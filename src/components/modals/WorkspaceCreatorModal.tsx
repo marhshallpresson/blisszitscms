@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 interface WorkspaceCreatorModalProps {
@@ -19,6 +20,7 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose }: WorkspaceCreatorModal
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const { createWorkspace } = useWorkspace();
+  const { user, isAuthReady } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -27,6 +29,14 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose }: WorkspaceCreatorModal
       toast({
         title: "Validation Error",
         description: "Workspace name is required.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!user || !isAuthReady) {
+      toast({
+        title: "Authentication Error",
+        description: "User not authenticated or authentication not ready. Please wait or try signing in again.",
         variant: "destructive",
       });
       return;
@@ -90,7 +100,7 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose }: WorkspaceCreatorModal
           <DialogClose asChild>
             <Button variant="outline" onClick={onClose}>Cancel</Button>
           </DialogClose>
-          <Button type="submit" onClick={handleCreate} disabled={isSubmitting}>
+          <Button type="submit" onClick={handleCreate} disabled={!user || !isAuthReady || isSubmitting}>
             {isSubmitting ? 'Creating...' : 'Create Workspace'}
           </Button>
         </DialogFooter>
@@ -98,3 +108,4 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose }: WorkspaceCreatorModal
     </Dialog>
   );
 };
+
