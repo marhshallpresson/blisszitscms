@@ -5,11 +5,15 @@ import type { GenerateContentIdeasOutput } from '@/ai/flows/generate-content-ide
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, DownloadCloud } from 'lucide-react';
 import { generateContentIdeas } from '@/ai/flows/generate-content-ideas';
 import { useToast } from '@/hooks/use-toast';
 
-export const AiRecommendationCard = () => {
+interface AiRecommendationCardProps {
+  onImportRecommendation: (title: string, description: string) => void;
+}
+
+export const AiRecommendationCard = ({ onImportRecommendation }: AiRecommendationCardProps) => {
   const [recommendations, setRecommendations] = useState<GenerateContentIdeasOutput>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -26,7 +30,7 @@ export const AiRecommendationCard = () => {
         description: "Could not fetch AI recommendations at this time.",
         variant: "destructive",
       });
-      setRecommendations([]); // Clear recommendations or set an error state
+      setRecommendations([]); 
     }
     setIsLoading(false);
   }, [toast]);
@@ -63,9 +67,20 @@ export const AiRecommendationCard = () => {
             ))
           ) : recommendations.length > 0 ? (
             recommendations.map((rec, i) => (
-              <div key={i} className="bg-white/10 p-4 rounded-xl backdrop-blur-sm">
-                <h4 className="font-bold font-headline text-lg">{rec.title}</h4>
-                <p className="text-sm opacity-90 mt-1 font-body">{rec.description}</p>
+              <div key={i} className="bg-white/10 p-6 rounded-xl backdrop-blur-sm flex flex-col justify-between">
+                <div>
+                  <h4 className="font-bold font-headline text-lg">{rec.title}</h4>
+                  <p className="text-sm opacity-90 mt-1 font-body mb-4">{rec.description}</p>
+                </div>
+                <Button 
+                  onClick={() => onImportRecommendation(rec.title, rec.description)}
+                  variant="outline" 
+                  size="sm"
+                  className="w-full bg-white/20 hover:bg-white/30 text-primary-foreground border-white/30 hover:border-white/50 font-semibold"
+                >
+                  <DownloadCloud size={16} className="mr-2" />
+                  Import Idea
+                </Button>
               </div>
             ))
           ) : (

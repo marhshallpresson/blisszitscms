@@ -9,14 +9,15 @@ import { Plus, Briefcase, ChevronRight } from 'lucide-react';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ClientFormattedDate } from '@/components/utils/ClientFormattedDate';
-import { RealtimeGreeting } from '@/components/rtdb/RealtimeGreeting';
+// import { RealtimeGreeting } from '@/components/rtdb/RealtimeGreeting'; // Removed
 
 interface WelcomeDashboardProps {
   onSelectWorkspace: (id: string) => void;
   onNewWorkspace: () => void;
+  onImportAiRecommendation: (title: string, description: string) => void; // Added prop
 }
 
-export const WelcomeDashboard = ({ onSelectWorkspace, onNewWorkspace }: WelcomeDashboardProps) => {
+export const WelcomeDashboard = ({ onSelectWorkspace, onNewWorkspace, onImportAiRecommendation }: WelcomeDashboardProps) => {
   const { workspaces, isLoadingWorkspaces } = useWorkspace();
 
   return (
@@ -86,8 +87,8 @@ export const WelcomeDashboard = ({ onSelectWorkspace, onNewWorkspace }: WelcomeD
           </div>
         )}
       </div>
-      <RealtimeGreeting />
-      <AiRecommendationCard />
+      {/* <RealtimeGreeting /> Removed */}
+      <AiRecommendationCard onImportRecommendation={onImportAiRecommendation} />
     </div>
   );
 };
