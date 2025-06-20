@@ -1,4 +1,3 @@
-
 // src/app/settings/page.tsx (Redirector)
 "use client";
 
@@ -20,6 +19,7 @@ export default function SettingsRedirectPage() {
       } else if (userProfile && userProfile.onboardingCompleted) {
         router.replace("/app/settings"); // Go to new app settings
       } else if (!userProfile && user && !isLoadingProfile) { 
+        // User authenticated, but profile somehow missing (edge case after onboarding attempt)
         console.warn("SettingsRedirectPage: User authenticated but profile missing. Redirecting to onboarding.");
         router.replace("/onboarding");
       }

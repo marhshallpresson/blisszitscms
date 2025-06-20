@@ -1,5 +1,4 @@
-
-// src/app/(app)/settings/page.tsx -> src/app/app/settings/page.tsx
+// src/app/app/settings/page.tsx
 "use client";
 
 import { ProfileDashboard } from "@/components/profile/ProfileDashboard";

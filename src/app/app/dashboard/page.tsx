@@ -1,5 +1,4 @@
-
-// src/app/(app)/dashboard/page.tsx -> src/app/app/dashboard/page.tsx
+// src/app/app/dashboard/page.tsx
 "use client";
 
 import { WelcomeDashboard } from "@/components/dashboard/WelcomeDashboard";

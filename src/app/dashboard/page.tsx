@@ -1,4 +1,3 @@
-
 // src/app/dashboard/page.tsx (Redirector)
 "use client";
 
@@ -19,6 +18,9 @@ export default function DashboardRedirectPage() {
         router.replace("/onboarding"); 
       } else if (userProfile && userProfile.onboardingCompleted) {
          router.replace("/app/dashboard"); // Redirect to the actual app dashboard
+      } else if (!userProfile && user && !isLoadingProfile) {
+        // User authenticated, but profile somehow missing (edge case after onboarding attempt)
+        router.replace("/onboarding"); 
       }
     }
   }, [user, isLoadingAuth, userProfile, isLoadingProfile, router]);
@@ -26,7 +28,7 @@ export default function DashboardRedirectPage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
       <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-       <p className="text-muted-foreground">Redirecting...</p>
+       <p className="text-muted-foreground">Redirecting to Dashboard...</p>
     </div>
   );
 }
