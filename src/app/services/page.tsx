@@ -1,10 +1,13 @@
+
 // src/app/services/page.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
-import { CheckCircle, Target, PenTool, Users, BarChartHorizontal, MessageCircle, TrendingUp, Brain } from "lucide-react";
+import { CheckCircle, Brain, PenTool, Users, BarChartHorizontal, MessageCircle, TrendingUp } from "lucide-react";
+import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
 
 const servicesList = [
   {
@@ -110,69 +113,73 @@ const servicesList = [
 export default function ServicesPage() {
   return (
     <>
-      {/* Page Header */}
-      <section className="bg-gradient-to-b from-primary/5 via-background to-background pt-20 pb-12 md:pt-28 md:pb-16">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold font-headline text-primary mb-4">Our Services</h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-            Comprehensive social media solutions tailored to elevate your brand, engage your audience, and drive meaningful results.
-          </p>
-        </div>
-      </section>
-
-      {/* Services List */}
-      <section className="py-16 md:py-24 bg-background">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="space-y-20 md:space-y-28">
-            {servicesList.map((service, index) => (
-              <div key={service.id} id={service.id} className={`grid md:grid-cols-2 gap-10 md:gap-16 items-center scroll-mt-24`}>
-                <div className={`relative ${index % 2 === 1 ? 'md:col-start-2' : ''}`}>
-                  <div className="absolute -top-4 -left-4 w-20 h-20 bg-accent/10 rounded-full hidden md:block" aria-hidden="true"></div>
-                  <Image
-                    src={service.image}
-                    alt={service.imageAlt}
-                    width={550}
-                    height={400}
-                    className="rounded-xl shadow-2xl object-cover w-full relative z-10"
-                    data-ai-hint={service.aiHint}
-                  />
-                </div>
-                <div className={`${index % 2 === 1 ? 'md:col-start-1 md:row-start-1' : ''}`}>
-                  <div className="inline-flex items-center gap-3 bg-primary/10 px-4 py-2 rounded-full mb-5">
-                    {service.icon}
-                    <h2 className="text-2xl md:text-3xl font-bold font-headline text-foreground">{service.title}</h2>
-                  </div>
-                  <p className="text-muted-foreground mb-6 text-base md:text-lg leading-relaxed">{service.description}</p>
-                  <ul className="space-y-3 mb-8">
-                    {service.features.map(feature => (
-                      <li key={feature} className="flex items-start">
-                        <CheckCircle size={20} className="text-green-500 mr-3 mt-0.5 flex-shrink-0" />
-                        <span className="text-muted-foreground text-sm md:text-base">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                   <Button size="lg" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md rounded-lg px-8 py-3">
-                     <Link href={`/contact?service=${encodeURIComponent(service.title)}`}>Get Started with {service.title.split(" ")[0]}</Link>
-                   </Button>
-                </div>
-              </div>
-            ))}
+      <Navbar />
+      <main className="flex-grow">
+        {/* Page Header */}
+        <section className="bg-gradient-to-b from-primary/5 via-background to-background pt-20 pb-12 md:pt-28 md:pb-16">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold font-headline text-primary mb-4">Our Services</h1>
+            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
+              Comprehensive social media solutions tailored to elevate your brand, engage your audience, and drive meaningful results.
+            </p>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Call to Action */}
-      <section className="py-20 bg-secondary">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold font-headline text-foreground mb-6">Ready to Transform Your Social Presence?</h2>
-          <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-10">
-            Partner with Blisszits to unlock your brand's full potential on social media. We're excited to help you achieve your goals.
-          </p>
-          <Button size="lg" asChild className="bg-accent hover:bg-accent/90 text-accent-foreground text-lg px-10 py-3.5 shadow-lg rounded-lg">
-            <Link href="/contact">Request a Free Proposal</Link>
-          </Button>
-        </div>
-      </section>
+        {/* Services List */}
+        <section className="py-16 md:py-24 bg-background">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="space-y-20 md:space-y-28">
+              {servicesList.map((service, index) => (
+                <div key={service.id} id={service.id} className={`grid md:grid-cols-2 gap-10 md:gap-16 items-center scroll-mt-24`}>
+                  <div className={`relative ${index % 2 === 1 ? 'md:col-start-2' : ''}`}>
+                    <div className="absolute -top-4 -left-4 w-20 h-20 bg-accent/10 rounded-full hidden md:block" aria-hidden="true"></div>
+                    <Image
+                      src={service.image}
+                      alt={service.imageAlt}
+                      width={550}
+                      height={400}
+                      className="rounded-xl shadow-2xl object-cover w-full relative z-10"
+                      data-ai-hint={service.aiHint}
+                    />
+                  </div>
+                  <div className={`${index % 2 === 1 ? 'md:col-start-1 md:row-start-1' : ''}`}>
+                    <div className="inline-flex items-center gap-3 bg-primary/10 px-4 py-2 rounded-full mb-5">
+                      {service.icon}
+                      <h2 className="text-2xl md:text-3xl font-bold font-headline text-foreground">{service.title}</h2>
+                    </div>
+                    <p className="text-muted-foreground mb-6 text-base md:text-lg leading-relaxed">{service.description}</p>
+                    <ul className="space-y-3 mb-8">
+                      {service.features.map(feature => (
+                        <li key={feature} className="flex items-start">
+                          <CheckCircle size={20} className="text-green-500 mr-3 mt-0.5 flex-shrink-0" />
+                          <span className="text-muted-foreground text-sm md:text-base">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <Button size="lg" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md rounded-lg px-8 py-3">
+                      <Link href={`/contact?service=${encodeURIComponent(service.title)}`}>Get Started with {service.title.split(" ")[0]}</Link>
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Call to Action */}
+        <section className="py-20 bg-secondary">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold font-headline text-foreground mb-6">Ready to Transform Your Social Presence?</h2>
+            <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-10">
+              Partner with Blisszits to unlock your brand's full potential on social media. We're excited to help you achieve your goals.
+            </p>
+            <Button size="lg" asChild className="bg-accent hover:bg-accent/90 text-accent-foreground text-lg px-10 py-3.5 shadow-lg rounded-lg">
+              <Link href="/contact">Request a Free Proposal</Link>
+            </Button>
+          </div>
+        </section>
+      </main>
+      <Footer />
     </>
   );
 }

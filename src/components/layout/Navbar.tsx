@@ -1,10 +1,11 @@
+
 // src/components/layout/Navbar.tsx
 "use client";
 
 import Link from 'next/link';
 import { AppLogo } from './AppLogo';
 import { Button } from '@/components/ui/button';
-import { Menu, X, LogOut, LayoutDashboard, Settings } from 'lucide-react';
+import { Menu, X, LogOut, ArrowRightToLine, Settings } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -81,11 +82,8 @@ export const Navbar = () => {
               <Button size="lg" className="ml-4" disabled>Loading...</Button>
             ) : user ? (
               <>
-                <Button variant="ghost" asChild className={cn("font-medium text-base px-3 py-2 lg:px-4", pathname === '/dashboard' ? "text-primary bg-primary/10" : "text-foreground/70 hover:text-primary hover:bg-primary/5")}>
-                  <Link href="/dashboard"><LayoutDashboard size={18} className="mr-1.5"/>Dashboard</Link>
-                </Button>
-                <Button variant="ghost" asChild className={cn("font-medium text-base px-3 py-2 lg:px-4", pathname === '/settings' ? "text-primary bg-primary/10" : "text-foreground/70 hover:text-primary hover:bg-primary/5")}>
-                  <Link href="/settings"><Settings size={18} className="mr-1.5"/>Settings</Link>
+                <Button asChild className="ml-2 bg-accent hover:bg-accent/90 text-accent-foreground shadow-sm hover:shadow-md">
+                  <Link href="/app/dashboard"> <ArrowRightToLine size={18} className="mr-1.5"/> Go to App</Link>
                 </Button>
                 <Button onClick={handleSignOut} variant="outline" size="default" className="ml-2 border-primary text-primary hover:bg-primary/5 hover:text-primary">
                   <LogOut size={18} className="mr-1.5"/> Sign Out
@@ -135,11 +133,8 @@ export const Navbar = () => {
                <Button className="w-full justify-start text-lg py-3" disabled>Loading...</Button>
             ) : user ? (
               <>
-                <Button variant="ghost" asChild className={cn("w-full justify-start font-medium text-lg py-3", pathname === '/dashboard' ? "text-primary bg-primary/10" : "text-foreground/80 hover:text-primary hover:bg-primary/10")}>
-                  <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)}><LayoutDashboard className="mr-2"/>Dashboard</Link>
-                </Button>
-                 <Button variant="ghost" asChild className={cn("w-full justify-start font-medium text-lg py-3", pathname === '/settings' ? "text-primary bg-primary/10" : "text-foreground/80 hover:text-primary hover:bg-primary/10")}>
-                  <Link href="/settings" onClick={() => setIsMobileMenuOpen(false)}><Settings className="mr-2"/>Settings</Link>
+                <Button variant="ghost" asChild className="w-full justify-start font-medium text-lg py-3 text-accent hover:bg-accent/10">
+                  <Link href="/app/dashboard" onClick={() => setIsMobileMenuOpen(false)}><ArrowRightToLine className="mr-2"/>Go to App</Link>
                 </Button>
                 <Button variant="ghost" onClick={handleSignOut} className="w-full justify-start text-lg py-3 text-red-600 hover:bg-red-500/10 hover:text-red-700">
                   <LogOut size={20} className="mr-2"/> Sign Out

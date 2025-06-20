@@ -1,8 +1,9 @@
+
 import type { Metadata } from 'next';
 import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
-import { Navbar } from '@/components/layout/Navbar';
-import { Footer } from '@/components/layout/Footer';
+// Note: Navbar and Footer are for the corporate site, not the (app) layout.
+// AuthProvider and WorkspaceProvider wrap everything.
 import { AuthProvider } from '@/contexts/AuthContext';
 import { WorkspaceProvider } from '@/contexts/WorkspaceContext';
 
@@ -30,11 +31,8 @@ export default function RootLayout({
       <body className="font-body antialiased flex flex-col min-h-screen bg-background">
         <AuthProvider>
           <WorkspaceProvider>
-            <Navbar />
-            <main className="flex-grow">
-              {children}
-            </main>
-            <Footer />
+            {/* Navbar and Footer are rendered by specific page layouts if needed, not globally here for app/site separation */}
+            {children}
             <Toaster />
           </WorkspaceProvider>
         </AuthProvider>

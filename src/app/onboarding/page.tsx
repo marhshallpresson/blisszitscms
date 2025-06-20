@@ -1,3 +1,4 @@
+
 // src/app/onboarding/page.tsx
 "use client";
 
@@ -13,14 +14,13 @@ export default function OnboardingPage() {
   const [authCheckComplete, setAuthCheckComplete] = useState(false);
 
   useEffect(() => {
-    if (!isLoadingAuth && !isLoadingProfile) { // Wait for both auth and profile checks
+    if (!isLoadingAuth && !isLoadingProfile) {
       setAuthCheckComplete(true);
       if (!user) {
         router.replace("/auth?mode=signin"); 
       } else if (userProfile?.onboardingCompleted) {
-        router.replace("/dashboard"); 
+        router.replace("/app/dashboard"); // Redirect to app dashboard
       }
-      // If user exists and onboarding is not complete, stay on this page
     }
   }, [user, isLoadingAuth, userProfile, isLoadingProfile, router]);
 
@@ -32,13 +32,10 @@ export default function OnboardingPage() {
     );
   }
   
-  // Render OnboardingForm only if user is authenticated and onboarding is not yet complete.
-  // The useEffect above handles redirects if these conditions aren't met after loading.
   if (user && !userProfile?.onboardingCompleted) {
     return <OnboardingForm />;
   }
 
-  // Fallback / intermediate state before redirection occurs from useEffect
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
       <p className="text-muted-foreground">Verifying your session...</p>

@@ -1,3 +1,4 @@
+
 // src/app/page.tsx (Homepage for corporate site)
 "use client";
 
@@ -9,9 +10,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react"; 
 import { Loader2 } from "lucide-react";
-// import { RealtimeGreeting } from "@/components/rtdb/RealtimeGreeting"; // Commented out for now
+import { Navbar } from "@/components/layout/Navbar"; 
+import { Footer } from "@/components/layout/Footer"; 
 
-// Sections for the corporate homepage
 const HeroSection = () => (
   <section className="bg-gradient-to-br from-secondary via-background to-background pt-20 pb-16 md:pt-32 md:pb-24">
     <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -145,47 +146,41 @@ export default function HomePage() {
       setAuthCheckComplete(true);
       if (user) {
         if (userProfile?.onboardingCompleted) {
-          router.replace('/dashboard');
+          router.replace('/app/dashboard'); 
         } else {
-          // User exists but onboarding not complete OR profile is still loading.
-          // Ensure profile is loaded before redirecting to onboarding.
-          router.replace('/onboarding');
+          router.replace('/onboarding'); 
         }
       }
-      // If no user, this effect does nothing, homepage renders.
     }
   }, [user, userProfile, isLoadingAuth, isLoadingProfile, router]);
 
-  // Show loading spinner while initial auth/profile check is in progress
   if (!authCheckComplete && (isLoadingAuth || isLoadingProfile)) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
+      <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
       </div>
     );
   }
 
-  // If user is logged in and auth checks are complete, this state should be brief before redirect.
-  // This also covers the case where user is logged in, but profile might still be loading
-  // which then gets handled by the useEffect for redirection.
   if (user && authCheckComplete) {
      return (
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)]">
+      <div className="flex flex-col items-center justify-center min-h-screen">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
         <p className="ml-4 text-muted-foreground">Loading your experience...</p>
       </div>
     );
   }
   
-  // If no user (or still initial loading phases before redirect), show corporate homepage content.
-  // This also ensures the homepage is shown while useEffect determines redirection for logged-in users.
   return (
     <>
-      <HeroSection />
-      <ServicesOverviewSection />
-      <AboutSummarySection />
-      <CallToActionSection />
-      {/* <RealtimeGreeting /> */}
+      <Navbar />
+      <main className="flex-grow">
+        <HeroSection />
+        <ServicesOverviewSection />
+        <AboutSummarySection />
+        <CallToActionSection />
+      </main>
+      <Footer />
     </>
   );
 }

@@ -1,3 +1,4 @@
+
 // src/app/contact/page.tsx
 "use client";
 
@@ -10,6 +11,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, type FormEvent, useEffect } from "react";
 import { Mail, Phone, MapPin, Loader2, SendHorizonal, Info } from "lucide-react";
 import { useSearchParams } from 'next/navigation';
+import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
+import Link from "next/link";
 
 const ContactForm = () => {
   const { toast } = useToast();
@@ -19,7 +23,7 @@ const ContactForm = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [company, setCompany] = useState('');
-  const [phone, setPhone] = useState('');
+  const [phoneNum, setPhoneNum] = useState(''); // Renamed to avoid conflict with Phone icon
   const [serviceOfInterest, setServiceOfInterest] = useState(initialService);
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -32,25 +36,20 @@ const ContactForm = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    // ** Placeholder for actual form submission logic **
-    // In a real app, you would send this data to a backend API endpoint,
-    // which could then email you, save to a database (like Firestore), or integrate with a CRM.
-    console.log("Form Submission Data:", { name, email, company, phone, serviceOfInterest, message });
+    console.log("Form Submission Data:", { name, email, company, phone: phoneNum, serviceOfInterest, message });
 
-    // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     toast({
       title: "Message Sent Successfully!",
       description: "Thank you for reaching out. We'll be in touch within 24-48 business hours.",
-      variant: "default", // Explicitly set variant if needed, default is usually fine
+      variant: "default",
     });
 
-    // Reset form
     setName('');
     setEmail('');
     setCompany('');
-    setPhone('');
+    setPhoneNum('');
     setServiceOfInterest('');
     setMessage('');
     setIsLoading(false);
@@ -85,7 +84,7 @@ const ContactForm = () => {
         </div>
         <div>
           <Label htmlFor="phone" className="text-foreground font-medium">Phone Number (Optional)</Label>
-          <Input id="phone" type="tel" placeholder="+234 800 000 0000" value={phone} onChange={(e) => setPhone(e.target.value)} className="mt-1 bg-input border-border focus:border-primary" />
+          <Input id="phone" type="tel" placeholder="+234 800 000 0000" value={phoneNum} onChange={(e) => setPhoneNum(e.target.value)} className="mt-1 bg-input border-border focus:border-primary" />
         </div>
       </div>
       <div>
@@ -126,80 +125,83 @@ const ContactForm = () => {
 export default function ContactPage() {
   return (
     <>
-      {/* Page Header */}
-      <section className="bg-gradient-to-b from-primary/5 via-background to-background pt-20 pb-12 md:pt-28 md:pb-16">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold font-headline text-primary mb-4">Contact Us</h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-            We're excited to hear about your project and discuss how Blisszits can help you achieve your social media goals.
-          </p>
-        </div>
-      </section>
+      <Navbar />
+      <main className="flex-grow">
+        {/* Page Header */}
+        <section className="bg-gradient-to-b from-primary/5 via-background to-background pt-20 pb-12 md:pt-28 md:pb-16">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold font-headline text-primary mb-4">Contact Us</h1>
+            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
+              We're excited to hear about your project and discuss how Blisszits can help you achieve your social media goals.
+            </p>
+          </div>
+        </section>
 
-      {/* Contact Form & Info Section */}
-      <section className="py-16 md:py-24 bg-background">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-5 gap-12 lg:gap-16">
-            {/* Contact Form */}
-            <div className="lg:col-span-3 bg-card p-8 md:p-10 rounded-xl shadow-xl border border-border/60">
-              <h2 className="text-2xl md:text-3xl font-bold font-headline text-foreground mb-1">Send Us a Message</h2>
-              <p className="text-muted-foreground mb-8">Fill out the form below, and we'll get back to you as soon as possible.</p>
-              <ContactForm />
-            </div>
-
-            {/* Contact Information */}
-            <div className="lg:col-span-2 space-y-8 pt-0 lg:pt-10">
-              <div>
-                <h3 className="text-xl font-headline font-semibold text-foreground mb-4">Direct Contact Details</h3>
-                <p className="text-muted-foreground mb-6">
-                  Alternatively, you can reach us through the following channels:
-                </p>
+        {/* Contact Form & Info Section */}
+        <section className="py-16 md:py-24 bg-background">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid lg:grid-cols-5 gap-12 lg:gap-16">
+              {/* Contact Form */}
+              <div className="lg:col-span-3 bg-card p-8 md:p-10 rounded-xl shadow-xl border border-border/60">
+                <h2 className="text-2xl md:text-3xl font-bold font-headline text-foreground mb-1">Send Us a Message</h2>
+                <p className="text-muted-foreground mb-8">Fill out the form below, and we'll get back to you as soon as possible.</p>
+                <ContactForm />
               </div>
-              <div className="space-y-6">
-                <div className="flex items-start space-x-4">
-                  <div className="bg-primary/10 p-3.5 rounded-full text-primary mt-1">
-                    <Mail size={22} />
-                  </div>
-                  <div>
-                    <h4 className="text-lg font-semibold text-foreground">Email Us</h4>
-                    <a href="mailto:info@blisszits.com" className="text-primary hover:underline break-all">info@blisszits.com</a>
-                    <p className="text-sm text-muted-foreground">We aim to respond within 1 business day.</p>
-                  </div>
+
+              {/* Contact Information */}
+              <div className="lg:col-span-2 space-y-8 pt-0 lg:pt-10">
+                <div>
+                  <h3 className="text-xl font-headline font-semibold text-foreground mb-4">Direct Contact Details</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Alternatively, you can reach us through the following channels:
+                  </p>
                 </div>
-                <div className="flex items-start space-x-4">
-                  <div className="bg-primary/10 p-3.5 rounded-full text-primary mt-1">
-                    <Phone size={22} />
+                <div className="space-y-6">
+                  <div className="flex items-start space-x-4">
+                    <div className="bg-primary/10 p-3.5 rounded-full text-primary mt-1">
+                      <Mail size={22} />
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-semibold text-foreground">Email Us</h4>
+                      <a href="mailto:info@blisszits.com" className="text-primary hover:underline break-all">info@blisszits.com</a>
+                      <p className="text-sm text-muted-foreground">We aim to respond within 1 business day.</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-lg font-semibold text-foreground">Call Us</h4>
-                    <a href="tel:+2348000000000" className="text-primary hover:underline">+234 (800) 000-0000</a> {/* Placeholder NG number */}
-                    <p className="text-sm text-muted-foreground">Mon - Fri, 9am - 5pm (WAT)</p>
+                  <div className="flex items-start space-x-4">
+                    <div className="bg-primary/10 p-3.5 rounded-full text-primary mt-1">
+                      <Phone size={22} />
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-semibold text-foreground">Call Us</h4>
+                      <a href="tel:+2348000000000" className="text-primary hover:underline">+234 (800) 000-0000</a>
+                      <p className="text-sm text-muted-foreground">Mon - Fri, 9am - 5pm (WAT)</p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-start space-x-4">
-                  <div className="bg-primary/10 p-3.5 rounded-full text-primary mt-1">
-                    <MapPin size={22} />
+                  <div className="flex items-start space-x-4">
+                    <div className="bg-primary/10 p-3.5 rounded-full text-primary mt-1">
+                      <MapPin size={22} />
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-semibold text-foreground">Our Office</h4>
+                      <p className="text-muted-foreground">Lagos, Nigeria (Meetings by appointment)</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-lg font-semibold text-foreground">Our Office</h4>
-                    <p className="text-muted-foreground">Lagos, Nigeria (Meetings by appointment)</p>
-                    {/* <p className="text-sm text-muted-foreground">123 Content Avenue, Media City, MC 45678</p> */}
-                  </div>
-                </div>
-                 <div className="flex items-start space-x-4 p-4 bg-accent/5 border border-accent/20 rounded-lg">
-                  <div className="bg-accent/10 p-3 rounded-full text-accent mt-1 flex-shrink-0">
-                    <Info size={20} />
-                  </div>
-                  <div>
-                    <h4 className="text-md font-semibold text-accent">Project Inquiries</h4>
-                    <p className="text-sm text-muted-foreground">For detailed project discussions or proposals, please use the contact form or email us with your requirements.</p>
+                  <div className="flex items-start space-x-4 p-4 bg-accent/5 border border-accent/20 rounded-lg">
+                    <div className="bg-accent/10 p-3 rounded-full text-accent mt-1 flex-shrink-0">
+                      <Info size={20} />
+                    </div>
+                    <div>
+                      <h4 className="text-md font-semibold text-accent">Project Inquiries</h4>
+                      <p className="text-sm text-muted-foreground">For detailed project discussions or proposals, please use the contact form or email us with your requirements.</p>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
+      <Footer />
     </>
   );
 }

@@ -1,3 +1,4 @@
+
 // src/contexts/AuthContext.tsx
 "use client";
 
@@ -98,6 +99,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signUpWithEmail = async ({ email, password }: EmailPasswordCredentials): Promise<FirebaseUser | null> => {
     if (!auth || !db) throw new Error("Firebase not initialized.");
     setIsLoadingAuth(true);
+    setIsLoadingProfile(true); // Start loading profile as we'll create one
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const newUser = userCredential.user;
@@ -108,11 +110,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         onboardingCompleted: false,
         createdAt: serverTimestamp() as Timestamp,
       };
-      await setDoc(userDocRef, initialProfile); // Use setDoc for initial creation
-      setUserProfile(initialProfile); 
+      await setDoc(userDocRef, initialProfile);
+      setUserProfile(initialProfile); // Set profile immediately
+      setIsLoadingProfile(false); // Profile is now "loaded" (it's the initial one)
       return newUser;
     } catch (error: any) {
       console.error("Sign up error:", error);
+      setIsLoadingProfile(false); // Stop loading profile on error
       toast({ title: "Sign Up Failed", description: error.message, variant: "destructive" });
       throw error;
     } finally {
@@ -126,6 +130,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoadingProfile(true); 
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      // User profile will be fetched by onAuthStateChanged effect
       return userCredential.user;
     } catch (error: any) {
       console.error("Sign in error:", error);
@@ -134,6 +139,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw error;
     } finally {
       setIsLoadingAuth(false);
+      // setIsLoadingProfile will be set to false by fetchUserProfile in onAuthStateChanged
     }
   };
   
@@ -144,24 +150,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userDocRef = doc(db, "users", user.uid);
 
       const dataToSet: Partial<UserProfile> = {
-        uid: user.uid,
-        email: user.email || '', // Ensure email from auth is included
-        ...profileData, // displayName, phoneNumber, dateOfBirth
+        uid: user.uid, // ensure uid is part of the object
+        email: user.email || '', // ensure email from auth is included
+        ...profileData, 
         onboardingCompleted: true,
         updatedAt: serverTimestamp() as Timestamp,
       };
-
-      // Check if the document exists or if createdAt is missing to set it
+      
       const docSnap = await getDoc(userDocRef);
       if (!docSnap.exists() || !docSnap.data()?.createdAt) {
         dataToSet.createdAt = serverTimestamp() as Timestamp;
       }
 
-      // Use setDoc with merge: true. This will create the document if it doesn't exist,
-      // or update/merge fields if it does.
       await setDoc(userDocRef, dataToSet, { merge: true });
       
-      await fetchUserProfile(user.uid); // Re-fetch to update context state
+      const updatedProfile = await fetchUserProfile(user.uid); // Re-fetch to update context state
+      setUserProfile(updatedProfile); // Explicitly update state
     } catch (error: any) {
       console.error("Error saving onboarding profile:", error);
       toast({ title: "Profile Save Failed", description: error.message, variant: "destructive" });
@@ -185,10 +189,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (profileData.address) {
         const currentAddress = userProfile?.address || {};
         dataToUpdate.address = { ...currentAddress, ...profileData.address };
+      } else {
+        // If address is intended to be cleared, you might need specific handling
+        // For now, partial updates merge, so not providing `address` won't clear it.
       }
       if (profileData.socialMedia) {
         const currentSocials = userProfile?.socialMedia || {};
         dataToUpdate.socialMedia = { ...currentSocials, ...profileData.socialMedia };
+        // Remove empty social media links
         for (const key in dataToUpdate.socialMedia) {
           if (!dataToUpdate.socialMedia[key]) {
             delete dataToUpdate.socialMedia[key]; 
@@ -196,8 +204,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
       
-      await updateDoc(userDocRef, dataToUpdate); // updateDoc is fine here, as profile must exist to reach settings
-      await fetchUserProfile(user.uid); 
+      await updateDoc(userDocRef, dataToUpdate); 
+      const updatedProfile = await fetchUserProfile(user.uid);
+      setUserProfile(updatedProfile); // Explicitly update state
     } catch (error: any) {
       console.error("Error updating user profile:", error);
       toast({ title: "Profile Update Failed", description: error.message, variant: "destructive" });

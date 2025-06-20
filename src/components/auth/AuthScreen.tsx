@@ -1,3 +1,4 @@
+
 // src/components/auth/AuthScreen.tsx
 "use client";
 
@@ -17,9 +18,9 @@ import type { EmailPasswordCredentials } from '@/types/auth';
 
 export const AuthScreen = () => {
   const {
+    user,
     signUpWithEmail,
     signInWithEmail,
-    user,
     isLoadingAuth,
     userProfile,
     isLoadingProfile
@@ -48,13 +49,10 @@ export const AuthScreen = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    // Redirect if user is logged in and auth/profile checks are complete
     if (!isLoadingAuth && !isLoadingProfile && user) {
       if (userProfile?.onboardingCompleted) {
-        router.push('/dashboard');
+        router.push('/app/dashboard'); 
       } else {
-        // User exists but onboarding not complete or profile still loading
-        // Wait for isLoadingProfile to be false before redirecting to onboarding
         if (!isLoadingProfile) router.push('/onboarding');
       }
     }
@@ -86,13 +84,13 @@ export const AuthScreen = () => {
         const newUser = await signUpWithEmail(credentials);
         if (newUser) {
           toast({ title: "Account Created!", description: "Welcome! Let's get you set up." });
-          // No explicit redirect here; useEffect will handle it once profile (even initial) is fetched
+          router.push('/onboarding'); 
         }
-      } else {
+      } else { 
         const signedInUser = await signInWithEmail(credentials);
         if (signedInUser) {
           toast({ title: "Signed In Successfully!", description: "Welcome back!" });
-          // No explicit redirect here; useEffect will handle it
+          // useEffect will handle redirect based on onboarding status
         }
       }
     } catch (err: any) {
@@ -107,10 +105,10 @@ export const AuthScreen = () => {
     const newMode = mode === 'signin' ? 'signup' : 'signin';
     setMode(newMode);
     setError(null);
-    router.replace(`/auth?mode=${newMode}`, { scroll: false });
+    router.replace(`/auth?mode=${newMode}`, { scroll: false }); 
   };
 
-  if (!isClient || isLoadingAuth) { // Only wait for isLoadingAuth initially, profile check is for redirection
+  if (!isClient || isLoadingAuth) {
     return (
       <div className="w-full min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-secondary/30 to-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -118,8 +116,7 @@ export const AuthScreen = () => {
     );
   }
   
-  // If user is logged in, useEffect will redirect. This prevents form flashing.
-  if (user && !formLoading) { // Check !formLoading to avoid redirect during submission
+  if (user && !formLoading) { 
      return (
       <div className="w-full min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-secondary/30 to-background">
         <p className="text-muted-foreground">Checking your session...</p>
@@ -127,7 +124,6 @@ export const AuthScreen = () => {
       </div>
     );
   }
-
 
   const PasswordVisibilityToggle = ({ visible, onClick }: { visible: boolean, onClick: () => void }) => (
     <Button type="button" variant="ghost" size="icon" onClick={onClick} className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:text-foreground">
@@ -147,7 +143,7 @@ export const AuthScreen = () => {
             {mode === 'signin' ? 'Welcome Back!' : 'Create Your Account'}
           </CardTitle>
           <CardDescription className="text-muted-foreground font-body text-base">
-            {mode === 'signin' ? 'Sign in to continue to Blisszits.' : 'Get started with Blisszits.'}
+            {mode === 'signin' ? 'Sign in to continue to Blisszits App.' : 'Get started with Blisszits App.'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6 px-6 md:px-8 pb-6">

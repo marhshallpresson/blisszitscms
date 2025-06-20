@@ -1,3 +1,4 @@
+
 // src/components/onboarding/OnboardingForm.tsx
 "use client";
 
@@ -19,7 +20,7 @@ export const OnboardingForm = () => {
 
   const [displayName, setDisplayName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState(""); // Stored as "YYYY-MM-DD"
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -43,7 +44,7 @@ export const OnboardingForm = () => {
       };
       await saveOnboardingProfile(profileData);
       toast({ title: "Welcome!", description: "Your profile has been set up." });
-      router.push("/dashboard");
+      router.push("/app/dashboard"); 
     } catch (error: any) {
       toast({ title: "Onboarding Failed", description: error.message || "Could not save profile.", variant: "destructive" });
     } finally {
@@ -59,7 +60,7 @@ export const OnboardingForm = () => {
         <CardHeader className="text-center pt-8 pb-6">
           <CardTitle className="text-3xl font-bold text-foreground font-headline">Tell Us About Yourself</CardTitle>
           <CardDescription className="text-muted-foreground font-body text-base">
-            Just a few more details to personalize your Blisszits experience.
+            Just a few more details to personalize your Blisszits app experience.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -104,8 +105,9 @@ export const OnboardingForm = () => {
                   type="date"
                   value={dateOfBirth}
                   onChange={(e) => setDateOfBirth(e.target.value)}
-                  className="pl-10 pr-3 py-2.5 bg-input border-border focus:border-primary appearance-none" // appearance-none for better date input styling control
+                  className="pl-10 pr-3 py-2.5 bg-input border-border focus:border-primary appearance-none" 
                   disabled={overallLoading}
+                  max={new Date().toISOString().split("T")[0]} 
                 />
               </div>
             </div>

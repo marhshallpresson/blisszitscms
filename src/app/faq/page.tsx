@@ -1,3 +1,4 @@
+
 // src/app/faq/page.tsx
 "use client";
 
@@ -7,6 +8,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
 
 const faqData = [
   {
@@ -46,40 +51,44 @@ const faqData = [
 export default function FAQPage() {
   return (
     <>
-      <section className="bg-primary/10 py-16 md:py-24">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary mb-4">Frequently Asked Questions</h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-            Find answers to common questions about our social media management services.
-          </p>
-        </div>
-      </section>
+      <Navbar />
+      <main className="flex-grow">
+        <section className="bg-primary/10 py-16 md:py-24">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary mb-4">Frequently Asked Questions</h1>
+            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
+              Find answers to common questions about our social media management services.
+            </p>
+          </div>
+        </section>
 
-      <section className="py-12 md:py-16 bg-background">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl mx-auto">
-            <Accordion type="single" collapsible className="w-full space-y-4">
-              {faqData.map((item, index) => (
-                <AccordionItem key={index} value={`item-${index}`} className="border border-border/70 rounded-lg shadow-sm bg-card overflow-hidden">
-                  <AccordionTrigger className="px-6 py-4 text-left text-lg font-semibold font-headline text-card-foreground hover:no-underline hover:bg-secondary/50 transition-colors">
-                    {item.question}
-                  </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-6 pt-0 text-muted-foreground leading-relaxed">
-                    {item.answer}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+        <section className="py-12 md:py-16 bg-background">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl mx-auto">
+              <Accordion type="single" collapsible className="w-full space-y-4">
+                {faqData.map((item, index) => (
+                  <AccordionItem key={index} value={`item-${index}`} className="border border-border/70 rounded-lg shadow-sm bg-card overflow-hidden">
+                    <AccordionTrigger className="px-6 py-4 text-left text-lg font-semibold font-headline text-card-foreground hover:no-underline hover:bg-secondary/50 transition-colors">
+                      {item.question}
+                    </AccordionTrigger>
+                    <AccordionContent className="px-6 pb-6 pt-0 text-muted-foreground leading-relaxed">
+                      {item.answer}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </div>
+            <div className="text-center mt-12 md:mt-16">
+              <h2 className="text-2xl font-headline text-foreground mb-3">Still have questions?</h2>
+              <p className="text-muted-foreground mb-6">We're here to help. Contact us for more information.</p>
+              <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                <Link href="/contact">Contact Our Team</Link>
+              </Button>
+            </div>
           </div>
-          <div className="text-center mt-12 md:mt-16">
-            <h2 className="text-2xl font-headline text-foreground mb-3">Still have questions?</h2>
-            <p className="text-muted-foreground mb-6">We're here to help. Contact us for more information.</p>
-            <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              <Link href="/contact">Contact Our Team</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+        </section>
+      </main>
+      <Footer />
     </>
   );
 }

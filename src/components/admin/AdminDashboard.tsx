@@ -1,3 +1,4 @@
+
 // src/components/admin/AdminDashboard.tsx
 "use client";
 
@@ -10,8 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Trash2, Briefcase, ExternalLink, Loader2, Edit, Settings, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ClientFormattedDate } from '@/components/utils/ClientFormattedDate';
-import { useRouter } from 'next/navigation'; // For navigation
-import { WorkspaceCreatorModal } from '@/components/modals/WorkspaceCreatorModal'; // Import the modal
+import { useRouter } from 'next/navigation'; 
+import { WorkspaceCreatorModal } from '@/components/modals/WorkspaceCreatorModal'; 
 
 export const AdminDashboard = () => {
   const { user, isLoadingAuth } = useAuth();
@@ -46,9 +47,7 @@ export const AdminDashboard = () => {
 
   const handleNavigateToWorkspace = (workspaceId: string) => {
     setCurrentWorkspaceId(workspaceId);
-    // Assuming you have a page like /workspace/[id] or similar structure
-    // For now, let's assume it should redirect to a general dashboard view that becomes workspace-aware
-    router.push('/dashboard'); // Or a dedicated workspace page e.g. /workspace/${workspaceId}
+    router.push(`/app/workspace/${workspaceId}`); 
     toast({ title: "Workspace Selected", description: "Navigating to workspace view..."});
   };
   
@@ -63,7 +62,7 @@ export const AdminDashboard = () => {
     );
   }
   
-  if (!user && !isLoadingAuth) { // If auth check is complete and no user
+  if (!user && !isLoadingAuth) { 
     return (
       <div className="container mx-auto px-4 py-12 text-center">
         <AlertTriangle className="mx-auto h-12 w-12 text-destructive mb-4" />
@@ -130,11 +129,6 @@ export const AdminDashboard = () => {
                           <ExternalLink size={14} className="mr-1 md:mr-2" />
                           <span className="hidden md:inline">Open</span>
                         </Button>
-                        {/* Edit button can be re-enabled if edit workspace functionality is added */}
-                        {/* <Button variant="outline" size="sm" disabled aria-label={`Edit workspace ${ws.name}`} className="hover:border-primary hover:text-primary">
-                          <Edit size={14} className="mr-1 md:mr-2" />
-                           <span className="hidden md:inline">Edit</span>
-                        </Button> */}
                          <Button variant="destructive" size="sm" disabled={isDeleting === ws.id} onClick={() => handleDeleteWorkspace(ws.id, ws.name)} aria-label={`Delete workspace ${ws.name}`}>
                             {isDeleting === ws.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                             <span className="ml-1 hidden md:inline">Delete</span>
@@ -168,7 +162,7 @@ export const AdminDashboard = () => {
         onWorkspaceCreated={(id) => {
           setIsWorkspaceCreatorOpen(false); 
           if (id) {
-            handleNavigateToWorkspace(id); // Navigate to the newly created workspace
+            handleNavigateToWorkspace(id); 
           }
         }}
       />

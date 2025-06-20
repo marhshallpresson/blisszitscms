@@ -1,52 +1,91 @@
+
 // src/components/workspace/WorkspaceViewWrapper.tsx
 "use client";
 
-// This component is part of the old dashboard structure and is being removed
-// as the application is refactored into a corporate website.
-// If a client portal with workspace-like features is developed later,
-// this or a similar component might be reintroduced.
-
-// import type { Workspace, ContentItem } from '@/contexts/WorkspaceContext';
-// import { Button } from '@/components/ui/button';
-// import { ContentGrid } from '@/components/content/ContentDashboard';
-// import { CalendarView } from '@/components/content/CalendarView';
-// import { IdeaBoard } from '@/components/content/IdeaBoard';
-// import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
-// import { Plus, LayoutGrid, CalendarDays, Lightbulb, BarChartHorizontalBig, Palette } from 'lucide-react';
-// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-// import { useWorkspace } from '@/contexts/WorkspaceContext';
-// import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import type { Workspace, ContentItem } from '@/contexts/WorkspaceContext';
+import { Button } from '@/components/ui/button';
+import { ContentGrid } from '@/components/content/ContentDashboard'; // Corrected import
+import { CalendarView } from '@/components/content/CalendarView';
+import { IdeaBoard } from '@/components/content/IdeaBoard';
+import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
+import { Plus, LayoutGrid, CalendarDays, Lightbulb, BarChartHorizontalBig } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { useWorkspace } from '@/contexts/WorkspaceContext'; // For accessing content items
+import Link from 'next/link';
 
 interface WorkspaceViewWrapperProps {
-  // workspace: Workspace;
-  // onNewContent: () => void;
-  // onEditContent: (item: ContentItem) => void;
-  // onViewDetails: (item: ContentItem) => void;
-  // onMarkAsPublished: (item: ContentItem) => void;
+  workspace: Workspace; // This will be the currently active workspace
+  onNewContent: () => void;
+  onEditContent: (item: ContentItem) => void;
+  onViewDetails: (item: ContentItem) => void;
+  onMarkAsPublished: (item: ContentItem) => void;
 }
 
 export const WorkspaceViewWrapper = ({ 
-    // workspace, 
-    // onNewContent, 
-    // onEditContent,
-    // onViewDetails,
-    // onMarkAsPublished
+    workspace, 
+    onNewContent, 
+    onEditContent,
+    onViewDetails,
+    onMarkAsPublished
 }: WorkspaceViewWrapperProps) => {
-  // const { contentItems, isLoadingContent } = useWorkspace();
+  const { contentItems, isLoadingContent } = useWorkspace(); // Get content items for this workspace
 
   return (
-    <div className="container mx-auto px-4 py-8 text-center">
-      <h1 className="text-2xl font-bold text-foreground mb-4">Workspace View (Placeholder)</h1>
-      <p className="text-muted-foreground">
-        This component (WorkspaceViewWrapper) was part of the previous CMS dashboard structure.
-        It is not used in the current corporate website layout.
-      </p>
-      {/* 
-      The original content of this component, including Tabs for Content Grid,
-      Calendar, Idea Board, and Analytics, has been removed as part of the
-      refactor to a corporate website. These features would be part of a
-      logged-in CMS/dashboard experience, not the public-facing corporate site.
-      */}
+    <div className="space-y-6 h-full flex flex-col">
+      <Card className="shadow-lg border-border/70 flex-shrink-0">
+        <CardHeader className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+          <div>
+            <CardTitle className="font-headline text-3xl text-foreground">{workspace.name}</CardTitle>
+            <CardDescription className="text-muted-foreground mt-1">
+              {workspace.description || "Manage your content, ideas, and track performance for this workspace."}
+            </CardDescription>
+          </div>
+          <div className="flex gap-2 items-center">
+            <Button onClick={onNewContent} className="font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-md">
+              <Plus size={18} className="mr-2" /> Add New Content
+            </Button>
+             {/* Optional: Link back to all workspaces */}
+            <Button variant="outline" asChild>
+                <Link href="/app/admin">All Workspaces</Link>
+            </Button>
+          </div>
+        </CardHeader>
+      </Card>
+
+      <Tabs defaultValue="grid" className="flex-grow flex flex-col">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6 bg-card border py-2 h-auto">
+          <TabsTrigger value="grid" className="py-2.5 text-sm font-medium gap-2"><LayoutGrid size={18}/> Content Grid</TabsTrigger>
+          <TabsTrigger value="calendar" className="py-2.5 text-sm font-medium gap-2"><CalendarDays size={18}/> Calendar</TabsTrigger>
+          <TabsTrigger value="ideas" className="py-2.5 text-sm font-medium gap-2"><Lightbulb size={18}/> Idea Board</TabsTrigger>
+          <TabsTrigger value="analytics" className="py-2.5 text-sm font-medium gap-2"><BarChartHorizontalBig size={18}/> Analytics</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="grid" className="flex-grow">
+          <ContentGrid 
+            contentItems={contentItems} 
+            isLoading={isLoadingContent}
+            onEdit={onEditContent} 
+            onViewDetails={onViewDetails}
+            onMarkAsPublished={onMarkAsPublished}
+          />
+        </TabsContent>
+        <TabsContent value="calendar" className="flex-grow">
+          <CalendarView 
+            contentItems={contentItems}
+            isLoading={isLoadingContent}
+            onViewDetails={onViewDetails}
+          />
+        </TabsContent>
+        <TabsContent value="ideas" className="flex-grow">
+          <IdeaBoard />
+        </TabsContent>
+        <TabsContent value="analytics" className="flex-grow">
+          {/* This analytics dashboard is general for now. Could be adapted for workspace-specific data */}
+          <AnalyticsDashboard /> 
+          <Card className="mt-4"><CardContent className="p-4 text-sm text-muted-foreground">Workspace-specific analytics coming soon.</CardContent></Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
