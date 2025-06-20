@@ -10,7 +10,7 @@ import { IdeaBoard } from '@/components/content/IdeaBoard';
 import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
 import { Plus, LayoutGrid, CalendarDays, Lightbulb, BarChartHorizontalBig } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useWorkspace } from '@/contexts/WorkspaceContext'; // For accessing content items
 import Link from 'next/link';
 
