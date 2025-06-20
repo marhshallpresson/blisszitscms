@@ -8,7 +8,7 @@ import { AppSidebar } from '@/components/layout/AppSidebar';
 import { AppLogo } from '@/components/layout/AppLogo';
 import { Loader2, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, userProfile, isLoadingAuth, isLoadingProfile } = useAuth();
@@ -53,6 +53,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="p-0 w-72 bg-card">
+              <SheetTitle className="sr-only">Menu</SheetTitle>
+              <SheetDescription className="sr-only">
+                Main navigation menu for the application.
+              </SheetDescription>
               {/* By passing a function to AppSidebar, we can close the mobile menu on navigation */}
               <AppSidebar onNavigate={() => setMobileMenuOpen(false)} />
             </SheetContent>
