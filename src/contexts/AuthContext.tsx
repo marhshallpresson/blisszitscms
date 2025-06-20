@@ -38,9 +38,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [isAuthReady, setIsAuthReady] = useState(false); // Tracks if initial auth check is done
-  const [isLoadingAuth, setIsLoadingAuth] = useState(true); // Tracks auth operation in progress
-  const [isLoadingProfile, setIsLoadingProfile] = useState(true); // Tracks profile operation in progress
+  const [isAuthReady, setIsAuthReady] = useState(false); 
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true); 
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true); 
   const { toast } = useToast();
 
   const fetchUserProfile = useCallback(async (uid: string): Promise<UserProfile | null> => {
@@ -71,18 +71,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    setIsLoadingAuth(true); // Start loading auth state
-    setIsLoadingProfile(true); // Start loading profile state
+    setIsLoadingAuth(true); 
+    setIsLoadingProfile(true); 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
-        await fetchUserProfile(currentUser.uid); // Profile loading is handled by this function
+        await fetchUserProfile(currentUser.uid); 
       } else {
         setUserProfile(null); 
-        setIsLoadingProfile(false); // No profile to load
+        setIsLoadingProfile(false); 
       }
-      setIsAuthReady(true); // Initial auth check is done
-      setIsLoadingAuth(false); // Auth loading is done
+      setIsAuthReady(true); 
+      setIsLoadingAuth(false); 
     }, (error) => { 
       console.error("Auth state change error:", error);
       setUser(null);
@@ -104,14 +104,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userDocRef = doc(db, "users", newUser.uid);
       const initialProfile: UserProfile = {
         uid: newUser.uid,
-        email: newUser.email || '', // Firebase user email should be non-null after creation
+        email: newUser.email || '', 
         onboardingCompleted: false,
         createdAt: serverTimestamp() as Timestamp,
-        // Other fields like displayName, etc., will be added during onboarding
       };
-      await setDoc(userDocRef, initialProfile);
+      await setDoc(userDocRef, initialProfile); // Use setDoc for initial creation
       setUserProfile(initialProfile); 
-      // Don't set isLoadingProfile here, fetchUserProfile will handle it
       return newUser;
     } catch (error: any) {
       console.error("Sign up error:", error);
@@ -125,14 +123,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signInWithEmail = async ({ email, password }: EmailPasswordCredentials): Promise<FirebaseUser | null> => {
     if (!auth) throw new Error("Firebase Auth not initialized.");
     setIsLoadingAuth(true);
-    setIsLoadingProfile(true); // Will fetch profile after sign-in
+    setIsLoadingProfile(true); 
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      // Profile will be fetched by onAuthStateChanged effect, which triggers fetchUserProfile
       return userCredential.user;
     } catch (error: any) {
       console.error("Sign in error:", error);
-      setIsLoadingProfile(false); // Failed to sign in, so no profile fetch
+      setIsLoadingProfile(false); 
       toast({ title: "Sign In Failed", description: error.message, variant: "destructive" });
       throw error;
     } finally {
@@ -145,12 +142,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoadingProfile(true);
     try {
       const userDocRef = doc(db, "users", user.uid);
-      const dataToSave = {
-        ...profileData,
+
+      const dataToSet: Partial<UserProfile> = {
+        uid: user.uid,
+        email: user.email || '', // Ensure email from auth is included
+        ...profileData, // displayName, phoneNumber, dateOfBirth
         onboardingCompleted: true,
         updatedAt: serverTimestamp() as Timestamp,
       };
-      await updateDoc(userDocRef, dataToSave);
+
+      // Check if the document exists or if createdAt is missing to set it
+      const docSnap = await getDoc(userDocRef);
+      if (!docSnap.exists() || !docSnap.data()?.createdAt) {
+        dataToSet.createdAt = serverTimestamp() as Timestamp;
+      }
+
+      // Use setDoc with merge: true. This will create the document if it doesn't exist,
+      // or update/merge fields if it does.
+      await setDoc(userDocRef, dataToSet, { merge: true });
+      
       await fetchUserProfile(user.uid); // Re-fetch to update context state
     } catch (error: any) {
       console.error("Error saving onboarding profile:", error);
@@ -167,30 +177,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const userDocRef = doc(db, "users", user.uid);
       
-      const dataToUpdate: Record<string, any> = { // Use Record<string, any> for flexible update payload
+      const dataToUpdate: Record<string, any> = { 
         ...profileData,
         updatedAt: serverTimestamp() as Timestamp,
       };
 
-      // Handle nested address object: ensure to merge, not overwrite
       if (profileData.address) {
         const currentAddress = userProfile?.address || {};
         dataToUpdate.address = { ...currentAddress, ...profileData.address };
       }
-      // Handle nested socialMedia object
       if (profileData.socialMedia) {
         const currentSocials = userProfile?.socialMedia || {};
         dataToUpdate.socialMedia = { ...currentSocials, ...profileData.socialMedia };
-         // Clean up empty social media links (set to undefined to remove from Firestore if desired, or handle in component)
         for (const key in dataToUpdate.socialMedia) {
           if (!dataToUpdate.socialMedia[key]) {
-            delete dataToUpdate.socialMedia[key]; // Or set to null / FieldValue.delete()
+            delete dataToUpdate.socialMedia[key]; 
           }
         }
       }
       
-      await updateDoc(userDocRef, dataToUpdate);
-      await fetchUserProfile(user.uid); // Re-fetch to update context state
+      await updateDoc(userDocRef, dataToUpdate); // updateDoc is fine here, as profile must exist to reach settings
+      await fetchUserProfile(user.uid); 
     } catch (error: any) {
       console.error("Error updating user profile:", error);
       toast({ title: "Profile Update Failed", description: error.message, variant: "destructive" });
@@ -205,9 +212,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoadingAuth(true);
     try {
       await firebaseSignOut(auth);
-      setUser(null); // Explicitly set user to null
-      setUserProfile(null); // Explicitly set profile to null
-      // isLoadingProfile will be set to false by onAuthStateChanged via fetchUserProfile
+      setUser(null); 
+      setUserProfile(null); 
     } catch (error: any) {
       console.error("Sign out failed:", error);
       toast({ title: "Sign Out Failed", description: error.message, variant: "destructive" });
@@ -230,14 +236,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   const updateUserPassword = async (newPassword: string) => {
     if (!auth || !auth.currentUser) throw new Error("User not authenticated.");
+    setIsLoadingAuth(true);
     try {
       await firebaseUpdatePassword(auth.currentUser, newPassword);
+      toast({ title: "Password Updated", description: "Your password has been changed successfully." });
     } catch (error: any) {
       console.error("Password update error:", error);
-      // It's good practice to re-authenticate the user for sensitive operations if this fails often.
-      // Firebase might throw an error requiring recent login.
       toast({ title: "Password Update Error", description: error.message + " You might need to sign in again.", variant: "destructive" });
       throw error; 
+    } finally {
+      setIsLoadingAuth(false);
     }
   };
 
