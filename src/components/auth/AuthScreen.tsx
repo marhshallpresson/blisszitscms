@@ -34,7 +34,7 @@ export const AuthScreen = () => {
   const { toast } = useToast();
 
   const [isClient, setIsClient] = useState(false);
-  const [isSigningUp, setIsSigningUp] = useState(true);
+  const [isSigningUp, setIsSigningUp] = useState(false); // Changed initial state to false
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
