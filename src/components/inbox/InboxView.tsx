@@ -1,4 +1,3 @@
-
 // src/components/inbox/InboxView.tsx
 "use client";
 

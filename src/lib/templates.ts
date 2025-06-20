@@ -1,4 +1,3 @@
-
 // src/lib/templates.ts
 
 // NOTE: All mock/template data has been removed from the application

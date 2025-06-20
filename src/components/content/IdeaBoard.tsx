@@ -1,4 +1,3 @@
-
 // src/components/content/IdeaBoard.tsx
 "use client";
 

@@ -1,4 +1,3 @@
-
 // src/components/workspace/WorkspaceViewWrapper.tsx
 "use client";
 

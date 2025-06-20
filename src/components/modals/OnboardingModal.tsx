@@ -1,4 +1,3 @@
-
 // src/components/modals/OnboardingModal.tsx
 "use client";
 

@@ -1,4 +1,3 @@
-
 // src/components/ai/AiRecommendationCard.tsx
 "use client";
 
