@@ -183,9 +183,9 @@ export const AuthScreen = () => {
                 </div>
               </div>
             )}
-            <Button type="submit" className="w-full font-semibold py-3 text-base shadow-md bg-primary hover:bg-primary/90 text-primary-foreground" disabled={formLoading || isAuthLoading}>
-              {formLoading || isAuthLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : (mode === 'signup' ? <UserPlus size={20} className="mr-2"/> : <LogIn size={20} className="mr-2"/>)}
-              {formLoading || isAuthLoading ? 'Processing...' : (mode === 'signup' ? 'Get Started' : 'Sign In')}
+            <Button type="submit" className="w-full font-semibold py-3 text-base shadow-md bg-primary hover:bg-primary/90 text-primary-foreground" disabled={formLoading || isLoadingAuth}>
+              {formLoading || isLoadingAuth ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : (mode === 'signup' ? <UserPlus size={20} className="mr-2"/> : <LogIn size={20} className="mr-2"/>)}
+              {formLoading || isLoadingAuth ? 'Processing...' : (mode === 'signup' ? 'Get Started' : 'Sign In')}
             </Button>
           </form>
 
