@@ -50,7 +50,7 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose, onWorkspaceCreated }: W
       const newWorkspaceId = await createWorkspace(name, description, seedWithTemplate); 
       toast({
         title: "Workspace Created",
-        description: `Workspace "${name}" has been successfully created. ${seedWithTemplate ? 'Content template applied.' : ''}`,
+        description: `Workspace "${name}" has been successfully created. ${seedWithTemplate ? '30-Day Challenge template applied.' : ''}`,
       });
       if (newWorkspaceId) {
          setCurrentWorkspaceId(newWorkspaceId); 
@@ -84,7 +84,7 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose, onWorkspaceCreated }: W
   }, [isOpen]);
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(openStatus) => !openStatus && onClose()}>
       <DialogContent className="sm:max-w-[425px] bg-card">
         <DialogHeader>
           <DialogTitle className="font-headline text-card-foreground">Create New Workspace</DialogTitle>
@@ -132,7 +132,7 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose, onWorkspaceCreated }: W
           <DialogClose asChild>
             <Button variant="outline" onClick={onClose}>Cancel</Button>
           </DialogClose>
-          <Button type="submit" onClick={handleCreate} disabled={!user || !isAuthReady || isSubmitting}>
+          <Button type="button" onClick={handleCreate} disabled={!user || !isAuthReady || isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isSubmitting ? 'Creating...' : 'Create Workspace'}
           </Button>
@@ -141,5 +141,3 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose, onWorkspaceCreated }: W
     </Dialog>
   );
 };
-
-    

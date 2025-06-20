@@ -63,7 +63,8 @@ export const ProfileDashboard = ({ onBack }: ProfileDashboardProps) => {
   if (!user) {
     return (
       <div className="p-4 md:p-8 text-center">
-        <p>Loading user profile or user not found...</p>
+        <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary mb-4" />
+        <p>Loading user profile...</p>
         <Button onClick={onBack} variant="link" className="mt-4">Go Back</Button>
       </div>
     );
@@ -71,7 +72,7 @@ export const ProfileDashboard = ({ onBack }: ProfileDashboardProps) => {
 
   return (
     <div className="p-4 md:p-8">
-      <Button onClick={onBack} variant="link" className="text-primary font-semibold mb-6 flex items-center gap-2 px-0 hover:underline">
+      <Button onClick={onBack} variant="ghost" className="text-primary font-semibold mb-6 flex items-center gap-2 px-0 hover:underline hover:bg-transparent focus-visible:bg-transparent">
         <ArrowLeft size={18}/> Back to Dashboard
       </Button>
       <h1 className="text-4xl font-bold text-foreground font-headline mb-8">Profile Settings</h1>
@@ -85,7 +86,7 @@ export const ProfileDashboard = ({ onBack }: ProfileDashboardProps) => {
           <CardContent className="space-y-4">
             <div>
               <Label className="text-sm font-medium text-muted-foreground">Email Address</Label>
-              <p className="text-foreground font-semibold">{user.email}</p>
+              <p className="text-foreground font-semibold break-all">{user.email || "N/A"}</p>
             </div>
             {user.phoneNumber && (
                <div>
@@ -99,6 +100,10 @@ export const ProfileDashboard = ({ onBack }: ProfileDashboardProps) => {
                 <p className="text-foreground font-semibold">{user.displayName}</p>
               </div>
             )}
+             <div>
+                <Label className="text-sm font-medium text-muted-foreground">User ID</Label>
+                <p className="text-xs text-muted-foreground break-all">{user.uid}</p>
+              </div>
           </CardContent>
         </Card>
 
@@ -108,53 +113,66 @@ export const ProfileDashboard = ({ onBack }: ProfileDashboardProps) => {
             <CardDescription>Manage your account security and notification preferences.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-8">
-            <form onSubmit={handlePasswordChange} className="space-y-6">
-              <h3 className="text-lg font-semibold text-foreground mb-2">Change Password</h3>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="newPassword">New Password</Label>
-                  <div className="relative">
-                    <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      id="newPassword"
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Enter new password"
-                      className="pl-10"
-                      required
-                      aria-required="true"
-                    />
+            {user.providerData.some(provider => provider.providerId === 'password') && (
+              <form onSubmit={handlePasswordChange} className="space-y-6">
+                <h3 className="text-lg font-semibold text-foreground mb-2">Change Password</h3>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="newPassword">New Password</Label>
+                    <div className="relative">
+                      <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <Input
+                        id="newPassword"
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="Enter new password"
+                        className="pl-10"
+                        required
+                        aria-required="true"
+                        aria-label="New password"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                    <div className="relative">
+                      <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Confirm new password"
+                        className="pl-10"
+                        required
+                        aria-required="true"
+                        aria-label="Confirm new password"
+                      />
+                    </div>
                   </div>
                 </div>
+                {passwordError && (
+                  <p className="text-sm text-destructive flex items-center gap-2"><ShieldAlert size={16}/> {passwordError}</p>
+                )}
+                <Button type="submit" disabled={isAuthLoading || !newPassword || !confirmPassword} className="font-semibold">
+                  {isAuthLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isAuthLoading ? 'Updating...' : 'Update Password'}
+                </Button>
+                 <p className="text-xs text-muted-foreground">
+                  Firebase may require you to re-authenticate for sensitive operations like changing your password if you haven't signed in recently.
+              </p>
+              </form>
+            )}
+             {!user.providerData.some(provider => provider.providerId === 'password') && (
                 <div>
-                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                  <div className="relative">
-                    <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Confirm new password"
-                      className="pl-10"
-                      required
-                      aria-required="true"
-                    />
-                  </div>
+                    <h3 className="text-lg font-semibold text-foreground mb-2">Password Management</h3>
+                    <p className="text-sm text-muted-foreground">
+                        You signed in using a third-party provider (e.g., Google, Phone). Password changes are managed through that provider.
+                    </p>
                 </div>
-              </div>
-              {passwordError && (
-                <p className="text-sm text-destructive flex items-center gap-2"><ShieldAlert size={16}/> {passwordError}</p>
-              )}
-              <Button type="submit" disabled={isAuthLoading || !newPassword || !confirmPassword} className="font-semibold">
-                {isAuthLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isAuthLoading ? 'Updating...' : 'Update Password'}
-              </Button>
-               <p className="text-xs text-muted-foreground">
-                Firebase may require you to re-authenticate for sensitive operations like changing your password if you haven't signed in recently.
-            </p>
-            </form>
+             )}
+
 
             <div className="border-t pt-6">
               <h3 className="text-lg font-semibold text-foreground mb-3">Notification Preferences</h3>

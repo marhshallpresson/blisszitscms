@@ -2,11 +2,11 @@
 // src/lib/templates.ts
 export interface ThirtyDayChallengeTemplateItem {
   title: string;
-  idea: string; // Changed from coreIdea to match ContentItem
+  idea: string; 
   script: string;
   caption: string;
-  // day, goal, tools are omitted to simplify mapping to ContentItem
-  // status will default to 'Draft' when seeding
+  // Removed day, goal, tools, status to simplify mapping to ContentItem
+  // Status will default to 'Draft' and dueDate will be empty when seeding
 }
 
 export const thirtyDayChallengeTemplate: ThirtyDayChallengeTemplateItem[] = [
@@ -191,5 +191,3 @@ export const thirtyDayChallengeTemplate: ThirtyDayChallengeTemplateItem[] = [
     caption: "WE DID IT! 30 days. The challenge is over, but our journey is just beginning. Thank you for everything. Here's what's next... #ChallengeComplete #WhatsNext"
   }
 ];
-
-    

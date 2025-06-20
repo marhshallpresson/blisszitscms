@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useWorkspace, type ContentItem, type Workspace } from '@/contexts/WorkspaceContext';
 import { AuthScreen } from '@/components/auth/AuthScreen';
 import { WelcomeDashboard } from '@/components/dashboard/WelcomeDashboard';
-import { ContentDashboard } from '@/components/content/ContentDashboard';
+import { WorkspaceViewWrapper } from '@/components/workspace/WorkspaceViewWrapper'; // Changed
 import { ProfileDashboard } from '@/components/profile/ProfileDashboard';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
@@ -33,10 +33,10 @@ import {
   SidebarMenuButton,
   SidebarMenuSkeleton,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, LogOut, Sparkles, UserCircle, Briefcase, BarChart2, MessageSquare, Shield } from 'lucide-react';
+import { LayoutDashboard, LogOut, Sparkles, UserCircle, Briefcase, BarChart2, MessageSquare, Shield, ArrowLeft } from 'lucide-react';
 
 
-type ActiveView = 'welcome' | 'content' | 'profile' | 'admin' | 'analytics' | 'inbox';
+type ActiveView = 'welcome' | 'workspace' | 'profile' | 'manageWorkspaces' | 'analytics' | 'inbox';
 
 
 export default function AppPage() {
@@ -74,9 +74,9 @@ export default function AppPage() {
   }, []);
 
   useEffect(() => {
-    if (currentWorkspaceId && activeView !== 'profile' && activeView !== 'admin' && activeView !== 'analytics' && activeView !== 'inbox') {
-      setActiveView('content');
-    } else if (!currentWorkspaceId && (activeView === 'content')) {
+    if (currentWorkspaceId && activeView !== 'profile' && activeView !== 'manageWorkspaces' && activeView !== 'analytics' && activeView !== 'inbox') {
+      setActiveView('workspace'); // Changed from 'content'
+    } else if (!currentWorkspaceId && (activeView === 'workspace')) {
       setActiveView('welcome');
     }
   }, [currentWorkspaceId, activeView]);
@@ -136,7 +136,7 @@ export default function AppPage() {
 
   const handleWorkspaceSelectedForImport = (workspaceId: string) => {
     setCurrentWorkspaceId(workspaceId); 
-    setActiveView('content');
+    setActiveView('workspace'); // Changed from 'content'
     setIsSelectWorkspaceModalOpen(false);
     if (pendingAiImportData) {
       setEditingContentItem({
@@ -159,12 +159,20 @@ export default function AppPage() {
   };
 
   const navigateTo = (view: ActiveView, workspaceId?: string | null) => {
-    if (workspaceId !== undefined) {
+    if (workspaceId !== undefined) { // if workspaceId is explicitly passed
         setCurrentWorkspaceId(workspaceId);
+        if(workspaceId) setActiveView('workspace'); // If workspaceId is truthy, go to workspace view
+        else if(view !== 'workspace') setActiveView(view); // If workspaceId is null, set to passed view unless it's 'workspace'
+        else setActiveView('welcome'); // Fallback to welcome if navigating to workspace with null id
+    } else { // if workspaceId is not passed, just set the view
+        setActiveView(view);
+        if (view !== 'workspace' && view !== 'profile' && view !== 'manageWorkspaces' && view !== 'analytics' && view !== 'inbox') {
+           // If navigating away from a specific workspace or specific non-workspace views, clear currentWorkspaceId
+           // This logic might need refinement based on desired behavior for all views
+           if(activeView === 'workspace') setCurrentWorkspaceId(null);
+        }
     }
-    setActiveView(view);
   };
-
   
   const handleOpenOnboardingModal = () => {
     setIsOnboardingModalOpen(true);
@@ -212,10 +220,23 @@ export default function AppPage() {
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
+            {currentWorkspaceId && (
+                 <SidebarMenuItem>
+                    <SidebarMenuButton
+                        onClick={() => navigateTo('welcome', null)} 
+                        isActive={false} 
+                        tooltip="Back to Main Dashboard"
+                        className="font-semibold text-primary"
+                    >
+                        <ArrowLeft />
+                        <span>Back to Main Dashboard</span>
+                    </SidebarMenuButton>
+                 </SidebarMenuItem>
+            )}
             <SidebarMenuItem>
               <SidebarMenuButton
                 onClick={() => navigateTo('welcome', null)}
-                isActive={activeView === 'welcome'}
+                isActive={activeView === 'welcome' && !currentWorkspaceId}
                 tooltip="Dashboard"
               >
                 <LayoutDashboard />
@@ -254,12 +275,12 @@ export default function AppPage() {
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton 
-                onClick={() => navigateTo('admin', null)} 
-                isActive={activeView === 'admin'}
-                tooltip="Admin Panel"
+                onClick={() => navigateTo('manageWorkspaces', null)} 
+                isActive={activeView === 'manageWorkspaces'}
+                tooltip="Manage Workspaces"
               >
-                <Shield />
-                <span>Admin</span>
+                <Briefcase /> {/* Changed icon from Shield */}
+                <span>Manage Workspaces</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             
@@ -292,13 +313,13 @@ export default function AppPage() {
         </header>
         <main className="flex-1 overflow-y-auto">
           {activeView === 'profile' && <ProfileDashboard onBack={() => navigateTo('welcome', null)} />}
-          {activeView === 'admin' && <AdminDashboard onNavigateToWorkspace={(id) => navigateTo('content', id)} onCreateWorkspace={() => setCreatingWorkspace(true)} />}
+          {activeView === 'manageWorkspaces' && <AdminDashboard onNavigateToWorkspace={(id) => navigateTo('workspace', id)} onCreateWorkspace={() => setCreatingWorkspace(true)} />}
           {activeView === 'analytics' && <AnalyticsDashboard />}
           {activeView === 'inbox' && <InboxView />}
-          {activeView === 'content' && currentWorkspace && (
-            <ContentDashboard
+          {activeView === 'workspace' && currentWorkspace && (
+            <WorkspaceViewWrapper // Changed from ContentDashboard
               workspace={currentWorkspace}
-              onBack={() => navigateTo('welcome', null)}
+              // onBack is handled by sidebar button now
               onNewContent={openNewContentModal}
               onEditContent={openEditContentModal}
               onViewDetails={openDetailsModal}
@@ -307,7 +328,7 @@ export default function AppPage() {
           )}
           {activeView === 'welcome' && (
             <WelcomeDashboard
-              onSelectWorkspace={(id) => navigateTo('content', id)}
+              onSelectWorkspace={(id) => navigateTo('workspace', id)} // Changed to 'workspace'
               onNewWorkspace={() => setCreatingWorkspace(true)}
               onImportAiRecommendation={handleImportAiRecommendation}
               onOpenOnboardingModal={handleOpenOnboardingModal}
@@ -322,7 +343,7 @@ export default function AppPage() {
         onClose={() => setCreatingWorkspace(false)} 
         onWorkspaceCreated={(newId) => {
             setCurrentWorkspaceId(newId); 
-            setActiveView('content');
+            setActiveView('workspace'); // Changed to 'workspace'
         }}
       />
       <ContentFormModal 

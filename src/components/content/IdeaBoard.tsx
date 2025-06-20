@@ -15,14 +15,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ClientFormattedDate } from '@/components/utils/ClientFormattedDate';
+import { useToast } from '@/hooks/use-toast';
 
 interface IdeaCardProps {
   idea: Idea;
   onDelete: (id: string) => void;
   onStatusChange: (id: string, status: IdeaBoardStatus) => void;
+  isUpdatingStatus: string | null; // Track which idea status is being updated
 }
 
-const IdeaCard = ({ idea, onDelete, onStatusChange }: IdeaCardProps) => {
+const IdeaCard = ({ idea, onDelete, onStatusChange, isUpdatingStatus }: IdeaCardProps) => {
   return (
     <Card className="mb-4 shadow-md bg-card hover:shadow-lg transition-shadow">
       <CardContent className="pt-4 pb-3">
@@ -35,9 +37,13 @@ const IdeaCard = ({ idea, onDelete, onStatusChange }: IdeaCardProps) => {
          </div>
       </CardContent>
       <CardFooter className="p-3 border-t bg-muted/30">
-        <Select value={idea.status} onValueChange={(newStatus) => onStatusChange(idea.id, newStatus as IdeaBoardStatus)}>
+        <Select 
+            value={idea.status} 
+            onValueChange={(newStatus) => onStatusChange(idea.id, newStatus as IdeaBoardStatus)}
+            disabled={isUpdatingStatus === idea.id}
+        >
             <SelectTrigger className="w-full h-8 text-xs bg-background" aria-label={`Change status for idea: ${idea.text}`}>
-                <SelectValue placeholder="Set status" />
+                {isUpdatingStatus === idea.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <SelectValue placeholder="Set status" />}
             </SelectTrigger>
             <SelectContent>
                 {IDEA_BOARD_STATUSES.map(status => (
@@ -51,15 +57,19 @@ const IdeaCard = ({ idea, onDelete, onStatusChange }: IdeaCardProps) => {
 };
 
 export const IdeaBoard = () => {
-  const { ideas: contextIdeas, isLoadingIdeas, addIdea, updateIdeaStatus, deleteIdea, getIdeas } = useWorkspace();
+  const { ideas: contextIdeas, isLoadingIdeas, addIdea, updateIdeaStatus: contextUpdateIdeaStatus, deleteIdea: contextDeleteIdea, getIdeas } = useWorkspace();
   const [newIdeaText, setNewIdeaText] = useState('');
   const [isAddingIdea, setIsAddingIdea] = useState(false);
-  const [ideas, setIdeasState] = useState<Idea[]>(contextIdeas); // Local copy for optimistic updates or sorting
+  const [ideas, setIdeasState] = useState<Idea[]>(contextIdeas);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
-    const unsubscribe = getIdeas(setIdeasState); // Use the callback to update local state
+    const unsubscribe = getIdeas((fetchedIdeas) => {
+        setIdeasState(fetchedIdeas); // Update local state with fetched ideas
+    }); 
     return () => unsubscribe();
-  }, [getIdeas]);
+  }, [getIdeas]); // Ensure getIdeas is stable or correctly memoized in context
 
   const handleAddIdea = async (e: FormEvent) => {
     e.preventDefault();
@@ -68,15 +78,43 @@ export const IdeaBoard = () => {
     try {
       await addIdea(newIdeaText);
       setNewIdeaText('');
-    } catch (error) {
+      toast({ title: "Idea Added", description: "Your new idea has been saved to the board." });
+    } catch (error: any) {
       console.error("Failed to add idea:", error);
-      // Add toast notification for error
+      toast({ title: "Error Adding Idea", description: error.message || "Could not save your idea.", variant: "destructive" });
     } finally {
       setIsAddingIdea(false);
     }
   };
 
-  if (isLoadingIdeas && ideas.length === 0) { // Show loader only if no ideas are displayed yet
+  const handleStatusChange = async (id: string, status: IdeaBoardStatus) => {
+    setIsUpdatingStatus(id);
+    try {
+      await contextUpdateIdeaStatus(id, status);
+      toast({ title: "Status Updated", description: `Idea status changed to "${status}".` });
+    } catch (error: any) {
+      console.error("Failed to update idea status:", error);
+      toast({ title: "Error Updating Status", description: error.message || "Could not update idea status.", variant: "destructive" });
+    } finally {
+      setIsUpdatingStatus(null);
+    }
+  };
+
+  const handleDeleteIdea = async (id: string) => {
+    const confirmed = window.confirm("Are you sure you want to delete this idea?");
+    if (confirmed) {
+        try {
+            await contextDeleteIdea(id);
+            toast({ title: "Idea Deleted", description: "The idea has been removed from the board." });
+        } catch (error: any) {
+            console.error("Failed to delete idea:", error);
+            toast({ title: "Error Deleting Idea", description: error.message || "Could not delete the idea.", variant: "destructive" });
+        }
+    }
+  };
+
+
+  if (isLoadingIdeas && ideas.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-10">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -111,7 +149,7 @@ export const IdeaBoard = () => {
       </Card>
 
       {ideas.length === 0 && !isLoadingIdeas && (
-        <div className="text-center py-12 border-2 border-dashed border-border rounded-lg bg-muted/20">
+        <div className="text-center py-12 border-2 border-dashed border-border rounded-lg bg-card/50 p-10">
           <Lightbulb size={48} className="mx-auto text-muted-foreground" />
           <h3 className="mt-4 text-xl font-semibold font-headline text-foreground">Your Idea Board is Empty</h3>
           <p className="mt-1 text-muted-foreground">
@@ -124,19 +162,20 @@ export const IdeaBoard = () => {
         {IDEA_BOARD_STATUSES.map(status => (
           <div key={status} className="bg-muted/50 p-3 md:p-4 rounded-lg flex flex-col min-h-[200px]">
             <h3 className="font-semibold text-lg mb-4 text-foreground capitalize pb-2 border-b border-border">{status}</h3>
-            <div className="flex-grow space-y-3 overflow-y-auto max-h-[calc(100vh-250px)] pr-1">
+            <div className="flex-grow space-y-3 overflow-y-auto max-h-[calc(100vh-350px)] pr-1 custom-scrollbar"> {/* Added custom-scrollbar */}
               {ideas.filter(idea => idea.status === status).length === 0 && (
                 <p className="text-sm text-muted-foreground text-center pt-8">No ideas in this stage.</p>
               )}
               {ideas
                 .filter(idea => idea.status === status)
-                .sort((a, b) => new Date(b.createdAt as Date).getTime() - new Date(a.createdAt as Date).getTime()) // Sort by newest first
+                .sort((a, b) => new Date(b.createdAt as Date).getTime() - new Date(a.createdAt as Date).getTime()) 
                 .map(idea => (
                   <IdeaCard
                     key={idea.id}
                     idea={idea}
-                    onDelete={deleteIdea}
-                    onStatusChange={updateIdeaStatus}
+                    onDelete={handleDeleteIdea}
+                    onStatusChange={handleStatusChange}
+                    isUpdatingStatus={isUpdatingStatus}
                   />
                 ))}
             </div>
@@ -146,5 +185,3 @@ export const IdeaBoard = () => {
     </div>
   );
 };
-
-    

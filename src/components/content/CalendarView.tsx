@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CalendarDays as CalendarDaysIconLucide } from 'lucide-react'; // Renamed to avoid conflict
 
 interface CalendarViewProps {
   contentItems: ContentItem[];
@@ -35,13 +35,19 @@ export const CalendarView = ({ contentItems, onViewDetails, isLoading }: Calenda
     contentItems.forEach(item => {
       if (item.dueDate) {
         try {
-          const dateKey = new Date(item.dueDate).toDateString();
+          // Attempt to parse date, ensure it's valid before using
+          const dateObj = new Date(item.dueDate);
+          if (isNaN(dateObj.getTime())) {
+            console.warn(`Invalid due date for item "${item.title}": ${item.dueDate}`);
+            return; // Skip invalid date
+          }
+          const dateKey = dateObj.toDateString(); // Use the valid date object
           if (!map.has(dateKey)) {
             map.set(dateKey, []);
           }
           map.get(dateKey)!.push(item);
         } catch (e) {
-          console.warn(`Invalid due date for item "${item.title}": ${item.dueDate}`);
+          console.warn(`Error processing due date for item "${item.title}": ${item.dueDate}`, e);
         }
       }
     });
@@ -50,17 +56,17 @@ export const CalendarView = ({ contentItems, onViewDetails, isLoading }: Calenda
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-full">
+      <div className="flex justify-center items-center h-full p-10">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
         <p className="ml-4 text-lg text-muted-foreground">Loading Calendar...</p>
       </div>
     );
   }
   
-  if (contentItems.length === 0 && !isLoading) {
+  if (contentItems.filter(item => !!item.dueDate).length === 0 && !isLoading) {
     return (
-      <div className="text-center py-12">
-        <CalendarDaysIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+      <div className="text-center py-12 border-2 border-dashed border-border rounded-lg bg-card/50 p-10">
+        <CalendarDaysIconLucide className="mx-auto h-12 w-12 text-muted-foreground" />
         <h3 className="mt-2 text-xl font-semibold text-foreground">No Content with Due Dates</h3>
         <p className="mt-1 text-sm text-muted-foreground">
           Add content items with due dates to see them on the calendar.
@@ -126,7 +132,7 @@ export const CalendarView = ({ contentItems, onViewDetails, isLoading }: Calenda
           },
         }}
         classNames={{
-          day: 'h-24 md:h-28 relative focus-within:relative focus-within:z-20', // Increase height
+          day: 'h-24 md:h-28 relative focus-within:relative focus-within:z-20', 
           day_disabled: 'text-muted-foreground opacity-50 h-24 md:h-28',
           cell: 'h-24 md:h-28 text-sm p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md',
         }}
@@ -134,34 +140,3 @@ export const CalendarView = ({ contentItems, onViewDetails, isLoading }: Calenda
     </div>
   );
 };
-
-
-function CalendarDaysIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M8 2v4" />
-      <path d="M16 2v4" />
-      <rect width="18" height="18" x="3" y="4" rx="2" />
-      <path d="M3 10h18" />
-      <path d="M8 14h.01" />
-      <path d="M12 14h.01" />
-      <path d="M16 14h.01" />
-      <path d="M8 18h.01" />
-      <path d="M12 18h.01" />
-      <path d="M16 18h.01" />
-    </svg>
-  );
-}
-
-    

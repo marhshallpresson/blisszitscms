@@ -54,8 +54,7 @@ export const AdminDashboard = ({ onNavigateToWorkspace, onCreateWorkspace }: Adm
   };
 
   if (!user) {
-    
-    return <p className="p-4">You must be an administrator to view this page.</p>;
+    return <p className="p-4">You must be signed in to manage workspaces.</p>;
   }
 
 
@@ -63,8 +62,8 @@ export const AdminDashboard = ({ onNavigateToWorkspace, onCreateWorkspace }: Adm
     <div className="p-4 md:p-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-            <h1 className="text-4xl font-bold text-foreground font-headline">Admin Panel</h1>
-            <p className="text-lg text-muted-foreground mt-1">Manage workspaces and application settings.</p>
+            <h1 className="text-4xl font-bold text-foreground font-headline">Manage Workspaces</h1>
+            <p className="text-lg text-muted-foreground mt-1">Oversee all workspaces, create new ones, or remove existing ones.</p>
         </div>
         <Button onClick={onCreateWorkspace} className="font-bold">
           <Plus size={20} className="mr-2" /> Create New Workspace
@@ -73,8 +72,8 @@ export const AdminDashboard = ({ onNavigateToWorkspace, onCreateWorkspace }: Adm
 
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline text-xl">Manage Workspaces</CardTitle>
-          <CardDescription>View, edit, or delete existing workspaces.</CardDescription>
+          <CardTitle className="font-headline text-xl">Your Workspaces</CardTitle>
+          <CardDescription>View, open, or delete existing workspaces.</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoadingWorkspaces ? (
@@ -118,7 +117,7 @@ export const AdminDashboard = ({ onNavigateToWorkspace, onCreateWorkspace }: Adm
                             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                             <AlertDialogDescription>
                               This action cannot be undone. This will permanently delete the workspace
-                              <span className="font-semibold"> "{ws.name}"</span> and all of its content, including comments.
+                              <span className="font-semibold"> "{ws.name}"</span> and all of its content, including comments and ideas.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>

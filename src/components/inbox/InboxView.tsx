@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,30 +11,50 @@ import { Send, Instagram, MessageCircle, Linkedin, Video, InboxIcon } from 'luci
 import { ClientFormattedDate } from '@/components/utils/ClientFormattedDate'; 
 import { useToast } from '@/hooks/use-toast';
 
-// Removed mock data. This component will now show a placeholder.
-// type Message = { id: string; platform: string; user: string; avatar: string; message: string; timestamp: string; read: boolean; };
-type Message = any; // Using 'any' as data structure might change with real integration
+type MessagePlatform = "Instagram" | "TikTok" | "LinkedIn" | "Other";
 
-const platformIcons: Record<string, React.ReactNode> = {
+interface Message {
+  id: string;
+  platform: MessagePlatform;
+  user: string;
+  avatar?: string; // Optional avatar URL
+  message: string;
+  timestamp: string | Date; // Can be string or Date object
+  read: boolean;
+}
+
+const platformIcons: Record<MessagePlatform, React.ReactNode> = {
     Instagram: <Instagram className="text-pink-600 h-5 w-5" />,
-    TikTok: <Video className="text-black h-5 w-5" />, 
-    LinkedIn: <Linkedin className="text-blue-700 h-5 w-5" />
+    TikTok: <Video className="text-black h-5 w-5" />, // Assuming a generic video icon for TikTok if specific one not available
+    LinkedIn: <Linkedin className="text-blue-700 h-5 w-5" />,
+    Other: <MessageCircle className="text-gray-500 h-5 w-5" />
 };
 
 export const InboxView = () => {
-    const [messages, setMessages] = useState<Message[]>([]); // No initial mock data
+    const [messages, setMessages] = useState<Message[]>([]); 
     const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
     const [replyText, setReplyText] = useState('');
     const { toast } = useToast();
+    const [isLoading, setIsLoading] = useState(true); // Added loading state
 
-    // In a real app, messages would be fetched here via useEffect
-    // useEffect(() => {
-    //   // Fetch messages logic
-    // }, []);
+    useEffect(() => {
+      // Simulate fetching messages
+      // In a real app, this would be an API call
+      setIsLoading(true);
+      // setMessages([]); // No demo data
+      // setSelectedMessage(null);
+      // For demonstration, let's turn off loading after a short delay
+      // as there's no actual data source
+      const timer = setTimeout(() => {
+        setIsLoading(false);
+      }, 1000); 
+      return () => clearTimeout(timer);
+    }, []);
 
     const handleSelectMessage = (message: Message) => {
         setSelectedMessage(message);
         // In a real app, mark as read in backend
+        // This is a local update for UI only
         setMessages(msgs => msgs.map(m => m.id === message.id ? {...m, read: true} : m));
     };
 
@@ -43,8 +63,9 @@ export const InboxView = () => {
         // Real reply logic would go here (API call to social platform)
         console.log(`Replying to ${selectedMessage.user} on ${selectedMessage.platform}: ${replyText}`);
         
-        toast({ title: "Reply Sent (Demo)", description: `Your reply to ${selectedMessage.user} has been logged.` });
+        toast({ title: "Reply Sent (Demo)", description: `Your reply to ${selectedMessage.user} has been logged. This is a UI demonstration.` });
         setReplyText('');
+        // Potentially add the reply to a local conversation history for the selected message
     };
     
 
@@ -59,15 +80,21 @@ export const InboxView = () => {
                         <Input placeholder="Search messages..." className="bg-background" aria-label="Search messages"/>
                     </div>
                     <ScrollArea className="flex-grow">
-                        {messages.length === 0 && (
+                        {isLoading && (
+                             <div className="flex flex-col items-center justify-center h-full p-8 text-center text-muted-foreground">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+                                <p>Loading messages...</p>
+                            </div>
+                        )}
+                        {!isLoading && messages.length === 0 && (
                             <div className="flex flex-col items-center justify-center h-full p-8 text-center text-muted-foreground">
                                 <InboxIcon size={48} className="mb-4"/>
                                 <h3 className="text-lg font-semibold">No Messages Yet</h3>
                                 <p className="text-sm">Connect your social accounts to see messages here.</p>
-                                <p className="text-xs mt-4">(Demo: This inbox currently uses placeholder data.)</p>
+                                <p className="text-xs mt-4">(This inbox is for demonstration and does not currently fetch live data.)</p>
                             </div>
                         )}
-                        {messages.map(msg => (
+                        {!isLoading && messages.map(msg => (
                             <div
                                 key={msg.id}
                                 onClick={() => handleSelectMessage(msg)}
@@ -115,7 +142,7 @@ export const InboxView = () => {
                                         <p className="text-xs text-primary-foreground/70 mt-1 text-right"><ClientFormattedDate date={selectedMessage.timestamp} options={{timeStyle: 'short'}}/></p>
                                     </div>
                                 </div>
-                                
+                                {/* Placeholder for replies if you implement a conversation view */}
                             </ScrollArea>
                             <div className="p-4 border-t border-border bg-background">
                                <div className="flex items-center gap-2">
@@ -139,7 +166,7 @@ export const InboxView = () => {
                             <div className="text-center text-muted-foreground">
                                 <MessageCircle size={48} className="mx-auto mb-2" />
                                 <p>Select a message to view and reply.</p>
-                                {messages.length === 0 && <p className="text-xs mt-2">(No messages available to select)</p>}
+                                {!isLoading && messages.length === 0 && <p className="text-xs mt-2">(No messages available to select)</p>}
                             </div>
                         </div>
                     )}
@@ -149,5 +176,3 @@ export const InboxView = () => {
         </div>
     );
 };
-
-    

@@ -4,7 +4,7 @@
 import type { User } from 'firebase/auth';
 import type { Timestamp } from 'firebase/firestore';
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { collection, query, orderBy, onSnapshot, getDocs, doc, addDoc, deleteDoc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, getDocs, doc, addDoc, deleteDoc, updateDoc, serverTimestamp, writeBatch, where } from 'firebase/firestore';
 import { db, APP_ID, rtdb } from '@/lib/firebaseConfig';
 import { ref as rtdbRef, set as rtdbSet, onValue as rtdbOnValue, off as rtdbOff } from 'firebase/database';
 import { useAuth } from './AuthContext';
@@ -23,13 +23,14 @@ export interface Workspace {
 export interface ContentItem {
   id: string;
   title: string;
-  idea?: string;
+  idea?: string; // formerly coreIdea
   script?: string;
   caption?: string; 
-  dueDate?: string;
+  dueDate?: string; // Stored as YYYY-MM-DD string or ISO string, consistent handling needed
   status?: ContentStatus;
   createdAt?: Timestamp | Date;
   updatedAt?: Timestamp | Date;
+  // Removed 'day', 'theme', 'goal', 'tools' to align with simpler model
 }
 
 export type ContentStatus = 'Draft' | 'In Progress' | 'For Review' | 'Approved' | 'Published';
@@ -51,6 +52,7 @@ export interface Idea {
   text: string;
   status: IdeaBoardStatus;
   createdAt: Timestamp | Date;
+  // workspaceId: string; // No longer needed if ideas are subcollection of workspace
 }
 
 
@@ -102,7 +104,9 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
       setWorkspaces([]);
       setIsLoadingWorkspaces(false);
       setCurrentWorkspaceIdState(null);
-      setIsInitialRtdbLoadAttempted(false); // Reset for potential re-login
+      setContentItems([]);
+      setIdeas([]);
+      setIsInitialRtdbLoadAttempted(false); 
       return;
     }
     setIsLoadingWorkspaces(true);
@@ -110,7 +114,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = onSnapshot(q, async (snapshot) => {
       const workspacesData = await Promise.all(snapshot.docs.map(async (docData) => {
         const contentCol = collection(db, "artifacts", APP_ID, "users", user.uid, "workspaces", docData.id, "contentPlan");
-        const contentSnapshot = await getDocs(contentCol);
+        const contentSnapshot = await getDocs(contentCol); // Consider if this count is always needed or can be optimized
         return {
           id: docData.id,
           ...docData.data(),
@@ -129,7 +133,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!user || !rtdb || isInitialRtdbLoadAttempted) {
-      if (user && !isInitialRtdbLoadAttempted) { // If user is present but load not attempted, mark it
+      if (user && !isInitialRtdbLoadAttempted) {
         setIsInitialRtdbLoadAttempted(true);
       }
       return;
@@ -205,7 +209,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
       const batch = writeBatch(db);
       thirtyDayChallengeTemplate.forEach((item: ThirtyDayChallengeTemplateItem) => {
         const docRef = doc(planCollectionRef); 
-        const newItem: Omit<ContentItem, 'id' | 'updatedAt'> = {
+        const newItem: Omit<ContentItem, 'id' | 'updatedAt' | 'dueDate'> = { // Exclude dueDate for template
           title: item.title,
           idea: item.idea,
           script: item.script,
@@ -223,25 +227,21 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
   const deleteWorkspace = async (workspaceId: string) => {
     if (!user) throw new Error("User not authenticated");
     
-    // Batch delete for contentPlan items and their comments, and ideas
     const batch = writeBatch(db);
 
-    // Delete contentPlan items and their comments
     const contentPlanRef = collection(db, "artifacts", APP_ID, "users", user.uid, "workspaces", workspaceId, "contentPlan");
     const contentPlanSnapshot = await getDocs(contentPlanRef);
     for (const contentDoc of contentPlanSnapshot.docs) {
       const commentsRef = collection(contentPlanRef, contentDoc.id, "comments");
       const commentsSnapshot = await getDocs(commentsRef);
       commentsSnapshot.forEach(commentDoc => batch.delete(commentDoc.ref));
-      batch.delete(contentDoc.ref); // Delete the content item itself
+      batch.delete(contentDoc.ref); 
     }
 
-    // Delete ideas
     const ideasRef = collection(db, "artifacts", APP_ID, "users", user.uid, "workspaces", workspaceId, "ideas");
     const ideasSnapshot = await getDocs(ideasRef);
     ideasSnapshot.forEach(ideaDoc => batch.delete(ideaDoc.ref));
     
-    // Delete the workspace document
     batch.delete(doc(db, "artifacts", APP_ID, "users", user.uid, "workspaces", workspaceId));
     
     await batch.commit();
@@ -322,7 +322,6 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  // Idea Board Logic
   const getIdeas = useCallback((callback: (ideas: Idea[]) => void) => {
     if (!user || !currentWorkspaceId) {
       callback([]);
@@ -340,7 +339,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
         ...docData.data(),
         createdAt: docData.data().createdAt?.toDate ? docData.data().createdAt.toDate() : new Date(),
       } as Idea));
-      setIdeas(fetchedIdeas);
+      // setIdeas(fetchedIdeas); // This will be set by the consuming component directly
       callback(fetchedIdeas);
       setIsLoadingIdeas(false);
     }, (error) => {
@@ -351,11 +350,16 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
     return unsubscribe;
   }, [user, currentWorkspaceId]);
 
-  useEffect(() => {
-    // Automatic initial fetch for the provider state `ideas`
-    const unsubscribe = getIdeas(setIdeas);
-    return unsubscribe;
-  }, [getIdeas]);
+  // Effect to set the global ideas state for other potential consumers,
+  // but getIdeas callback handles direct updates for IdeaBoard.
+   useEffect(() => {
+    if (user && currentWorkspaceId) {
+      const unsubscribe = getIdeas(setIdeas); // Update the context's own ideas state
+      return unsubscribe;
+    } else {
+      setIdeas([]); // Clear ideas if no user or workspace
+    }
+  }, [user, currentWorkspaceId, getIdeas]);
 
 
   const addIdea = async (text: string) => {
@@ -401,9 +405,9 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
         getComments,
         addComment,
 
-        ideas,
+        ideas, // The context's general idea list
         isLoadingIdeas,
-        getIdeas,
+        getIdeas, // The function to subscribe to ideas
         addIdea,
         updateIdeaStatus,
         deleteIdea,
@@ -420,5 +424,3 @@ export const useWorkspace = (): WorkspaceContextType => {
   }
   return context;
 };
-
-    
