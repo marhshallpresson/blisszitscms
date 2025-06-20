@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { AppLogo } from './AppLogo';
 import { Button } from '@/components/ui/button';
-import { Menu, X, LogOut, LayoutDashboard, Settings } from 'lucide-react'; // Added Settings icon
+import { Menu, X, LogOut, LayoutDashboard, Settings } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -70,10 +70,8 @@ export const Navbar = () => {
     )}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          <Link href="/" passHref legacyBehavior>
-            <a className="flex items-center" aria-label="Blisszits - Back to homepage">
-              <AppLogo iconSize={36} showName={true} />
-            </a>
+          <Link href="/" className="flex items-center" aria-label="Blisszits - Back to homepage">
+            <AppLogo iconSize={36} showName={true} />
           </Link>
 
           {/* Desktop Navigation */}

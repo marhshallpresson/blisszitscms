@@ -20,17 +20,15 @@ export const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 md:gap-8">
           {/* Brand Info */}
           <div className="space-y-4 md:col-span-2 lg:col-span-1">
-            <Link href="/" passHref legacyBehavior>
-              <a className="inline-block mb-2" aria-label="Blisszits - Back to homepage">
-                <AppLogo iconSize={38} showName={true} />
-              </a>
+            <Link href="/" className="inline-block mb-2" aria-label="Blisszits - Back to homepage">
+              <AppLogo iconSize={38} showName={true} />
             </Link>
             <p className="text-sm leading-relaxed">
               Blisszits empowers brands with creative and strategic social media content management. We help you connect, engage, and grow.
             </p>
             <div className="flex space-x-3 pt-2">
               {socialLinks.map(social => (
-                <a
+                <Link
                   key={social.name}
                   href={social.href}
                   target="_blank"
@@ -39,7 +37,7 @@ export const Footer = () => {
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
                   {social.icon}
-                </a>
+                </Link>
               ))}
             </div>
           </div>
@@ -70,11 +68,11 @@ export const Footer = () => {
             <ul className="space-y-2 text-sm">
               <li className="flex items-start">
                  <Mail size={16} className="mr-2 mt-1 text-primary flex-shrink-0"/>
-                 <a href="mailto:info@blisszits.com" className="hover:text-primary">info@blisszits.com</a>
+                 <Link href="mailto:info@blisszits.com" className="hover:text-primary">info@blisszits.com</Link>
               </li>
               <li className="flex items-start">
                  <Phone size={16} className="mr-2 mt-1 text-primary flex-shrink-0"/>
-                 <a href="tel:+2348000000000" className="hover:text-primary">+234 (800) 000-0000</a> {/* Placeholder NG number */}
+                 <Link href="tel:+2348000000000" className="hover:text-primary">+234 (800) 000-0000</Link>
               </li>
               <li className="flex items-start">
                  <MapPin size={16} className="mr-2 mt-1 text-primary flex-shrink-0"/>
