@@ -55,6 +55,7 @@ export const AuthScreen = () => {
         window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
           'size': 'invisible',
           'callback': (response: any) => {
+            // reCAPTCHA solved, allow signInWithPhoneNumber.
             console.log("reCAPTCHA solved, response:", response);
           },
           'expired-callback': () => {
@@ -62,7 +63,7 @@ export const AuthScreen = () => {
             if (window.recaptchaVerifier) {
               window.recaptchaVerifier.clear(); 
             }
-            // No automatic re-setup here to avoid loops, user should retry action
+            // No automatic re-setup here to avoid loops, user should retry action or page will re-attempt via useEffect
           }
         });
         window.recaptchaVerifier.render().then((widgetId) => {
@@ -120,6 +121,7 @@ export const AuthScreen = () => {
       toast({ title: "Signed In with Google", description: "Welcome to Blisszits!" });
     } catch (authError: any) {
       setError(authError.message || "Google sign-in failed.");
+      // Toast for specific Google errors is handled in AuthContext
     }
   };
   
@@ -130,8 +132,7 @@ export const AuthScreen = () => {
       return;
     }
     if (!window.recaptchaVerifier) {
-      setError("reCAPTCHA not initialized. Please wait or refresh.");
-      setupRecaptcha(); 
+      setError("reCAPTCHA is not ready. Please wait a moment and try again, or refresh the page. If this persists, check console for reCAPTCHA setup errors.");
       return;
     }
     try {
@@ -144,7 +145,7 @@ export const AuthScreen = () => {
       if (window.recaptchaVerifier && typeof window.recaptchaVerifier.clear === 'function') {
         try {
            window.recaptchaVerifier.clear();
-        } catch(e) { console.warn("Could not clear recaptchaVerifier", e)}
+        } catch(e) { console.warn("Could not clear recaptchaVerifier on OTP send error", e)}
         setupRecaptcha(); 
       }
     }
@@ -162,7 +163,7 @@ export const AuthScreen = () => {
       setShowOtpInput(false); 
       setPhoneNumber('');
       setOtp('');
-    } catch (authError: any) {
+    } catch (authError: any) { 
       setError(authError.message || "Failed to verify OTP.");
       toast({ title: "OTP Verification Error", description: authError.message, variant: "destructive" });
     }
