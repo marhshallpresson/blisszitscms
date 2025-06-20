@@ -50,7 +50,6 @@ export const Footer = () => {
             <ul className="space-y-2">
               <li><Link href="/about" className="hover:text-primary transition-colors text-sm">About Us</Link></li>
               <li><Link href="/services" className="hover:text-primary transition-colors text-sm">Services</Link></li>
-              {/* <li><Link href="/blog" className="hover:text-primary transition-colors text-sm">Blog</Link></li> */}
               <li><Link href="/contact" className="hover:text-primary transition-colors text-sm">Contact</Link></li>
             </ul>
           </div>
@@ -59,7 +58,6 @@ export const Footer = () => {
           <div>
             <h5 className="font-headline text-base font-semibold text-foreground mb-4">Resources</h5>
             <ul className="space-y-2">
-              {/* <li><Link href="/case-studies" className="hover:text-primary transition-colors text-sm">Case Studies</Link></li> */}
               <li><Link href="/faq" className="hover:text-primary transition-colors text-sm">FAQ</Link></li>
               <li><Link href="/terms-of-service" className="hover:text-primary transition-colors text-sm">Terms of Service</Link></li>
               <li><Link href="/privacy-policy" className="hover:text-primary transition-colors text-sm">Privacy Policy</Link></li>
@@ -76,11 +74,11 @@ export const Footer = () => {
               </li>
               <li className="flex items-start">
                  <Phone size={16} className="mr-2 mt-1 text-primary flex-shrink-0"/>
-                 <a href="tel:+234000000000" className="hover:text-primary">+234 (000) 000-0000</a> {/* Placeholder NG number */}
+                 <a href="tel:+2348000000000" className="hover:text-primary">+234 (800) 000-0000</a> {/* Placeholder NG number */}
               </li>
               <li className="flex items-start">
                  <MapPin size={16} className="mr-2 mt-1 text-primary flex-shrink-0"/>
-                 <span>Lagos, Nigeria</span> {/* Placeholder address */}
+                 <span>Lagos, Nigeria</span>
               </li>
             </ul>
           </div>

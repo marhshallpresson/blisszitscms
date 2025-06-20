@@ -25,37 +25,42 @@ interface Message {
 
 const platformIcons: Record<MessagePlatform, React.ReactNode> = {
     Instagram: <Instagram className="text-pink-600 h-5 w-5" />,
-    TikTok: <Video className="h-5 w-5 text-foreground" />, // Adjusted color
+    TikTok: <Video className="h-5 w-5 text-foreground" />, 
     LinkedIn: <Linkedin className="text-blue-600 h-5 w-5" />,
     Other: <MessageCircle className="text-muted-foreground h-5 w-5" />
 };
 
 export const InboxView = () => {
-    const [messages, setMessages] = useState<Message[]>([]); // Start with no messages
+    const [messages, setMessages] = useState<Message[]>([]); 
     const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
     const [replyText, setReplyText] = useState('');
     const { toast } = useToast();
-    const [isLoading, setIsLoading] = useState(false); // Initially false as no data is fetched
+    const [isLoading, setIsLoading] = useState(true); // Start as true to show initial loading state
     const [searchTerm, setSearchTerm] = useState('');
 
-    // Demo data removed. In a real app, this would fetch from a backend.
     useEffect(() => {
-      // Simulating that no messages are available for this demo
-      setIsLoading(false);
-      setMessages([]);
-      setSelectedMessage(null);
+      // Simulate fetching messages. In a real app, this would be an API call.
+      // For this review, we ensure it shows "No messages" if the fetch is empty.
+      setIsLoading(true);
+      setTimeout(() => {
+        setMessages([]); // No demo data, so messages array remains empty
+        setSelectedMessage(null);
+        setIsLoading(false);
+      }, 1000); // Simulate network delay
     }, []);
 
     const handleSelectMessage = (message: Message) => {
         setSelectedMessage(message);
         // In a real app, mark as read in backend
-        // For demo, this won't do much as messages array is empty
+        // This will not do much here as messages array will be empty.
+        setMessages(prevMessages => prevMessages.map(m => m.id === message.id ? {...m, read: true} : m));
     };
 
     const handleReply = () => {
         if (!replyText.trim() || !selectedMessage) return;
         console.log(`Replying to ${selectedMessage.user} on ${selectedMessage.platform}: ${replyText}`);
-        toast({ title: "Reply Sent (Demo)", description: `Your reply to ${selectedMessage.user} would be sent here.` });
+        toast({ title: "Reply Sent (Demo)", description: `Your reply to ${selectedMessage.user} would be sent here in a real application.` });
+        // In a real app, you'd add the reply to the conversation thread.
         setReplyText('');
     };
 
@@ -72,14 +77,14 @@ export const InboxView = () => {
                     <div className="flex items-center gap-3">
                         <MessageCircle className="w-10 h-10 text-primary" />
                         <div>
-                            <CardTitle className="text-3xl font-bold text-foreground font-headline">Unified Inbox (Demo)</CardTitle>
-                            <CardDescription className="text-base text-muted-foreground mt-1">Manage social DMs & comments. (This is a placeholder)</CardDescription>
+                            <CardTitle className="text-3xl font-bold text-foreground font-headline">Unified Inbox</CardTitle>
+                            <CardDescription className="text-base text-muted-foreground mt-1">Manage social DMs & comments. (Live integration pending)</CardDescription>
                         </div>
                     </div>
                 </CardHeader>
             </Card>
             
-            <Card className="flex-grow flex flex-col md:flex-row overflow-hidden shadow-lg border-border/70">
+            <Card className="flex-grow flex flex-col md:flex-row overflow-hidden shadow-lg border-border/70 min-h-[600px]">
                 <div className="w-full md:w-2/5 lg:w-1/3 border-r border-border/70 flex flex-col bg-card">
                     <div className="p-4 border-b border-border/70">
                         <div className="relative">
@@ -90,7 +95,7 @@ export const InboxView = () => {
                                 aria-label="Search messages"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                disabled // Disabled as there's no data to search
+                                disabled={isLoading || messages.length === 0} 
                             />
                         </div>
                     </div>
@@ -105,15 +110,41 @@ export const InboxView = () => {
                             <div className="flex flex-col items-center justify-center h-full p-8 text-center text-muted-foreground">
                                 <InboxIconLucide size={56} className="mb-4 opacity-70"/>
                                 <h3 className="text-xl font-semibold text-foreground">Inbox is Empty</h3>
-                                <p className="text-sm">No messages to display in this demonstration.</p>
+                                <p className="text-sm">No messages to display. Connect your accounts to see messages here.</p>
                             </div>
                         )}
-                        {/* Message mapping logic removed as 'messages' will be empty */}
+                        {/* List rendering for actual messages would go here if messages were present */}
+                        {!isLoading && filteredMessages.length > 0 && (
+                            filteredMessages.map(msg => (
+                                <button 
+                                    key={msg.id}
+                                    onClick={() => handleSelectMessage(msg)}
+                                    className={`w-full text-left p-4 border-b border-border/50 hover:bg-muted/50 focus:bg-muted focus:outline-none ${selectedMessage?.id === msg.id ? 'bg-muted' : ''} ${!msg.read ? 'font-semibold' : ''}`}
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <Avatar className="h-10 w-10">
+                                                <AvatarImage src={msg.avatar || `https://placehold.co/40x40.png?text=${msg.user.substring(0,1)}`} alt={msg.user} data-ai-hint="profile avatar"/>
+                                                <AvatarFallback>{msg.user.substring(0,2).toUpperCase()}</AvatarFallback>
+                                            </Avatar>
+                                            <div>
+                                                <h4 className="text-sm text-foreground truncate max-w-[150px]">{msg.user}</h4>
+                                                <p className={`text-xs truncate max-w-[150px] ${!msg.read ? 'text-primary' : 'text-muted-foreground'}`}>{msg.message}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col items-end text-xs text-muted-foreground">
+                                            {platformIcons[msg.platform]}
+                                            <ClientFormattedDate date={msg.timestamp} options={{ month: 'short', day: 'numeric' }}/>
+                                        </div>
+                                    </div>
+                                </button>
+                            ))
+                        )}
                     </ScrollArea>
                 </div>
 
                 <div className="hidden md:flex w-full md:w-3/5 lg:w-2/3 flex-col bg-background">
-                    {selectedMessage ? ( // This block will likely not render
+                    {selectedMessage ? ( 
                         <>
                             <div className="p-4 border-b border-border/70 flex items-center gap-3 sticky top-0 bg-background z-10">
                                 <Avatar className="h-10 w-10">
@@ -126,10 +157,18 @@ export const InboxView = () => {
                                 </div>
                             </div>
                             <ScrollArea className="flex-grow p-6 space-y-4">
+                                {/* This is a simplified view of one message. A real chat would have multiple messages. */}
                                 <div className="flex">
-                                    <div className="p-3 rounded-lg bg-muted text-foreground max-w-[75%] shadow">
+                                    <div className={`p-3 rounded-lg bg-muted text-foreground max-w-[75%] shadow ${selectedMessage.user === userProfile?.displayName ? 'ml-auto bg-primary text-primary-foreground' : 'bg-muted'}`}>
                                         <p className="text-sm">{selectedMessage.message}</p>
                                         <p className="text-xs text-muted-foreground/80 mt-1.5 text-right"><ClientFormattedDate date={selectedMessage.timestamp} options={{timeStyle: 'short'}}/></p>
+                                    </div>
+                                </div>
+                                 {/* Example of a reply (placeholder) */}
+                                <div className="flex">
+                                    <div className="ml-auto p-3 rounded-lg bg-primary text-primary-foreground max-w-[75%] shadow">
+                                        <p className="text-sm">This is a simulated reply from you for context.</p>
+                                        <p className="text-xs text-primary-foreground/80 mt-1.5 text-right"><ClientFormattedDate date={new Date()} options={{timeStyle: 'short'}}/></p>
                                     </div>
                                 </div>
                             </ScrollArea>
@@ -139,7 +178,7 @@ export const InboxView = () => {
                                     type="text" 
                                     value={replyText} 
                                     onChange={e => setReplyText(e.target.value)} 
-                                    placeholder={`Reply to ${selectedMessage.user}... (Demo)`} 
+                                    placeholder={`Reply to ${selectedMessage.user}...`} 
                                     className="flex-grow bg-input focus-visible:ring-primary text-base py-2.5" 
                                     aria-label={`Reply to ${selectedMessage.user}`}
                                     onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleReply())}
@@ -155,7 +194,9 @@ export const InboxView = () => {
                             <InboxIconLucide size={64} className="mb-6 opacity-50" />
                             <h3 className="text-xl font-semibold text-foreground">No Message Selected</h3>
                             <p className="text-center mt-1">Select a message from the list to view its content and reply.</p>
-                             <p className="text-sm text-muted-foreground mt-4">(Your inbox is currently empty for this demo.)</p>
+                             <p className="text-sm text-muted-foreground mt-4">
+                                {isLoading ? "Loading messages..." : "Your inbox is currently empty."}
+                             </p>
                         </div>
                     )}
                 </div>
@@ -163,8 +204,8 @@ export const InboxView = () => {
              <div className="mt-6 p-4 bg-amber-50 border border-amber-300 rounded-lg text-amber-700 flex items-start gap-3">
                 <AlertTriangle size={24} className="flex-shrink-0"/>
                 <div>
-                    <h4 className="font-semibold">Demonstration Only</h4>
-                    <p className="text-sm">The Unified Inbox is for demonstration purposes. Actual social media account integration and message fetching are not implemented.</p>
+                    <h4 className="font-semibold">Illustrative Feature</h4>
+                    <p className="text-sm">The Unified Inbox is for demonstration purposes. Actual social media account integration and real-time message fetching are not implemented in this version.</p>
                 </div>
             </div>
         </div>

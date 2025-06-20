@@ -30,7 +30,7 @@ interface AuthContextType {
   updateUserPassword: (newPassword: string) => Promise<void>;
   fetchUserProfile: (uid: string) => Promise<UserProfile | null>;
   saveOnboardingProfile: (profileData: Partial<Pick<UserProfile, 'displayName' | 'phoneNumber' | 'dateOfBirth'>>) => Promise<void>;
-  updateUserProfile: (profileData: Partial<UserProfile>) => Promise<void>;
+  updateUserProfile: (profileData: Partial<Omit<UserProfile, 'uid' | 'email' | 'createdAt' | 'onboardingCompleted'>>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,9 +38,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [isAuthReady, setIsAuthReady] = useState(false);
-  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
-  const [isLoadingProfile, setIsLoadingProfile] = useState(true); // Start as true
+  const [isAuthReady, setIsAuthReady] = useState(false); // Tracks if initial auth check is done
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true); // Tracks auth operation in progress
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true); // Tracks profile operation in progress
   const { toast } = useToast();
 
   const fetchUserProfile = useCallback(async (uid: string): Promise<UserProfile | null> => {
@@ -56,34 +56,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (userDocSnap.exists()) {
         const profile = userDocSnap.data() as UserProfile;
         setUserProfile(profile);
-        setIsLoadingProfile(false);
         return profile;
       } else {
         setUserProfile(null); 
-        setIsLoadingProfile(false);
         return null;
       }
     } catch (error) {
       console.error("Error fetching user profile:", error);
       setUserProfile(null);
-      setIsLoadingProfile(false);
       return null;
+    } finally {
+      setIsLoadingProfile(false);
     }
   }, []);
 
   useEffect(() => {
-    setIsLoadingAuth(true);
-    setIsLoadingProfile(true); 
+    setIsLoadingAuth(true); // Start loading auth state
+    setIsLoadingProfile(true); // Start loading profile state
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
-        await fetchUserProfile(currentUser.uid);
+        await fetchUserProfile(currentUser.uid); // Profile loading is handled by this function
       } else {
         setUserProfile(null); 
-        setIsLoadingProfile(false); 
+        setIsLoadingProfile(false); // No profile to load
       }
-      setIsAuthReady(true);
-      setIsLoadingAuth(false);
+      setIsAuthReady(true); // Initial auth check is done
+      setIsLoadingAuth(false); // Auth loading is done
     }, (error) => { 
       console.error("Auth state change error:", error);
       setUser(null);
@@ -105,12 +104,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userDocRef = doc(db, "users", newUser.uid);
       const initialProfile: UserProfile = {
         uid: newUser.uid,
-        email: newUser.email || '',
+        email: newUser.email || '', // Firebase user email should be non-null after creation
         onboardingCompleted: false,
-        createdAt: serverTimestamp() as Timestamp, // Use serverTimestamp for creation
+        createdAt: serverTimestamp() as Timestamp,
+        // Other fields like displayName, etc., will be added during onboarding
       };
       await setDoc(userDocRef, initialProfile);
       setUserProfile(initialProfile); 
+      // Don't set isLoadingProfile here, fetchUserProfile will handle it
       return newUser;
     } catch (error: any) {
       console.error("Sign up error:", error);
@@ -124,12 +125,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signInWithEmail = async ({ email, password }: EmailPasswordCredentials): Promise<FirebaseUser | null> => {
     if (!auth) throw new Error("Firebase Auth not initialized.");
     setIsLoadingAuth(true);
+    setIsLoadingProfile(true); // Will fetch profile after sign-in
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      // Profile will be fetched by onAuthStateChanged effect
+      // Profile will be fetched by onAuthStateChanged effect, which triggers fetchUserProfile
       return userCredential.user;
     } catch (error: any) {
       console.error("Sign in error:", error);
+      setIsLoadingProfile(false); // Failed to sign in, so no profile fetch
       toast({ title: "Sign In Failed", description: error.message, variant: "destructive" });
       throw error;
     } finally {
@@ -148,7 +151,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         updatedAt: serverTimestamp() as Timestamp,
       };
       await updateDoc(userDocRef, dataToSave);
-      await fetchUserProfile(user.uid); 
+      await fetchUserProfile(user.uid); // Re-fetch to update context state
     } catch (error: any) {
       console.error("Error saving onboarding profile:", error);
       toast({ title: "Profile Save Failed", description: error.message, variant: "destructive" });
@@ -158,30 +161,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  const updateUserProfile = async (profileData: Partial<UserProfile>): Promise<void> => {
+  const updateUserProfile = async (profileData: Partial<Omit<UserProfile, 'uid' | 'email' | 'createdAt' | 'onboardingCompleted'>>): Promise<void> => {
     if (!user || !db) throw new Error("User not authenticated or Firestore not initialized.");
     setIsLoadingProfile(true);
     try {
       const userDocRef = doc(db, "users", user.uid);
       
-      // Prepare data, ensuring nested objects are merged correctly if they exist
-      const currentProfile = userProfile || {}; // Use empty object if profile is null
-      const dataToUpdate: Partial<UserProfile> = {
-        ...profileData, // Start with new data
+      const dataToUpdate: Record<string, any> = { // Use Record<string, any> for flexible update payload
+        ...profileData,
         updatedAt: serverTimestamp() as Timestamp,
       };
 
-      // Deep merge address if provided
+      // Handle nested address object: ensure to merge, not overwrite
       if (profileData.address) {
-        dataToUpdate.address = { ...(currentProfile.address || {}), ...profileData.address };
+        const currentAddress = userProfile?.address || {};
+        dataToUpdate.address = { ...currentAddress, ...profileData.address };
       }
-      // Deep merge socialMedia if provided
+      // Handle nested socialMedia object
       if (profileData.socialMedia) {
-         dataToUpdate.socialMedia = { ...(currentProfile.socialMedia || {}), ...profileData.socialMedia };
+        const currentSocials = userProfile?.socialMedia || {};
+        dataToUpdate.socialMedia = { ...currentSocials, ...profileData.socialMedia };
+         // Clean up empty social media links (set to undefined to remove from Firestore if desired, or handle in component)
+        for (const key in dataToUpdate.socialMedia) {
+          if (!dataToUpdate.socialMedia[key]) {
+            delete dataToUpdate.socialMedia[key]; // Or set to null / FieldValue.delete()
+          }
+        }
       }
       
       await updateDoc(userDocRef, dataToUpdate);
-      await fetchUserProfile(user.uid);
+      await fetchUserProfile(user.uid); // Re-fetch to update context state
     } catch (error: any) {
       console.error("Error updating user profile:", error);
       toast({ title: "Profile Update Failed", description: error.message, variant: "destructive" });
@@ -196,12 +205,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoadingAuth(true);
     try {
       await firebaseSignOut(auth);
-      // State (user, userProfile) will be cleared by onAuthStateChanged
+      setUser(null); // Explicitly set user to null
+      setUserProfile(null); // Explicitly set profile to null
+      // isLoadingProfile will be set to false by onAuthStateChanged via fetchUserProfile
     } catch (error: any) {
       console.error("Sign out failed:", error);
       toast({ title: "Sign Out Failed", description: error.message, variant: "destructive" });
     } finally {
-      setIsLoadingAuth(false); // Ensure loading state is reset
+      setIsLoadingAuth(false);
     }
   };
 
@@ -223,6 +234,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await firebaseUpdatePassword(auth.currentUser, newPassword);
     } catch (error: any) {
       console.error("Password update error:", error);
+      // It's good practice to re-authenticate the user for sensitive operations if this fails often.
+      // Firebase might throw an error requiring recent login.
+      toast({ title: "Password Update Error", description: error.message + " You might need to sign in again.", variant: "destructive" });
       throw error; 
     }
   };

@@ -1,11 +1,6 @@
 // src/components/analytics/AnalyticsDashboard.tsx
 "use client";
 
-// This component is now for a general, non-workspace-specific analytics overview,
-// or a placeholder if all analytics are moved into a workspace context.
-// For the corporate site, this might show high-level brand metrics (if any connected).
-// For now, it's a placeholder.
-
 declare global {
   interface Window {
     jspdf?: any;
@@ -18,9 +13,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Download, BarChart3, LineChart as LineChartIcon, PieChart as PieChartIcon, TrendingUp, Loader2, Info, AlertTriangle } from 'lucide-react';
+// Recharts components are imported but will show "No data" if data arrays are empty.
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useToast } from '@/hooks/use-toast';
 
+// KPI Icons remain for structure
 const kpiIcons: Record<string, React.ReactNode> = {
     "Follower Growth": <TrendingUp size={20} className="text-primary"/>,
     "Engagement": <BarChart3 size={20} className="text-primary"/>,
@@ -28,7 +25,7 @@ const kpiIcons: Record<string, React.ReactNode> = {
     "Profile Visits": <PieChartIcon size={20} className="text-primary"/>,
 };
 
-// Demo data structures removed, will use placeholders or "No data" messages
+// All mock data is removed. Components will show "No data" or illustrative placeholders.
 const emptyKpis = (platform: string) => [
     { title: "Follower Growth", value: "N/A", change: "" },
     { title: "Engagement", value: "N/A", change: "" },
@@ -47,17 +44,17 @@ const emptyBestTimeData = Array.from({ length: 7 }, () => Array.from({ length: 2
 
 export const AnalyticsDashboard = () => {
     const [selectedPlatform, setSelectedPlatform] = useState<string>("Overall Performance");
-    const platforms = ["Overall Performance", "Platform A (Demo)", "Platform B (Demo)"]; // Generic placeholders
+    const platforms = ["Overall Performance", "Platform A (Illustrative)", "Platform B (Illustrative)"];
     const [pdfLibsLoaded, setPdfLibsLoaded] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     const reportRef = useRef<HTMLDivElement>(null);
     const { toast } = useToast();
 
     const currentPlatformKpis = emptyKpis(selectedPlatform);
-    const currentFollowerData = emptyChartData;
-    const currentViewsData = emptyChartData;
-    const currentSentimentData = emptySentimentData;
-    const currentBestTimeData = emptyBestTimeData;
+    const currentFollowerData = emptyChartData; // No data
+    const currentViewsData = emptyChartData; // No data
+    const currentSentimentData = emptySentimentData; // No data
+    const currentBestTimeData = emptyBestTimeData; // Illustrative structure
 
     useEffect(() => {
         if (window.jspdf && window.html2canvas) {
@@ -66,27 +63,46 @@ export const AnalyticsDashboard = () => {
         }
         const jspdfScript = document.getElementById('jspdf-script');
         const html2canvasScript = document.getElementById('html2canvas-script');
-        if (jspdfScript && html2canvasScript) {
-            let loadedCount = 0;
-            const checkLoaded = () => {
-                if (window.jspdf && window.html2canvas) {
-                    setPdfLibsLoaded(true);
-                } else if (loadedCount < 10) {
-                    loadedCount++;
-                    setTimeout(checkLoaded, 500);
-                } else {
-                     console.warn("jsPDF or html2canvas still not loaded after attempts.");
-                }
-            };
-            checkLoaded();
+        
+        let jspdfLoaded = false;
+        let html2canvasLoaded = false;
+
+        const checkBothLoaded = () => {
+            if (jspdfLoaded && html2canvasLoaded) {
+                 setPdfLibsLoaded(true);
+            }
+        };
+
+        if (jspdfScript) {
+            jspdfScript.onload = () => { jspdfLoaded = true; checkBothLoaded(); };
+            jspdfScript.onerror = () => console.error("Failed to load jsPDF script.");
         } else {
-            console.warn("PDF script tags not found in RootLayout. PDF export may fail.");
+             console.warn("jsPDF script tag not found. PDF export may fail.");
+             jspdfLoaded = true; // Assume it might load via other means or fail silently
         }
+
+        if (html2canvasScript) {
+            html2canvasScript.onload = () => { html2canvasLoaded = true; checkBothLoaded(); };
+            html2canvasScript.onerror = () => console.error("Failed to load html2canvas script.");
+        } else {
+            console.warn("html2canvas script tag not found. PDF export may fail.");
+            html2canvasLoaded = true; // Assume it might load
+        }
+        
+        // Fallback check in case onload doesn't fire as expected for dynamically added scripts
+        // or if scripts are already loaded by the time this effect runs.
+        if (window.jspdf) jspdfLoaded = true;
+        if (window.html2canvas) html2canvasLoaded = true;
+        if (jspdfLoaded && html2canvasLoaded) setPdfLibsLoaded(true);
+
     }, []);
 
     const exportToPdf = async () => {
         if (!pdfLibsLoaded || !reportRef.current) {
-            toast({ title: "PDF Export Not Ready", description: "PDF library or content missing.", variant: "destructive" });
+            toast({ title: "PDF Export Not Ready", description: "Required PDF library or report content is missing. Please try again in a moment.", variant: "destructive" });
+            if (!window.jspdf) console.error("jsPDF library is missing.");
+            if (!window.html2canvas) console.error("html2canvas library is missing.");
+            if (!reportRef.current) console.error("Report reference is missing.");
             return;
         }
         setIsExporting(true);
@@ -94,45 +110,52 @@ export const AnalyticsDashboard = () => {
             const { jsPDF } = window.jspdf;
             const html2canvasInstance = window.html2canvas;
 
-            const canvas = await html2canvasInstance(reportRef.current, { scale: 2, backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--background').trim(), useCORS: true, logging: false });
+            const canvas = await html2canvasInstance(reportRef.current, { 
+              scale: 2, 
+              backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--background').trim() || '#ffffff', // Fallback color
+              useCORS: true, 
+              logging: false 
+            });
             const imgData = canvas.toDataURL('image/png');
             const pdf = new jsPDF('p', 'mm', 'a4');
             const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
             const canvasWidth = canvas.width;
             const canvasHeight = canvas.height;
             const ratio = canvasWidth / canvasHeight;
-            const imgHeight = pdfWidth / ratio;
-            
+            let imgHeight = pdfWidth / ratio;
             let heightLeft = imgHeight;
             let position = 0;
-            const pageHeight = pdf.internal.pageSize.getHeight();
 
-            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-            heightLeft -= pageHeight;
-
-            while (heightLeft > 0) {
-              position -= pageHeight;
-              pdf.addPage();
+            if (imgHeight > pdfHeight) { // Content is taller than one page
               pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-              heightLeft -= pageHeight;
+              heightLeft -= pdfHeight;
+              while (heightLeft > 0) {
+                position -= pdfHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+                heightLeft -= pdfHeight;
+              }
+            } else { // Content fits on one page
+              pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight);
             }
             
             pdf.save(`Blisszits-Analytics-${selectedPlatform.replace(/\s/g, '_')}-${new Date().toISOString().split('T')[0]}.pdf`);
             toast({ title: "PDF Exported", description: "Analytics report downloaded." });
         } catch (error) {
             console.error("PDF Export Error:", error);
-            const errorMessage = error instanceof Error ? error.message : "Could not generate PDF. Check console.";
+            const errorMessage = error instanceof Error ? error.message : "Could not generate PDF. Check console for details.";
             toast({ title: "PDF Export Failed", description: errorMessage, variant: "destructive" });
         } finally {
             setIsExporting(false);
         }
     };
     
-    const NoDataPlaceholder = ({ message }: { message: string }) => (
-        <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-8 text-center">
+    const NoDataPlaceholder = ({ message, height = "h-[300px] md:h-[350px]" }: { message: string, height?: string }) => (
+        <div className={`flex flex-col items-center justify-center text-muted-foreground p-8 text-center ${height}`}>
             <Info size={32} className="mb-3 opacity-70"/>
             <p className="text-lg font-medium">{message}</p>
-            <p className="text-sm">Data for this section is illustrative or not yet connected.</p>
+            <p className="text-sm">Real data integration is pending for this section.</p>
         </div>
     );
 
@@ -189,23 +212,23 @@ export const AnalyticsDashboard = () => {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                     <Card className="shadow-md border-border/70">
-                        <CardHeader><CardTitle className="font-headline text-xl">Follower Growth (Demo)</CardTitle></CardHeader>
-                        <CardContent className="h-[300px] md:h-[350px]">
-                            <NoDataPlaceholder message="Follower growth data unavailable." />
+                        <CardHeader><CardTitle className="font-headline text-xl">Follower Growth (Illustrative)</CardTitle></CardHeader>
+                        <CardContent>
+                           <NoDataPlaceholder message="Follower growth data unavailable." />
                         </CardContent>
                     </Card>
                     <Card className="shadow-md border-border/70">
-                        <CardHeader><CardTitle className="font-headline text-xl">Views/Impressions (Demo)</CardTitle></CardHeader>
-                        <CardContent className="h-[300px] md:h-[350px]">
-                            <NoDataPlaceholder message="Views data unavailable." />
+                        <CardHeader><CardTitle className="font-headline text-xl">Views/Impressions (Illustrative)</CardTitle></CardHeader>
+                         <CardContent>
+                           <NoDataPlaceholder message="Views/impressions data unavailable." />
                         </CardContent>
                     </Card>
                 </div>
                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <Card className="shadow-md border-border/70">
-                        <CardHeader><CardTitle className="font-headline text-xl">Sentiment Analysis (Demo)</CardTitle></CardHeader>
-                        <CardContent className="h-[300px] md:h-[350px]">
-                            <NoDataPlaceholder message="Sentiment data unavailable." />
+                        <CardHeader><CardTitle className="font-headline text-xl">Sentiment Analysis (Illustrative)</CardTitle></CardHeader>
+                         <CardContent>
+                           <NoDataPlaceholder message="Sentiment data unavailable." />
                         </CardContent>
                     </Card>
                     <Card className="shadow-md border-border/70">
@@ -224,7 +247,7 @@ export const AnalyticsDashboard = () => {
                 <AlertTriangle size={24} className="flex-shrink-0"/>
                 <div>
                     <h4 className="font-semibold">Illustrative Data Only</h4>
-                    <p className="text-sm">The analytics data shown here is for demonstration purposes and does not reflect live user or content data. Actual social media account integration is required for real insights.</p>
+                    <p className="text-sm">The analytics data shown here is for demonstration purposes and does not reflect live user or content data. Actual social media account integration and data fetching would be required for real insights.</p>
                 </div>
             </div>
         </div>

@@ -6,12 +6,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea'; // Keep if needed for street address multi-line
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { KeyRound, ShieldAlert, Loader2, UserCircle, Eye, EyeOff, Edit, Save, Phone, CalendarDays, MapPin, Globe, Link as LinkIconLucide } from 'lucide-react'; // Renamed Link to LinkIconLucide
+import { Mail, KeyRound, ShieldAlert, Loader2, UserCircle, Eye, EyeOff, Edit, Save, Phone, CalendarDays, MapPin, Globe, Link as LinkIconLucide } from 'lucide-react';
 import type { UserProfile } from '@/types/user';
-import { useRouter } from 'next/navigation'; // Not strictly needed here but good for consistency
 
 const socialPlatforms = [
   { key: 'facebook', label: 'Facebook', placeholder: 'facebook.com/username' },
@@ -51,8 +50,9 @@ export const ProfileDashboard = () => {
     if (userProfile) {
       setFormData({
         displayName: userProfile.displayName || '',
+        email: userProfile.email || '', // Email is usually from auth user, but good to have if stored
         phoneNumber: userProfile.phoneNumber || '',
-        dateOfBirth: userProfile.dateOfBirth || '', // Ensure it's a string in YYYY-MM-DD
+        dateOfBirth: userProfile.dateOfBirth || '', 
         address: {
           street: userProfile.address?.street || '',
           city: userProfile.address?.city || '',
@@ -86,7 +86,7 @@ export const ProfileDashboard = () => {
       ...prev,
       socialMedia: {
         ...(prev.socialMedia || {}),
-        [name]: value || undefined, // Store empty string as undefined to remove field
+        [name]: value || undefined, 
       },
     }));
   };
@@ -96,17 +96,21 @@ export const ProfileDashboard = () => {
     if (!user) return;
     setIsSubmittingProfile(true);
     try {
-      // Filter out empty social media links before saving
       const cleanedSocialMedia: Partial<UserProfile['socialMedia']> = {};
       if (formData.socialMedia) {
         for (const key in formData.socialMedia) {
           const platformKey = key as keyof UserProfile['socialMedia'];
           if (formData.socialMedia[platformKey]?.trim()) {
             cleanedSocialMedia[platformKey] = formData.socialMedia[platformKey];
+          } else {
+            cleanedSocialMedia[platformKey] = undefined; // Explicitly set to undefined to remove
           }
         }
       }
       const profileToUpdate = { ...formData, socialMedia: cleanedSocialMedia };
+      // Do not include email in the update payload if it's not meant to be changed here
+      delete profileToUpdate.email; 
+
       await updateUserProfile(profileToUpdate);
       toast({ title: "Profile Updated", description: "Your information has been saved." });
     } catch (error: any) {
@@ -148,12 +152,13 @@ export const ProfileDashboard = () => {
     </Button>
   );
 
-  if (isLoadingAuth || isLoadingProfile) {
+  const overallLoading = isLoadingAuth || isLoadingProfile;
+
+  if (overallLoading && !userProfile) { // Show loader if still loading initial profile
     return <div className="flex justify-center items-center h-64"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
   }
 
   if (!user || !userProfile) {
-     // Handled by page component, but good fallback.
     return <div className="flex justify-center items-center h-64"><p>User data not available. Please try re-logging.</p></div>;
   }
 
@@ -238,7 +243,7 @@ export const ProfileDashboard = () => {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full sm:w-auto font-semibold bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmittingProfile || isLoadingAuth || isLoadingProfile}>
+              <Button type="submit" className="w-full sm:w-auto font-semibold bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmittingProfile || isLoadingAuth}>
                 {isSubmittingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save size={16} className="mr-2" />}
                 Save Profile Changes
               </Button>

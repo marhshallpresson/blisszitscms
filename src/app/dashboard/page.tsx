@@ -9,30 +9,23 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-// Modals that might be triggered from WelcomeDashboard or its children
-import { WorkspaceCreatorModal } from '@/components/modals/WorkspaceCreatorModal';
-// OnboardingModal is now a page, so it's not typically opened from here
-// import { OnboardingModal } from '@/components/modals/OnboardingModal'; 
-
 export default function DashboardPage() {
   const { user, isLoadingAuth, userProfile, isLoadingProfile } = useAuth();
   const router = useRouter();
   const [authCheckComplete, setAuthCheckComplete] = useState(false);
-
-  const [isWorkspaceCreatorOpen, setIsWorkspaceCreatorOpen] = useState(false);
 
   useEffect(() => {
     if (!isLoadingAuth && !isLoadingProfile) {
       setAuthCheckComplete(true);
       if (!user) {
         router.replace("/auth?mode=signin");
-      } else if (!userProfile?.onboardingCompleted) {
+      } else if (userProfile && !userProfile.onboardingCompleted) { // Ensure profile is loaded before checking onboarding
         router.replace("/onboarding");
       }
     }
   }, [user, isLoadingAuth, userProfile, isLoadingProfile, router]);
 
-  if (!authCheckComplete || isLoadingAuth || isLoadingProfile) {
+  if (!authCheckComplete || isLoadingAuth || isLoadingProfile && !userProfile) { // Show loader if still loading initial auth/profile
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -41,7 +34,7 @@ export default function DashboardPage() {
     );
   }
 
-  if (!user) {
+  if (!user) { // This case should ideally be caught by useEffect redirect, but good as a fallback
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
         <p className="text-destructive mb-4">Access Denied. Please sign in.</p>
@@ -52,36 +45,27 @@ export default function DashboardPage() {
     );
   }
   
-  const handleNewWorkspace = () => setIsWorkspaceCreatorOpen(true);
-  
-  // These handlers are placeholders and need full implementation within WelcomeDashboard or here
-  const handleSelectWorkspace = (id: string) => {
-    console.log("Selected workspace (from DashboardPage):", id);
-    // router.push(`/workspace/${id}`); // Example: navigate to a dynamic workspace route
-  };
-  const handleImportAiRecommendation = (title: string, description: string, caption?:string) => {
-    console.log("Importing AI Recommendation (from DashboardPage):", {title, description, caption});
-  };
+  // If user is authenticated, but onboarding is not complete and profile is loaded
+  // This check ensures that if the initial redirect in useEffect didn't catch it (e.g., due to timing)
+  // the user is still sent to onboarding.
+  if (userProfile && !userProfile.onboardingCompleted) {
+    // This will be quickly redirected by the useEffect, but good to have a state for it.
+     return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <p className="text-muted-foreground">Redirecting to onboarding...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4 md:p-8">
+    <div className="p-0 md:p-0"> {/* Reduced padding to allow WelcomeDashboard to control its own padding */}
       <WelcomeDashboard
-        onSelectWorkspace={handleSelectWorkspace}
-        onNewWorkspace={handleNewWorkspace}
-        onImportAiRecommendation={handleImportAiRecommendation}
-        onOpenOnboardingModal={() => { /* This might be deprecated if onboarding is page-only */ }}
         isOnboardingCompleted={userProfile?.onboardingCompleted || false}
       />
-       <WorkspaceCreatorModal
-        isOpen={isWorkspaceCreatorOpen}
-        onClose={() => setIsWorkspaceCreatorOpen(false)}
-        onWorkspaceCreated={(id) => {
-          console.log("Workspace created with ID:", id);
-          // Optionally, select this workspace or refresh list
-          setIsWorkspaceCreatorOpen(false); 
-          // router.push(`/workspace/${id}`); // Example navigation
-        }}
-      />
+      {/* WorkspaceCreatorModal and its trigger are removed from here.
+          Workspace creation might be initiated from an "Admin" or "Manage Workspaces" section if that's its primary role.
+      */}
     </div>
   );
 }

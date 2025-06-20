@@ -1,4 +1,3 @@
-
 // Your web app's Firebase configuration directly embedded
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -16,10 +15,10 @@ import {getDatabase, type Database as RealtimeDatabase} from 'firebase/database'
 import {getFirestore, type Firestore} from 'firebase/firestore';
 import {getAuth, type Auth} from 'firebase/auth';
 
-let app: FirebaseApp | undefined; // Allow undefined
-let db: Firestore | undefined; // Allow undefined
-let auth: Auth | undefined; // Allow undefined
-let rtdb: RealtimeDatabase | undefined; // Allow undefined
+let app: FirebaseApp | undefined; 
+let db: Firestore | undefined; 
+let auth: Auth | undefined; 
+let rtdb: RealtimeDatabase | undefined; 
 
 if (typeof window !== 'undefined') {
   if (getApps().length === 0) {
@@ -42,18 +41,24 @@ if (typeof window !== 'undefined') {
     rtdb = getDatabase(app);
   }
 } else {
-  console.warn("Firebase not initialized (not in browser or an unexpected state). This is acceptable for a corporate site if no client-side Firebase features are used.");
+  // This case can be hit during SSR or in non-browser environments.
+  // Firebase client SDKs are typically for client-side use.
+  // If server-side Firebase Admin SDK is used, its initialization is separate.
+  console.warn("Firebase client SDK not initialized (not in browser or during SSR). This might be expected.");
   app = undefined;
   db = undefined;
   auth = undefined;
   rtdb = undefined;
 }
 
-const APP_ID_IDENTIFIER = 'blisszits-corporate-site'; // Changed for corporate site context
+// This APP_ID_IDENTIFIER is primarily for namespacing Firestore collections if you were to use a shared Firestore instance.
+// For Blisszits, where 'blisszits' is the projectId, collections are already namespaced by project.
+// However, if you adopt a pattern like users/{app_id_prefix}_{userId}/data, this can be useful.
+// For now, we'll use the projectId itself or a simple identifier.
+const APP_ID_IDENTIFIER = firebaseConfig.projectId || 'blisszits'; 
 
 console.log(
-    `Firebase Configuration Note: Using '${APP_ID_IDENTIFIER}' as the APP_ID_IDENTIFIER for Firestore structuring if used. ` +
-    "Ensure your Firestore security rules and data paths align with this if any Firebase features are enabled."
+    `Firebase Context: Using '${APP_ID_IDENTIFIER}' as the APP_ID for potential data namespacing if complex Firestore structures are used. Current Project ID: ${firebaseConfig.projectId}`
 );
 
 export {app, db, auth, rtdb, APP_ID_IDENTIFIER as APP_ID};
