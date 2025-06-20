@@ -62,7 +62,7 @@ export const IdeaBoard = () => {
   };
   
   const handleDeleteIdea = async (ideaId: string) => {
-    if (!confirm("Are you sure you want to delete this idea?")) return;
+    if (!confirm("Are you sure you want to delete this idea? This action cannot be undone.")) return;
     try {
         await deleteIdea(ideaId);
         toast({ title: "Idea Deleted" });

@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import { DesktopSidebar } from '@/components/layout/DesktopSidebar';
 import { MobileSidebar } from '@/components/layout/MobileSidebar';
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet';
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, userProfile, isLoadingAuth, isLoadingProfile } = useAuth();
@@ -41,6 +42,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           {children}
         </main>
       </div>
+      <Sheet>
+        <SheetContent>
+            <SheetTitle className="sr-only">Menu</SheetTitle>
+            <SheetDescription className="sr-only">
+                Main navigation menu for the application.
+            </SheetDescription>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

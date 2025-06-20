@@ -49,6 +49,12 @@ const getContentTypeIcon = (type?: string) => {
 
 export const ContentItemCard = ({ item, onEdit, onDelete, onViewDetails, onMarkAsPublished, viewMode = 'grid' }: ContentItemCardProps) => {
   
+  const handleDelete = () => {
+    if (confirm(`Are you sure you want to delete "${item.title}"? This action cannot be undone.`)) {
+      onDelete(item.id);
+    }
+  };
+  
   if (viewMode === 'list') {
     return (
       <Card className="flex items-center p-4 gap-4 hover:shadow-md transition-shadow border-border/70">
@@ -88,7 +94,7 @@ export const ContentItemCard = ({ item, onEdit, onDelete, onViewDetails, onMarkA
               <DropdownMenuItem onClick={() => onMarkAsPublished(item)}><CheckCircle size={14} className="mr-2"/> Mark as Published</DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onDelete(item.id)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+            <DropdownMenuItem onClick={handleDelete} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
               <Trash2 size={14} className="mr-2"/> Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -141,7 +147,7 @@ export const ContentItemCard = ({ item, onEdit, onDelete, onViewDetails, onMarkA
                 <DropdownMenuItem onClick={() => onMarkAsPublished(item)}><CheckCircle size={14} className="mr-2"/> Mark as Published</DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onDelete(item.id)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+            <DropdownMenuItem onClick={handleDelete} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
               <Trash2 size={14} className="mr-2"/> Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
