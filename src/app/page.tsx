@@ -3,10 +3,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useWorkspace, type ContentItem, type Workspace } from '@/contexts/WorkspaceContext';
+import { useWorkspace, type ContentItem } from '@/contexts/WorkspaceContext';
 import { AuthScreen } from '@/components/auth/AuthScreen';
 import { WelcomeDashboard } from '@/components/dashboard/WelcomeDashboard';
-import { WorkspaceViewWrapper } from '@/components/workspace/WorkspaceViewWrapper'; // Changed
+import { WorkspaceViewWrapper } from '@/components/workspace/WorkspaceViewWrapper';
 import { ProfileDashboard } from '@/components/profile/ProfileDashboard';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
@@ -16,7 +16,7 @@ import { ContentFormModal } from '@/components/modals/ContentFormModal';
 import { ContentDetailsModal } from '@/components/modals/ContentDetailsModal';
 import { MarkAsPublishedModal } from '@/components/modals/MarkAsPublishedModal';
 import { SelectWorkspaceForImportModal } from '@/components/modals/SelectWorkspaceForImportModal';
-import { OnboardingModal } from '@/components/modals/OnboardingModal'; 
+import { OnboardingModal } from '@/components/modals/OnboardingModal';
 import { AppLogo } from '@/components/layout/AppLogo';
 import { useToast } from '@/hooks/use-toast';
 
@@ -33,7 +33,8 @@ import {
   SidebarMenuButton,
   SidebarMenuSkeleton,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, LogOut, Sparkles, UserCircle, Briefcase, BarChart2, MessageSquare, Shield, ArrowLeft } from 'lucide-react';
+import { LayoutDashboard, LogOut, UserCircle, Briefcase, BarChart2, MessageSquare, ArrowLeft, Settings, HelpCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 
 type ActiveView = 'welcome' | 'workspace' | 'profile' | 'manageWorkspaces' | 'analytics' | 'inbox';
@@ -54,15 +55,15 @@ export default function AppPage() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isMarkAsPublishedModalOpen, setIsMarkAsPublishedModalOpen] = useState(false);
   
-  const [resizeKey, setResizeKey] = useState(0); 
+  const [resizeKey, setResizeKey] = useState(0);
 
   const [isSelectWorkspaceModalOpen, setIsSelectWorkspaceModalOpen] = useState(false);
   const [pendingAiImportData, setPendingAiImportData] = useState<{ title: string, description: string, caption?: string } | null>(null);
 
   
   const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
-  const [isOnboardingCompleted, setIsOnboardingCompleted] = useState(false); 
-  const [userInterests, setUserInterests] = useState<string[]>([]); 
+  const [isOnboardingCompleted, setIsOnboardingCompleted] = useState(false);
+  const [userInterests, setUserInterests] = useState<string[]>([]);
 
 
   useEffect(() => {
@@ -74,8 +75,17 @@ export default function AppPage() {
   }, []);
 
   useEffect(() => {
+    if (user && !isOnboardingCompleted) {
+        // Simple check: if user has no interests stored (you'd check Firestore in real app)
+        // For now, we assume if they load and this flag is false, they need onboarding.
+        // This could be refined with a Firestore check for `user.uid` onboarding status
+        // setIsOnboardingModalOpen(true); // Temporarily disable auto-popup
+    }
+  }, [user, isOnboardingCompleted]);
+
+  useEffect(() => {
     if (currentWorkspaceId && activeView !== 'profile' && activeView !== 'manageWorkspaces' && activeView !== 'analytics' && activeView !== 'inbox') {
-      setActiveView('workspace'); // Changed from 'content'
+      setActiveView('workspace');
     } else if (!currentWorkspaceId && (activeView === 'workspace')) {
       setActiveView('welcome');
     }
@@ -84,7 +94,7 @@ export default function AppPage() {
   const handleSignOut = async () => {
     await signOut();
     setCurrentWorkspaceId(null);
-    setActiveView('welcome'); 
+    setActiveView('welcome');
   };
 
   const openNewContentModal = () => {
@@ -108,15 +118,23 @@ export default function AppPage() {
   }
 
   const handleImportAiRecommendation = (title: string, description: string, caption?: string) => {
+    if (!isOnboardingCompleted) {
+      toast({
+        title: "Let's Personalize!",
+        description: "Please complete the quick onboarding to get AI ideas tailored for you.",
+      });
+      handleOpenOnboardingModal();
+      return;
+    }
     if (currentWorkspaceId) {
       setEditingContentItem({
-        id: '', 
+        id: '',
         title: title,
         idea: description,
         caption: caption || '',
         script: '',
-        dueDate: '', 
-        status: 'Draft', 
+        dueDate: '',
+        status: 'Draft',
       } as ContentItem);
       setIsContentFormModalOpen(true);
     } else {
@@ -126,7 +144,7 @@ export default function AppPage() {
               description: "Please create a workspace first before importing an AI idea.",
               variant: "destructive",
           });
-          setCreatingWorkspace(true); 
+          setCreatingWorkspace(true);
           return;
       }
       setPendingAiImportData({ title, description, caption });
@@ -135,8 +153,8 @@ export default function AppPage() {
   };
 
   const handleWorkspaceSelectedForImport = (workspaceId: string) => {
-    setCurrentWorkspaceId(workspaceId); 
-    setActiveView('workspace'); // Changed from 'content'
+    setCurrentWorkspaceId(workspaceId);
+    setActiveView('workspace');
     setIsSelectWorkspaceModalOpen(false);
     if (pendingAiImportData) {
       setEditingContentItem({
@@ -149,26 +167,24 @@ export default function AppPage() {
         status: 'Draft',
       } as ContentItem);
       setIsContentFormModalOpen(true);
-      setPendingAiImportData(null); 
+      setPendingAiImportData(null);
     }
   };
 
   const handleOpenCreateWorkspaceModalFromSelect = () => {
     setIsSelectWorkspaceModalOpen(false);
-    setCreatingWorkspace(true); 
+    setCreatingWorkspace(true);
   };
 
   const navigateTo = (view: ActiveView, workspaceId?: string | null) => {
-    if (workspaceId !== undefined) { // if workspaceId is explicitly passed
+    if (workspaceId !== undefined) {
         setCurrentWorkspaceId(workspaceId);
-        if(workspaceId) setActiveView('workspace'); // If workspaceId is truthy, go to workspace view
-        else if(view !== 'workspace') setActiveView(view); // If workspaceId is null, set to passed view unless it's 'workspace'
-        else setActiveView('welcome'); // Fallback to welcome if navigating to workspace with null id
-    } else { // if workspaceId is not passed, just set the view
+        if(workspaceId) setActiveView('workspace');
+        else if(view !== 'workspace') setActiveView(view);
+        else setActiveView('welcome');
+    } else {
         setActiveView(view);
         if (view !== 'workspace' && view !== 'profile' && view !== 'manageWorkspaces' && view !== 'analytics' && view !== 'inbox') {
-           // If navigating away from a specific workspace or specific non-workspace views, clear currentWorkspaceId
-           // This logic might need refinement based on desired behavior for all views
            if(activeView === 'workspace') setCurrentWorkspaceId(null);
         }
     }
@@ -179,14 +195,13 @@ export default function AppPage() {
   };
 
   const handleSaveUserInterests = (interests: string[]) => {
-    setUserInterests(interests);
-    setIsOnboardingCompleted(true); 
+    setUserInterests(interests); // In a real app, save this to Firestore user profile
+    setIsOnboardingCompleted(true);
     setIsOnboardingModalOpen(false);
     toast({
-      title: "Interests Saved!",
-      description: "Your content preferences have been updated.",
+      title: "Preferences Saved!",
+      description: "Your content preferences have been updated. You can now get AI ideas!",
     });
-    
     console.log("User interests saved:", interests);
   };
 
@@ -194,7 +209,7 @@ export default function AppPage() {
   if (!isAuthReady || isAuthLoading) {
     return (
       <div className="w-full h-screen flex flex-col items-center justify-center bg-background p-8 text-center antialiased">
-        <Sparkles className="text-primary w-24 h-24 mb-6 animate-pulse" />
+        <AppLogo iconSize={60} showName={false} className="mb-6"/>
         <h1 className="text-5xl font-bold text-foreground font-headline">Blisszits</h1>
         <p className="text-xl text-muted-foreground mt-4 font-body antialiased">Loading your AI content buddy...</p>
       </div>
@@ -202,19 +217,19 @@ export default function AppPage() {
   }
 
   if (!user) {
-    return <AuthScreen />; 
+    return <AuthScreen />;
   }
 
   const sidebarProviderKey = `${resizeKey}-${isAuthReady}-${isAuthLoading}-${user?.uid || 'no-user'}-${currentWorkspaceId || 'no-workspace'}`;
 
   return (
     <SidebarProvider key={sidebarProviderKey} defaultOpen={true}>
-      <Sidebar side="left" variant="sidebar" collapsible="icon" className="border-r">
+      <Sidebar side="left" variant="sidebar" collapsible="icon" className="border-r bg-sidebar text-sidebar-foreground">
         <SidebarHeader className="p-4">
           <div className="flex items-center justify-between">
-             <AppLogo showName={true} />
+             <AppLogo showName={true} iconSize={32} />
              <div className="md:hidden">
-                <SidebarTrigger />
+                <SidebarTrigger className="text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent" />
              </div>
           </div>
         </SidebarHeader>
@@ -223,10 +238,10 @@ export default function AppPage() {
             {currentWorkspaceId && (
                  <SidebarMenuItem>
                     <SidebarMenuButton
-                        onClick={() => navigateTo('welcome', null)} 
-                        isActive={false} 
+                        onClick={() => navigateTo('welcome', null)}
+                        isActive={false}
                         tooltip="Back to Main Dashboard"
-                        className="font-semibold text-primary"
+                        className="font-semibold text-sidebar-primary hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                     >
                         <ArrowLeft />
                         <span>Back to Main Dashboard</span>
@@ -238,48 +253,53 @@ export default function AppPage() {
                 onClick={() => navigateTo('welcome', null)}
                 isActive={activeView === 'welcome' && !currentWorkspaceId}
                 tooltip="Dashboard"
+                className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               >
                 <LayoutDashboard />
                 <span>Dashboard</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
              <SidebarMenuItem>
-              <SidebarMenuButton 
-                onClick={() => navigateTo('profile', null)} 
+              <SidebarMenuButton
+                onClick={() => navigateTo('profile', null)}
                 isActive={activeView === 'profile'}
                 tooltip="Profile Settings"
+                className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               >
                 <UserCircle />
                 <span>Profile</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton 
-                onClick={() => navigateTo('inbox', null)} 
+              <SidebarMenuButton
+                onClick={() => navigateTo('inbox', null)}
                 isActive={activeView === 'inbox'}
                 tooltip="Inbox"
+                className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               >
                 <MessageSquare />
                 <span>Inbox</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton 
-                onClick={() => navigateTo('analytics', null)} 
+              <SidebarMenuButton
+                onClick={() => navigateTo('analytics', null)}
                 isActive={activeView === 'analytics'}
                 tooltip="Analytics"
+                className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               >
                 <BarChart2 />
                 <span>Analytics</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton 
-                onClick={() => navigateTo('manageWorkspaces', null)} 
+              <SidebarMenuButton
+                onClick={() => navigateTo('manageWorkspaces', null)}
                 isActive={activeView === 'manageWorkspaces'}
                 tooltip="Manage Workspaces"
+                className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               >
-                <Briefcase /> {/* Changed icon from Shield */}
+                <Briefcase />
                 <span>Manage Workspaces</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -292,34 +312,48 @@ export default function AppPage() {
             )}
           </SidebarMenu>
         </SidebarContent>
-        <SidebarFooter className="p-4">
+        <SidebarFooter className="p-4 border-t border-sidebar-border">
           <SidebarMenu>
+             <SidebarMenuItem>
+                <SidebarMenuButton onClick={() => { /* Logic for help/support */ }} tooltip="Help & Support" className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+                    <HelpCircle />
+                    <span>Help & Support</span>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton onClick={handleSignOut} tooltip="Sign Out">
+                <SidebarMenuButton onClick={() => { /* Logic for settings, could be same as profile or different */ navigateTo('profile', null) }} tooltip="App Settings" className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+                    <Settings />
+                    <span>Settings</span>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={handleSignOut} tooltip="Sign Out" className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
                 <LogOut />
                 <span>Sign Out</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
+             <Button variant="outline" size="sm" className="w-full mt-4 group-data-[collapsible=icon]:hidden text-sidebar-foreground border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" onClick={() => window.open("https://firebase.google.com/products/studio", "_blank")}>
+                Powered by Firebase Studio
+            </Button>
           </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
 
-      <SidebarInset className="flex flex-col min-h-screen">
+      <SidebarInset className="flex flex-col min-h-screen bg-background">
         <header className="p-4 border-b md:hidden sticky top-0 bg-background z-10">
             <div className="flex items-center justify-between">
-                <AppLogo showName={false}/>
-                <SidebarTrigger />
+                <AppLogo showName={false} iconSize={28}/>
+                <SidebarTrigger className="text-foreground hover:text-primary hover:bg-muted" />
             </div>
         </header>
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
           {activeView === 'profile' && <ProfileDashboard onBack={() => navigateTo('welcome', null)} />}
           {activeView === 'manageWorkspaces' && <AdminDashboard onNavigateToWorkspace={(id) => navigateTo('workspace', id)} onCreateWorkspace={() => setCreatingWorkspace(true)} />}
           {activeView === 'analytics' && <AnalyticsDashboard />}
           {activeView === 'inbox' && <InboxView />}
           {activeView === 'workspace' && currentWorkspace && (
-            <WorkspaceViewWrapper // Changed from ContentDashboard
+            <WorkspaceViewWrapper
               workspace={currentWorkspace}
-              // onBack is handled by sidebar button now
               onNewContent={openNewContentModal}
               onEditContent={openEditContentModal}
               onViewDetails={openDetailsModal}
@@ -328,7 +362,7 @@ export default function AppPage() {
           )}
           {activeView === 'welcome' && (
             <WelcomeDashboard
-              onSelectWorkspace={(id) => navigateTo('workspace', id)} // Changed to 'workspace'
+              onSelectWorkspace={(id) => navigateTo('workspace', id)}
               onNewWorkspace={() => setCreatingWorkspace(true)}
               onImportAiRecommendation={handleImportAiRecommendation}
               onOpenOnboardingModal={handleOpenOnboardingModal}
@@ -338,18 +372,18 @@ export default function AppPage() {
         </main>
       </SidebarInset>
 
-      <WorkspaceCreatorModal 
-        isOpen={isCreatingWorkspace} 
-        onClose={() => setCreatingWorkspace(false)} 
+      <WorkspaceCreatorModal
+        isOpen={isCreatingWorkspace}
+        onClose={() => setCreatingWorkspace(false)}
         onWorkspaceCreated={(newId) => {
-            setCurrentWorkspaceId(newId); 
-            setActiveView('workspace'); // Changed to 'workspace'
+            setCurrentWorkspaceId(newId);
+            setActiveView('workspace');
         }}
       />
-      <ContentFormModal 
-        isOpen={isContentFormModalOpen} 
-        onClose={() => setIsContentFormModalOpen(false)} 
-        item={editingContentItem} 
+      <ContentFormModal
+        isOpen={isContentFormModalOpen}
+        onClose={() => setIsContentFormModalOpen(false)}
+        item={editingContentItem}
       />
       <ContentDetailsModal
         isOpen={isDetailsModalOpen}
@@ -365,7 +399,7 @@ export default function AppPage() {
         isOpen={isSelectWorkspaceModalOpen}
         onClose={() => {
           setIsSelectWorkspaceModalOpen(false);
-          setPendingAiImportData(null); 
+          setPendingAiImportData(null);
         }}
         workspaces={workspaces || []}
         onSelectWorkspace={handleWorkspaceSelectedForImport}

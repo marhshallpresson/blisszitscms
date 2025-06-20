@@ -5,7 +5,7 @@ import type { ContentItem } from '@/contexts/WorkspaceContext';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit3, Trash2, Calendar, Eye, CheckCircle } from 'lucide-react'; 
+import { Edit3, Trash2, Calendar, Eye, CheckCircle, MoreVertical } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,86 +13,87 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu"
-import { MoreVertical } from "lucide-react"
 import { useState, useEffect } from 'react';
+import { ClientFormattedDate } from '@/components/utils/ClientFormattedDate'; // Assuming this is created
 
 
 interface ContentItemCardProps {
   item: ContentItem;
   onEdit: (item: ContentItem) => void;
   onDelete: (itemId: string) => void;
-  onViewDetails: (item: ContentItem) => void; 
-  onMarkAsPublished: (item: ContentItem) => void; 
+  onViewDetails: (item: ContentItem) => void;
+  onMarkAsPublished: (item: ContentItem) => void;
 }
 
-const getStatusColor = (status?: string) => {
+const getStatusVariant = (status?: string): "default" | "secondary" | "destructive" | "outline" => {
   switch (status) {
-    case 'Draft': return 'bg-yellow-200 text-yellow-800 hover:bg-yellow-300';
-    case 'In Progress': return 'bg-blue-200 text-blue-800 hover:bg-blue-300';
-    case 'For Review': return 'bg-purple-200 text-purple-800 hover:bg-purple-300';
-    case 'Approved': return 'bg-green-200 text-green-800 hover:bg-green-300';
-    case 'Published': return 'bg-teal-200 text-teal-800 hover:bg-teal-300';
-    default: return 'bg-gray-200 text-gray-800 hover:bg-gray-300';
+    case 'Draft': return 'secondary';
+    case 'In Progress': return 'default'; // Using primary for In Progress
+    case 'For Review': return 'outline'; // Using a theme accent color
+    case 'Approved': return 'default'; // Using another theme accent color
+    case 'Published': return 'default';
+    default: return 'secondary';
   }
-}
+};
+
+const getStatusClass = (status?: string): string => {
+    switch (status) {
+        case 'Draft': return 'bg-amber-500 hover:bg-amber-600 text-white'; // Muted yellow
+        case 'In Progress': return 'bg-sky-500 hover:bg-sky-600 text-white'; // Muted blue
+        case 'For Review': return 'bg-purple-500 hover:bg-purple-600 text-white'; // Muted purple
+        case 'Approved': return 'bg-lime-600 hover:bg-lime-700 text-white'; // Muted green
+        case 'Published': return 'bg-teal-500 hover:bg-teal-600 text-primary-foreground'; // Primary color for published
+        default: return 'bg-slate-400 hover:bg-slate-500 text-white'; // Muted gray
+    }
+};
+
 
 export const ContentItemCard = ({ item, onEdit, onDelete, onViewDetails, onMarkAsPublished }: ContentItemCardProps) => {
-  const [clientFormattedDueDate, setClientFormattedDueDate] = useState('Loading date...');
-
-  useEffect(() => {
-    if (item.dueDate) {
-      // Ensure date is valid before formatting
-      const dateObj = new Date(item.dueDate);
-      if (!isNaN(dateObj.getTime())) {
-        setClientFormattedDueDate(dateObj.toLocaleDateString());
-      } else {
-        setClientFormattedDueDate('Invalid date');
-      }
-    } else {
-      setClientFormattedDueDate('Not set');
-    }
-  }, [item.dueDate]);
 
   return (
-    <Card className="flex flex-col group shadow-lg hover:shadow-xl transition-shadow duration-300 bg-card">
-      <CardHeader className="relative pb-2">
-         <Badge variant="outline" className={`absolute top-4 right-4 px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(item.status)} border-0`}>
+    <Card 
+      className="flex flex-col group shadow-lg hover:shadow-xl transition-all duration-300 bg-card border-border/70 hover:border-primary/40 h-full"
+      aria-labelledby={`item-title-${item.id}`}
+    >
+      <CardHeader className="relative pb-3 pt-5 px-5">
+         <Badge 
+            variant={getStatusVariant(item.status)} 
+            className={`absolute top-4 right-4 px-3 py-1 text-xs font-semibold rounded-full border-0 shadow-sm ${getStatusClass(item.status)}`}
+         >
           {item.status || 'Draft'}
         </Badge>
-        <CardTitle className="font-headline text-xl mt-2 text-card-foreground pr-10 line-clamp-2">{item.title}</CardTitle>
+        <CardTitle id={`item-title-${item.id}`} className="font-headline text-lg text-card-foreground pr-10 line-clamp-2 tracking-tight">{item.title}</CardTitle>
       </CardHeader>
-      <CardContent className="flex-grow pt-0">
-        <p className="text-muted-foreground text-sm line-clamp-2 h-10 font-body">{item.idea || "No brief provided."}</p>
-        <p className="text-muted-foreground text-xs line-clamp-2 h-8 font-body mt-1">{item.caption || ""}</p>
-
+      <CardContent className="flex-grow pt-0 px-5 pb-4">
+        <p className="text-muted-foreground text-sm line-clamp-2 h-10 font-body mb-1">{item.idea || "No brief provided."}</p>
+        {item.caption && <p className="text-muted-foreground/80 text-xs line-clamp-1 h-5 font-body italic">"{item.caption}"</p>}
       </CardContent>
-      <CardFooter className="pt-4 border-t border-border flex justify-between items-center">
+      <CardFooter className="pt-3 border-t border-border/70 flex justify-between items-center px-5 pb-4">
         <div className="flex items-center text-xs text-muted-foreground">
-          <Calendar size={14} className="mr-1.5" />
-          Due: {clientFormattedDueDate}
+          <Calendar size={14} className="mr-1.5 text-primary" />
+          Due: <ClientFormattedDate date={item.dueDate} options={{ month: 'short', day: 'numeric' }} placeholder="Not set" />
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="More options">
-              <MoreVertical size={16} />
-              <span className="sr-only">More options</span>
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-muted" aria-label={`More options for ${item.title}`}>
+              <MoreVertical size={18} />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onViewDetails(item)} className="cursor-pointer">
-              <Eye size={16} className="mr-2" /> View Details & Comments
+          <DropdownMenuContent align="end" className="bg-popover border-border shadow-xl w-56">
+            <DropdownMenuItem onClick={() => onViewDetails(item)} className="cursor-pointer group">
+              <Eye size={16} className="mr-2 text-primary group-hover:text-primary/90" /> View Details & Comments
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onEdit(item)} className="cursor-pointer">
-              <Edit3 size={16} className="mr-2" /> Edit Content
+            <DropdownMenuItem onClick={() => onEdit(item)} className="cursor-pointer group">
+              <Edit3 size={16} className="mr-2 text-primary group-hover:text-primary/90" /> Edit Content
             </DropdownMenuItem>
             {item.status !== 'Published' && (
-              <DropdownMenuItem onClick={() => onMarkAsPublished(item)} className="cursor-pointer">
-                <CheckCircle size={16} className="mr-2 text-green-500" /> Mark as Published
+              <DropdownMenuItem onClick={() => onMarkAsPublished(item)} className="cursor-pointer group">
+                <CheckCircle size={16} className="mr-2 text-teal-500 group-hover:text-teal-600" /> Mark as Published
               </DropdownMenuItem>
             )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onDelete(item.id)} className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer">
-              <Trash2 size={16} className="mr-2" /> Delete
+            <DropdownMenuSeparator className="bg-border/70" />
+            <DropdownMenuItem onClick={() => onDelete(item.id)} className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer group">
+              <Trash2 size={16} className="mr-2 group-hover:text-destructive/90" /> Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
