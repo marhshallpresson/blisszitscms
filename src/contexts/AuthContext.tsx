@@ -10,7 +10,7 @@ import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail
 } from 'firebase/auth';
-import { auth } from '@/lib/firebaseConfig';
+import { auth } from '@/lib/firebaseConfig'; // Ensure auth is correctly initialized
 import type { EmailPasswordCredentials } from '@/lib/types';
 
 interface AuthContextType {
@@ -28,13 +28,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Start true until auth state is resolved
 
   useEffect(() => {
-    setIsLoading(true);
+    setIsLoading(true); // Explicitly set loading true when effect runs
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setIsAuthReady(true);
+      setIsLoading(false);
+    }, (error) => { // Optional: Add error handling for onAuthStateChanged itself
+      console.error("Auth state change error:", error);
+      setIsAuthReady(true); // Still set ready to allow app to proceed (e.g. show login)
       setIsLoading(false);
     });
     return () => unsubscribe();
@@ -46,8 +50,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       setUser(userCredential.user);
       return userCredential.user;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Email sign up failed:", error);
+      if (error.code === 'auth/configuration-not-found') {
+        console.error(
+          "Firebase Authentication Error (auth/configuration-not-found): " +
+          "This usually means the Email/Password sign-in provider is not enabled " +
+          "in your Firebase project console. Please go to Firebase Console -> Authentication -> " +
+          "Sign-in method and ensure 'Email/Password' is enabled."
+        );
+      }
       throw error; // Re-throw to be caught by UI
     } finally {
       setIsLoading(false);
@@ -60,8 +72,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       setUser(userCredential.user);
       return userCredential.user;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Email sign in failed:", error);
+       if (error.code === 'auth/configuration-not-found') {
+        console.error(
+          "Firebase Authentication Error (auth/configuration-not-found): " +
+          "This usually means the Email/Password sign-in provider is not enabled " +
+          "in your Firebase project console. Please go to Firebase Console -> Authentication -> " +
+          "Sign-in method and ensure 'Email/Password' is enabled."
+        );
+      }
       throw error; // Re-throw
     } finally {
       setIsLoading(false);
@@ -72,8 +92,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     try {
       await sendPasswordResetEmail(auth, email);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Password reset failed:", error);
+      if (error.code === 'auth/configuration-not-found') {
+        console.error(
+          "Firebase Authentication Error (auth/configuration-not-found) during password reset: " +
+          "Check Firebase console settings for Email/Password provider."
+        );
+      }
       throw error; // Re-throw
     } finally {
       setIsLoading(false);
@@ -87,6 +113,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
     } catch (error) {
       console.error("Sign out failed:", error);
+      // Potentially handle specific sign-out errors if needed
     } finally {
       setIsLoading(false);
     }
