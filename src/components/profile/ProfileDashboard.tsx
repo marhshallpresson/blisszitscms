@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, KeyRound, ShieldAlert, Loader2, UserCircle, Eye, EyeOff, Edit, Save, Phone, CalendarDays, MapPin, Globe, Link as LinkIconLucide } from 'lucide-react';
+import { Mail, KeyRound, ShieldAlert, Loader2, UserCircle, User, Eye, EyeOff, Edit, Save, Phone, CalendarDays, MapPin, Globe, Link as LinkIconLucide } from 'lucide-react';
 import type { UserProfile } from '@/types/user';
 
 const socialPlatforms = [
