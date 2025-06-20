@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { WorkspaceProvider } from '@/contexts/WorkspaceContext';
@@ -5,8 +6,8 @@ import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Blisszits CMS',
-  description: 'AI-powered content to-do buddy',
+  title: 'Blisszits - Your AI Content Buddy',
+  description: 'Blisszits: Your AI-powered content to-do buddy for content creators. Simplify, create, and manage content with AI recommendations and reminders.',
 };
 
 export default function RootLayout({

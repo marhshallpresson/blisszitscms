@@ -3,11 +3,12 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
+import { BellRing, Mail } from 'lucide-react';
 
 interface ReminderSetupModalProps {
   isOpen: boolean;
@@ -22,61 +23,79 @@ export const ReminderSetupModal = ({ isOpen, onClose }: ReminderSetupModalProps)
 
   const handleSavePreferences = () => {
     // Placeholder for saving logic
-    console.log({ enablePush, enableEmail, email });
+    console.log("Reminder Preferences:", { enablePush, enableEmail, email });
     toast({
-      title: "Preferences Saved",
-      description: "Your reminder preferences have been updated.",
+      title: "Preferences Saved (Demo)",
+      description: "Your reminder preferences have been noted. Full functionality requires backend setup.",
     });
     onClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[500px] bg-card">
+      <DialogContent className="sm:max-w-[525px] bg-card">
         <DialogHeader>
-          <DialogTitle className="font-headline text-card-foreground">Setup Reminders</DialogTitle>
+          <DialogTitle className="font-headline text-card-foreground text-2xl">Setup Content Reminders</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            Stay on top of your content schedule. Blisszits can send you reminders for deadlines and important tasks.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-6 py-4">
-          <p className="text-muted-foreground">
-            Blisszits can send you reminders about content deadlines. Configure your notification preferences below.
-          </p>
-          <div className="space-y-4 p-4 border border-border rounded-lg">
+          <div className="space-y-4 p-5 border border-border rounded-lg shadow-sm bg-background/30">
             <div className="flex items-center justify-between">
-              <Label htmlFor="pushToggle" className="font-semibold text-card-foreground">Enable Push Notifications</Label>
+              <Label htmlFor="pushToggle" className="flex items-center gap-2 font-semibold text-card-foreground text-base">
+                <BellRing className="text-primary" /> Enable Push Notifications
+              </Label>
               <Switch
                 id="pushToggle"
                 checked={enablePush}
                 onCheckedChange={setEnablePush}
+                aria-label="Enable push notifications"
               />
             </div>
-            <p className="text-sm text-muted-foreground">Get alerts directly on your devices. Requires browser permission.</p>
+            <p className="text-sm text-muted-foreground ml-7">
+              Get instant alerts directly on your devices. Requires browser permission.
+            </p>
           </div>
-          <div className="space-y-4 p-4 border border-border rounded-lg">
+          
+          <div className="space-y-4 p-5 border border-border rounded-lg shadow-sm bg-background/30">
             <div className="flex items-center justify-between">
-              <Label htmlFor="emailToggle" className="font-semibold text-card-foreground">Enable Email Notifications</Label>
+              <Label htmlFor="emailToggle" className="flex items-center gap-2 font-semibold text-card-foreground text-base">
+                <Mail className="text-primary" /> Enable Email Notifications
+              </Label>
               <Switch
                 id="emailToggle"
                 checked={enableEmail}
                 onCheckedChange={setEnableEmail}
+                aria-label="Enable email notifications"
               />
             </div>
-            <p className="text-sm text-muted-foreground">Receive summaries and important alerts in your inbox.</p>
+            <p className="text-sm text-muted-foreground ml-7">
+              Receive summaries and important alerts in your inbox.
+            </p>
             {enableEmail && (
-              <Input
-                type="email"
-                placeholder="your-email@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full mt-2"
-              />
+              <div className="ml-7 mt-3">
+                <Label htmlFor="reminderEmail" className="text-sm font-medium text-card-foreground">Notification Email</Label>
+                <Input
+                  id="reminderEmail"
+                  type="email"
+                  placeholder="your-email@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full mt-1 bg-input text-foreground"
+                />
+              </div>
             )}
           </div>
+           <p className="text-xs text-muted-foreground text-center pt-2">
+              Note: Full reminder functionality (sending actual push notifications and emails) requires backend server setup and is currently for demonstration purposes in this UI.
+            </p>
         </div>
-        <DialogFooter>
+        <DialogFooter className="mt-2">
           <DialogClose asChild>
             <Button variant="outline" onClick={onClose}>Cancel</Button>
           </DialogClose>
-          <Button onClick={handleSavePreferences}>Save Preferences</Button>
+          <Button onClick={handleSavePreferences} className="font-semibold">Save Preferences</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

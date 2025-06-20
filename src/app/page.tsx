@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useWorkspace, ContentItem } from '@/contexts/WorkspaceContext';
+import { useWorkspace, type ContentItem } from '@/contexts/WorkspaceContext'; // Ensure ContentItem type is imported
 import { AuthScreen } from '@/components/auth/AuthScreen';
 import { WelcomeDashboard } from '@/components/dashboard/WelcomeDashboard';
 import { ContentDashboard } from '@/components/content/ContentDashboard';
@@ -25,7 +25,7 @@ import {
   SidebarMenuButton,
   SidebarMenuSkeleton,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, Bell, LogOut } from 'lucide-react';
+import { LayoutDashboard, Bell, LogOut, Sparkles } from 'lucide-react'; // Added Sparkles
 import { Button } from '@/components/ui/button';
 
 export default function AppPage() {
@@ -34,17 +34,15 @@ export default function AppPage() {
 
   const [isCreatingWorkspace, setCreatingWorkspace] = useState(false);
   const [isSettingReminders, setSettingReminders] = useState(false);
-  const [editingContentItem, setEditingContentItem] = useState<ContentItem | null>(null); // null for new, object for edit
+  const [editingContentItem, setEditingContentItem] = useState<ContentItem | null>(null);
   const [isContentFormModalOpen, setIsContentFormModalOpen] = useState(false);
   
-  // This state ensures sidebar re-renders correctly on mobile when collapsing/expanding
   const [sidebarKey, setSidebarKey] = useState(0);
   useEffect(() => {
     const handleResize = () => setSidebarKey(prev => prev + 1);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
 
   const handleSignOut = async () => {
     await signOut();
@@ -62,16 +60,27 @@ export default function AppPage() {
   };
 
   if (!isAuthReady || isAuthLoading) {
-    return <AuthScreen />;
+    return (
+      <div className="w-full h-screen flex flex-col items-center justify-center bg-background p-8 text-center">
+        <Sparkles className="text-primary w-24 h-24 mb-6 animate-pulse" />
+        <h1 className="text-5xl font-bold text-foreground font-headline">Blisszits</h1>
+        <p className="text-xl text-muted-foreground mt-4 font-body">Loading your AI content buddy...</p>
+      </div>
+    );
   }
 
+  if (!user) {
+    return <AuthScreen />; // Shows login/signup options
+  }
+
+  // User is signed in, show the main app
   return (
     <SidebarProvider key={sidebarKey} defaultOpen={true}>
       <Sidebar side="left" variant="sidebar" collapsible="icon" className="border-r">
         <SidebarHeader className="p-4">
           <div className="flex items-center justify-between">
              <AppLogo showName={true} />
-             <div className="md:hidden"> {/* Only show trigger on mobile when sidebar is collapsible */}
+             <div className="md:hidden">
                 <SidebarTrigger />
              </div>
           </div>
@@ -94,7 +103,6 @@ export default function AppPage() {
                 <span>Reminders</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-             {/* Placeholder for workspace list if needed in sidebar */}
             {(isLoadingWorkspaces && !currentWorkspaceId) && (
               <>
                 <SidebarMenuSkeleton showIcon />
@@ -116,7 +124,7 @@ export default function AppPage() {
       </Sidebar>
 
       <SidebarInset className="flex flex-col min-h-screen">
-        <header className="p-4 border-b md:hidden sticky top-0 bg-background z-10"> {/* Mobile header with trigger */}
+        <header className="p-4 border-b md:hidden sticky top-0 bg-background z-10">
             <div className="flex items-center justify-between">
                 <AppLogo showName={false}/>
                 <SidebarTrigger />
