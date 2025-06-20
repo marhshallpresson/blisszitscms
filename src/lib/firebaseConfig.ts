@@ -3,7 +3,7 @@
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyA_e8VnGjnPALsVDYeBvAlQaWCvNDIUOYM",
-  authDomain: "blisszits.firebaseapp.com",
+  authDomain: "blisszits.firebaseapp.com", // Ensure this domain, and any domain you serve your app from (e.g., localhost for dev), are listed in Firebase Console > Authentication > Settings > Authorized domains.
   projectId: "blisszits",
   storageBucket: "blisszits.firebasestorage.app",
   messagingSenderId: "668053435356",
@@ -19,13 +19,10 @@ import {getDatabase, type Database as RealtimeDatabase} from 'firebase/database'
 import {getFirestore, type Firestore} from 'firebase/firestore';
 import {getAuth, type Auth} from 'firebase/auth';
 
-// Your web app's Firebase configuration directly embedded
-// const firebaseConfig = { ... } // Already defined above
-
 let app: FirebaseApp;
 let db: Firestore;
 let auth: Auth;
-let rtdb: RealtimeDatabase; // Add this
+let rtdb: RealtimeDatabase;
 // let analytics; // Uncomment if getAnalytics is used
 
 if (typeof window !== 'undefined') {
@@ -34,14 +31,14 @@ if (typeof window !== 'undefined') {
       app = initializeApp(firebaseConfig);
       db = getFirestore(app);
       auth = getAuth(app);
-      rtdb = getDatabase(app); // Initialize RTDB
+      rtdb = getDatabase(app);
       // analytics = getAnalytics(app); // Initialize analytics if needed
     } catch (error) {
       console.error('Firebase initialization error:', error);
       // @ts-ignore
-      app = undefined; 
+      app = undefined;
       // @ts-ignore
-      db = undefined; 
+      db = undefined;
       // @ts-ignore
       auth = undefined;
       // @ts-ignore
@@ -51,7 +48,7 @@ if (typeof window !== 'undefined') {
     app = getApps()[0];
     db = getFirestore(app);
     auth = getAuth(app);
-    rtdb = getDatabase(app); // Get RTDB instance
+    rtdb = getDatabase(app);
     // analytics = getAnalytics(app); // Get analytics instance if app is already initialized
   }
 } else {
@@ -70,15 +67,14 @@ if (typeof window !== 'undefined') {
 
 // This APP_ID_IDENTIFIER is used for structuring data in Firestore (e.g., /artifacts/{APP_ID_IDENTIFIER}/users/...).
 // It's good practice to make this unique for your app.
-// It can still be sourced from an environment variable if preferred for differentiation between environments.
-const APP_ID_IDENTIFIER = process.env.NEXT_PUBLIC_APP_ID_IDENTIFIER || 'blisszits-cms'; 
+const APP_ID_IDENTIFIER = 'blisszits-cms';
 
-if (APP_ID_IDENTIFIER === 'default-app-id-replace-me' || APP_ID_IDENTIFIER === 'blisszits-cms' && process.env.NEXT_PUBLIC_APP_ID_IDENTIFIER === undefined) {
-    console.warn(
-        `Firebase Configuration Note: Using '${APP_ID_IDENTIFIER}' as the APP_ID_IDENTIFIER for Firestore structuring. ` +
-        "You can customize this by setting NEXT_PUBLIC_APP_ID_IDENTIFIER in your .env.local file."
-    );
-}
+console.log(
+    `Firebase Configuration Note: Using '${APP_ID_IDENTIFIER}' as the APP_ID_IDENTIFIER for Firestore structuring. ` +
+    "Ensure your Firestore security rules and data paths align with this."
+);
 
-export {app, db, auth, rtdb, APP_ID_IDENTIFIER as APP_ID}; // Export rtdb
+
+export {app, db, auth, rtdb, APP_ID_IDENTIFIER as APP_ID};
 // export { app, db, auth, analytics, APP_ID_IDENTIFIER as APP_ID }; // export analytics if used
+
