@@ -1,13 +1,17 @@
-// src/app/page.tsx (Homepage)
+// src/app/page.tsx (Homepage for corporate site)
 "use client";
 
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight, Target, PenTool, Users, BarChartHorizontal, MessageSquareText, TrendingUpIcon } from "lucide-react";
+import { ChevronRight, Target, PenTool, Users, BarChartHorizontal, MessageSquareText, TrendingUpIcon } from "lucide-react"; // Sparkles removed as it's not used here
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react"; // Added useState
+import { Loader2 } from "lucide-react";
+// import { RealtimeGreeting } from "@/components/rtdb/RealtimeGreeting"; // Commented out for now
 
-// Sections (could be moved to separate components in src/components/sections/)
-
+// Sections for the corporate homepage
 const HeroSection = () => (
   <section className="bg-gradient-to-br from-secondary via-background to-background pt-20 pb-16 md:pt-32 md:pb-24">
     <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -30,7 +34,7 @@ const HeroSection = () => (
         </div>
         <div className="mt-10 md:mt-0">
           <Image 
-            src="https://placehold.co/700x550.png" // Replace with high-quality, relevant hero image
+            src="https://placehold.co/700x550.png"
             alt="Social media content management dashboard and creative elements" 
             width={700} 
             height={550} 
@@ -86,7 +90,7 @@ const AboutSummarySection = () => (
       <div className="grid md:grid-cols-2 gap-12 items-center">
         <div>
           <Image 
-            src="https://placehold.co/600x450.png" // Replace with an actual engaging image about the brand/team
+            src="https://placehold.co/600x450.png"
             alt="Blisszits team collaborating on social media strategy" 
             width={600} 
             height={450} 
@@ -116,7 +120,7 @@ const CallToActionSection = () => (
   <section className="py-20 md:py-28 bg-background">
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
       <div className="max-w-3xl mx-auto bg-gradient-to-r from-primary to-accent p-1 rounded-xl shadow-2xl">
-        <div className="bg-background p-8 md:p-12 rounded-lg">
+        <div className="bg-card p-8 md:p-12 rounded-lg">
           <h2 className="text-3xl md:text-4xl font-bold font-headline text-foreground mb-5">Ready to Elevate Your Social Media Game?</h2>
           <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-8">
             Let's discuss your unique needs and craft a strategy that delivers real results. Get in touch for a personalized consultation.
@@ -132,14 +136,57 @@ const CallToActionSection = () => (
 
 
 export default function HomePage() {
-  // This page is now the corporate homepage.
-  // All CMS dashboard logic has been removed.
+  const { user, isLoadingAuth, userProfile, isLoadingProfile } = useAuth();
+  const router = useRouter();
+  const [authCheckComplete, setAuthCheckComplete] = useState(false);
+
+  useEffect(() => {
+    if (!isLoadingAuth && !isLoadingProfile) { // Wait for both auth and profile status
+      setAuthCheckComplete(true);
+      if (user) {
+        if (userProfile?.onboardingCompleted) {
+          router.replace('/dashboard');
+        } else {
+          // User is authenticated, but profile (and thus onboarding status) is still loading or not found
+          // This specific check ensures we don't redirect to /onboarding prematurely if profile is still loading
+          if (!isLoadingProfile && !userProfile?.onboardingCompleted) {
+            router.replace('/onboarding');
+          }
+        }
+      }
+      // If no user, stay on this page (corporate homepage)
+    }
+  }, [user, userProfile, isLoadingAuth, isLoadingProfile, router]);
+
+  // Show loading spinner while auth/profile check is in progress
+  if (!authCheckComplete) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
+        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // If user is not logged in (after checks), show corporate homepage content.
+  // Redirection for logged-in users is handled by useEffect.
+  if (!user) {
+    return (
+      <>
+        <HeroSection />
+        <ServicesOverviewSection />
+        <AboutSummarySection />
+        <CallToActionSection />
+        {/* <RealtimeGreeting /> */}
+      </>
+    );
+  }
+  
+  // Fallback for logged-in users before redirection (should be brief)
+  // This state is hit if user is logged in, but the redirect useEffect hasn't fired yet or profile is loading
   return (
-    <>
-      <HeroSection />
-      <ServicesOverviewSection />
-      <AboutSummarySection />
-      <CallToActionSection />
-    </>
+     <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
+        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+        <p className="ml-4 text-muted-foreground">Loading your experience...</p>
+      </div>
   );
 }

@@ -1,113 +1,133 @@
 // src/components/auth/AuthScreen.tsx
 "use client";
 
-// This component is no longer used in the basic corporate website layout.
-// It's kept for potential future use if a client portal or login functionality is added.
-
-import { useState, useEffect, useCallback } from 'react';
-// import { useAuth } from '@/contexts/AuthContext'; // AuthContext is simplified
+import { useState, useEffect, FormEvent } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AppLogo } from '@/components/layout/AppLogo';
-import { Mail, KeyRound, UserPlus, LogIn, AlertTriangle, Smartphone, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { Mail, KeyRound, UserPlus, LogIn, AlertTriangle, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-// import { RecaptchaVerifier } from 'firebase/auth'; // Firebase auth methods simplified/removed
-// import { auth } from '@/lib/firebaseConfig'; // Firebase auth methods simplified/removed
-
-// declare global {
-//   interface Window {
-//     recaptchaVerifier?: RecaptchaVerifier;
-//     recaptchaWidgetId?: number;
-//   }
-// }
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import type { EmailPasswordCredentials } from '@/types/auth';
 
 export const AuthScreen = () => {
-  // const {
-  //   signUpWithEmail,
-  //   signInWithEmail,
-  //   signInWithGoogle,
-  //   signInWithPhoneNumberFlow,
-  //   confirmOtp,
-  //   sendPasswordReset,
-  //   isLoading
-  // } = useAuth(); // Auth methods are not used in basic corporate site
+  const {
+    signUpWithEmail,
+    signInWithEmail,
+    user,
+    isLoadingAuth,
+    userProfile,
+    isLoadingProfile
+  } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [isClient, setIsClient] = useState(false);
-  const [isSigningUp, setIsSigningUp] = useState(false);
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [otp, setOtp] = useState('');
-  const [showOtpInput, setShowOtpInput] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false); // Local loading state
+  const [formLoading, setFormLoading] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    const queryMode = searchParams.get('mode');
+    if (queryMode === 'signup' || queryMode === 'signin') {
+      setMode(queryMode);
+    }
+  }, [searchParams]);
 
-  // setupRecaptcha and other auth-related useEffects are removed as they depend on Firebase auth
-  // which is not part of the basic corporate site.
+  useEffect(() => {
+    // Redirect if user is logged in and auth/profile checks are complete
+    if (!isLoadingAuth && !isLoadingProfile && user) {
+      if (userProfile?.onboardingCompleted) {
+        router.push('/dashboard');
+      } else {
+        // User exists but onboarding not complete or profile still loading
+        // Wait for isLoadingProfile to be false before redirecting to onboarding
+        if (!isLoadingProfile) router.push('/onboarding');
+      }
+    }
+  }, [user, userProfile, isLoadingAuth, isLoadingProfile, router]);
 
-  const handleEmailAuth = async (e: React.FormEvent) => {
+
+  const handleAuth = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
-    setIsLoading(true);
-    console.log("Email auth attempt (corporate site - placeholder):", { email, password, isSigningUp });
-    // Placeholder for actual auth logic if re-enabled
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    toast({ title: "Action (Demo)", description: "Authentication is currently disabled for this site." });
-    setIsLoading(false);
-  };
+    setFormLoading(true);
 
-  const handleGoogleSignIn = async () => {
-    setError(null);
-    setIsLoading(true);
-    console.log("Google sign-in attempt (corporate site - placeholder)");
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    toast({ title: "Action (Demo)", description: "Google Sign-In is currently disabled." });
-    setIsLoading(false);
+    if (mode === 'signup') {
+      if (password !== confirmPassword) {
+        setError("Passwords do not match.");
+        setFormLoading(false);
+        return;
+      }
+      if (password.length < 6) {
+        setError("Password must be at least 6 characters long.");
+        setFormLoading(false);
+        return;
+      }
+    }
+
+    const credentials: EmailPasswordCredentials = { email, password };
+
+    try {
+      if (mode === 'signup') {
+        const newUser = await signUpWithEmail(credentials);
+        if (newUser) {
+          toast({ title: "Account Created!", description: "Welcome! Let's get you set up." });
+          // No explicit redirect here; useEffect will handle it once profile (even initial) is fetched
+        }
+      } else {
+        const signedInUser = await signInWithEmail(credentials);
+        if (signedInUser) {
+          toast({ title: "Signed In Successfully!", description: "Welcome back!" });
+          // No explicit redirect here; useEffect will handle it
+        }
+      }
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred.");
+      toast({ title: "Authentication Failed", description: err.message || "Please try again.", variant: "destructive" });
+    } finally {
+      setFormLoading(false);
+    }
   };
   
-  const handleSendOtp = async () => {
+  const toggleMode = () => {
+    const newMode = mode === 'signin' ? 'signup' : 'signin';
+    setMode(newMode);
     setError(null);
-    setIsLoading(true);
-    console.log("Send OTP attempt (corporate site - placeholder):", phoneNumber);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    toast({ title: "Action (Demo)", description: "Phone Sign-In is currently disabled." });
-    setIsLoading(false);
+    router.replace(`/auth?mode=${newMode}`, { scroll: false });
   };
 
-  const handleVerifyOtp = async () => {
-    setError(null);
-    setIsLoading(true);
-    console.log("Verify OTP attempt (corporate site - placeholder):", otp);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    toast({ title: "Action (Demo)", description: "Phone Sign-In is currently disabled." });
-    setIsLoading(false);
-  };
-  
-  const handlePasswordReset = async () => {
-    setError(null);
-    setIsLoading(true);
-    console.log("Password reset attempt (corporate site - placeholder):", email);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    toast({ title: "Action (Demo)", description: "Password reset is currently disabled." });
-    setIsLoading(false);
-  };
-
-
-  if (!isClient) {
-    return null;
+  if (!isClient || isLoadingAuth) { // Only wait for isLoadingAuth initially, profile check is for redirection
+    return (
+      <div className="w-full min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-secondary/30 to-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
   }
+  
+  // If user is logged in, useEffect will redirect. This prevents form flashing.
+  if (user && !formLoading) { // Check !formLoading to avoid redirect during submission
+     return (
+      <div className="w-full min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-secondary/30 to-background">
+        <p className="text-muted-foreground">Checking your session...</p>
+        <Loader2 className="h-8 w-8 animate-spin text-primary ml-2" />
+      </div>
+    );
+  }
+
 
   const PasswordVisibilityToggle = ({ visible, onClick }: { visible: boolean, onClick: () => void }) => (
     <Button type="button" variant="ghost" size="icon" onClick={onClick} className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:text-foreground">
@@ -117,46 +137,71 @@ export const AuthScreen = () => {
   );
 
   return (
-    <div className="w-full min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background via-muted/50 to-background p-4 sm:p-8 antialiased">
-      <Card className="w-full max-w-md shadow-2xl rounded-xl border-border/70">
+    <div className="w-full min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background via-secondary/30 to-background p-4 sm:p-8 antialiased">
+      <Card className="w-full max-w-md shadow-2xl rounded-xl border-border/70 bg-card">
         <CardHeader className="text-center pt-8 pb-6">
-          <AppLogo iconSize={48} showName={false} className="mx-auto mb-4" />
-          <CardTitle className="text-3xl font-bold text-foreground font-headline">Welcome</CardTitle>
-          <CardDescription className="text-muted-foreground font-body text-base">Access your account (Currently Disabled)</CardDescription>
+          <Link href="/" className="inline-block mx-auto mb-4" aria-label="Back to homepage">
+            <AppLogo iconSize={48} showName={false} />
+          </Link>
+          <CardTitle className="text-3xl font-bold text-foreground font-headline">
+            {mode === 'signin' ? 'Welcome Back!' : 'Create Your Account'}
+          </CardTitle>
+          <CardDescription className="text-muted-foreground font-body text-base">
+            {mode === 'signin' ? 'Sign in to continue to Blisszits.' : 'Get started with Blisszits.'}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6 px-6 md:px-8 pb-6">
-          <p className="text-center text-muted-foreground">User authentication is not enabled for this corporate website demonstration.</p>
-          {/* Form kept for UI structure, but submission is a placeholder */}
-          <form onSubmit={handleEmailAuth} className="space-y-4 opacity-50 pointer-events-none">
+          {error && (
+            <div className="bg-destructive/10 p-3 rounded-md flex items-center text-destructive text-sm">
+              <AlertTriangle size={18} className="mr-2" />
+              {error}
+            </div>
+          )}
+          <form onSubmit={handleAuth} className="space-y-4">
             <div>
               <Label htmlFor="email">Email Address</Label>
               <div className="relative mt-1">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 pr-3 py-2.5" disabled/>
+                <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 pr-3 py-2.5 bg-input border-border focus:border-primary" required/>
               </div>
             </div>
             <div>
               <Label htmlFor="password">Password</Label>
               <div className="relative mt-1">
                 <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input id="password" type={showPassword ? "text" : "password"} placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 pr-10 py-2.5" disabled/>
+                <Input id="password" type={showPassword ? "text" : "password"} placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 pr-10 py-2.5 bg-input border-border focus:border-primary" required/>
                 <PasswordVisibilityToggle visible={showPassword} onClick={() => setShowPassword(!showPassword)} />
               </div>
             </div>
-            <Button type="submit" className="w-full font-semibold py-3 text-base shadow-md" disabled={isLoading || true}>
-              {isLoading ? 'Processing...' : (isSigningUp ? 'Create Account' : 'Sign In')}
+            {mode === 'signup' && (
+              <div>
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                 <div className="relative mt-1">
+                  <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input id="confirmPassword" type={showConfirmPassword ? "text" : "password"} placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="pl-10 pr-10 py-2.5 bg-input border-border focus:border-primary" required/>
+                  <PasswordVisibilityToggle visible={showConfirmPassword} onClick={() => setShowConfirmPassword(!showConfirmPassword)} />
+                </div>
+              </div>
+            )}
+            <Button type="submit" className="w-full font-semibold py-3 text-base shadow-md bg-primary hover:bg-primary/90 text-primary-foreground" disabled={formLoading || isAuthLoading}>
+              {formLoading || isAuthLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : (mode === 'signup' ? <UserPlus size={20} className="mr-2"/> : <LogIn size={20} className="mr-2"/>)}
+              {formLoading || isAuthLoading ? 'Processing...' : (mode === 'signup' ? 'Get Started' : 'Sign In')}
             </Button>
           </form>
 
           <Separator />
-           <p className="text-center text-sm text-muted-foreground">
-            This is a demonstration of a corporate website. CMS features are not active here.
+           
+          <p className="text-center text-sm text-muted-foreground">
+            {mode === 'signin' ? "Don't have an account?" : "Already have an account?"}{' '}
+            <Button variant="link" onClick={toggleMode} className="font-semibold text-primary p-0 h-auto">
+              {mode === 'signin' ? 'Get Started' : 'Sign In'}
+            </Button>
           </p>
 
         </CardContent>
         <CardFooter className="px-6 md:px-8 pb-8 pt-4">
           <p className="text-xs text-muted-foreground/80 text-center w-full font-body">
-            Explore our <Link href="/services" className="underline hover:text-primary">Services</Link> or <Link href="/contact" className="underline hover:text-primary">Contact Us</Link>.
+            By continuing, you agree to Blisszits' <Link href="/terms-of-service" className="underline hover:text-primary">Terms of Service</Link> and <Link href="/privacy-policy" className="underline hover:text-primary">Privacy Policy</Link>.
           </p>
         </CardFooter>
       </Card>
