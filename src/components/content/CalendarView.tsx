@@ -1,4 +1,3 @@
-
 // src/components/content/CalendarView.tsx
 "use client";
 
@@ -9,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import { Loader2, CalendarDays, Eye } from 'lucide-react';
 import { format, isSameDay } from 'date-fns';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface CalendarViewProps {
   contentItems: ContentItem[];
