@@ -50,13 +50,19 @@ export interface Idea {
   createdAt: Timestamp | Date;
 }
 
+// Type for seeding a new workspace with content from the AI generator
+export interface ContentSeed {
+  title: string;
+  idea: string;
+}
+
 interface WorkspaceContextType {
   workspaces: Workspace[];
   currentWorkspace: Workspace | null;
   currentWorkspaceId: string | null;
   isLoadingWorkspaces: boolean;
   setCurrentWorkspaceId: (id: string | null) => void;
-  createWorkspace: (name: string, description?: string) => Promise<string | undefined>;
+  createWorkspace: (name: string, description?: string, contentPlan?: ContentSeed[]) => Promise<string | undefined>;
   deleteWorkspace: (workspaceId: string) => Promise<void>;
   
   contentItems: ContentItem[];
@@ -184,14 +190,34 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user, workspaces, currentWorkspaceId]);
 
-  const createWorkspace = async (name: string, description: string = ''): Promise<string | undefined> => {
+  const createWorkspace = async (name: string, description: string = '', contentPlan: ContentSeed[] = []): Promise<string | undefined> => {
     if (!user || !db) throw new Error("User not logged in or DB not initialized");
-    const newWorkspaceRef = await addDoc(collection(db, "workspaces"), {
+
+    const batch = writeBatch(db);
+    const newWorkspaceRef = doc(collection(db, "workspaces"));
+
+    batch.set(newWorkspaceRef, {
       name,
       description,
       ownerId: user.uid,
       createdAt: serverTimestamp(),
     });
+
+    if (contentPlan.length > 0) {
+        contentPlan.forEach((itemTemplate) => {
+            const contentRef = doc(collection(db, `workspaces/${newWorkspaceRef.id}/content`));
+            batch.set(contentRef, {
+                title: itemTemplate.title,
+                idea: itemTemplate.idea,
+                status: 'Draft',
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+            });
+        });
+    }
+
+    await batch.commit();
+
     return newWorkspaceRef.id;
   };
 

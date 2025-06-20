@@ -12,9 +12,6 @@ import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Sparkles, Check, ArrowRight, ArrowLeft } from 'lucide-react';
 import { generateAdvancedWorkspacePlan, type GenerateAdvancedWorkspacePlanOutput } from '@/ai/flows/generate-advanced-workspace-plan';
-import { writeBatch } from 'firebase/firestore';
-import { db } from '@/lib/firebaseConfig';
-import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import { ScrollArea } from '../ui/scroll-area';
 import { Progress } from '../ui/progress';
 
@@ -91,6 +88,7 @@ export const AiWorkspaceGeneratorModal = ({ isOpen, onClose, onWorkspaceCreated 
       setGeneratedPlan(plan);
       setStep('review');
     } catch (error: any) {
+      console.error("AI Generation Error:", error);
       toast({ title: "AI Generation Failed", description: error.message || "Could not generate a plan.", variant: "destructive" });
       setStep('platforms'); // Go back to the last step on failure
     } finally {
@@ -106,24 +104,19 @@ export const AiWorkspaceGeneratorModal = ({ isOpen, onClose, onWorkspaceCreated 
     setIsSubmitting(true);
     try {
       const { workspaceName, workspaceDescription, contentPlan } = generatedPlan;
-      const newWorkspaceId = await createWorkspace(workspaceName, workspaceDescription);
       
-      if (!newWorkspaceId) throw new Error("Failed to get new workspace ID.");
-
-      if (contentPlan.length > 0) {
-        const batch = writeBatch(db);
-        contentPlan.forEach((itemTemplate) => {
-            const contentRef = doc(collection(db, `workspaces/${newWorkspaceId}/content`));
-            batch.set(contentRef, { ...itemTemplate, status: 'Draft', createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
-        });
-        await batch.commit();
+      const newWorkspaceId = await createWorkspace(workspaceName, workspaceDescription, contentPlan);
+      
+      if (!newWorkspaceId) {
+        throw new Error("Creation process failed to return a new workspace ID.");
       }
 
       toast({ title: "Workspace Created!", description: `Successfully created "${workspaceName}" with ${contentPlan.length} content ideas.` });
       if (onWorkspaceCreated) onWorkspaceCreated(newWorkspaceId);
       onClose();
     } catch (error: any) {
-      toast({ title: "Creation Failed", description: error.message || "Could not create workspace.", variant: "destructive" });
+      console.error("Workspace Creation Error:", error);
+      toast({ title: "Creation Failed", description: error.message || "Could not create the workspace and its content.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
@@ -221,22 +214,22 @@ export const AiWorkspaceGeneratorModal = ({ isOpen, onClose, onWorkspaceCreated 
           )}
         </div>
 
-        <DialogFooter className="flex-shrink-0">
+        <DialogFooter className="flex-shrink-0 pt-4 border-t">
           <div className="flex justify-between w-full">
             <div>
                  {step !== 'topic' && step !== 'generating' && (
-                    <Button variant="ghost" onClick={() => setStep(step === 'interests' ? 'topic' : 'interests')} disabled={isSubmitting}>
-                        <ArrowLeft className="mr-2"/> Back
+                    <Button variant="ghost" onClick={() => setStep(step === 'interests' ? 'topic' : step === 'platforms' ? 'interests' : 'platforms')} disabled={isSubmitting}>
+                        <ArrowLeft className="mr-2 h-4 w-4"/> Back
                     </Button>
                 )}
             </div>
             <div className="flex gap-2">
               <DialogClose asChild><Button variant="outline" onClick={onClose}>Cancel</Button></DialogClose>
               
-              {step === 'topic' && <Button onClick={() => setStep('interests')} disabled={!topic.trim()}>Next <ArrowRight className="ml-2"/></Button>}
-              {step === 'interests' && <Button onClick={() => setStep('platforms')}>Next <ArrowRight className="ml-2"/></Button>}
-              {step === 'platforms' && <Button onClick={handleGeneratePlan} disabled={isSubmitting}>Generate Plan <Sparkles className="ml-2"/></Button>}
-              {step === 'review' && <Button onClick={handleCreateWorkspace} disabled={isSubmitting}>Create Workspace <Check className="ml-2"/></Button>}
+              {step === 'topic' && <Button onClick={() => setStep('interests')} disabled={!topic.trim()}>Next <ArrowRight className="ml-2 h-4 w-4"/></Button>}
+              {step === 'interests' && <Button onClick={() => setStep('platforms')}>Next <ArrowRight className="ml-2 h-4 w-4"/></Button>}
+              {step === 'platforms' && <Button onClick={handleGeneratePlan} disabled={isSubmitting || !topic.trim()}>Generate Plan <Sparkles className="ml-2 h-4 w-4"/></Button>}
+              {step === 'review' && <Button onClick={handleCreateWorkspace} disabled={isSubmitting} className="bg-primary hover:bg-primary/90 text-primary-foreground">Create Workspace <Check className="ml-2 h-4 w-4"/></Button>}
             </div>
           </div>
         </DialogFooter>
