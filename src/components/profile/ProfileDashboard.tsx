@@ -27,7 +27,7 @@ const socialPlatforms = [
 
 
 export const ProfileDashboard = () => {
-  const { user, userProfile, updateUserProfile, updateUserPassword, isLoadingAuth, isLoadingProfile } = useAuth();
+  const { user, userProfile, updateUserProfile, updateUserPassword } = useAuth();
   const { toast } = useToast();
   
   const [formData, setFormData] = useState<Partial<UserProfile>>({
@@ -147,16 +147,6 @@ export const ProfileDashboard = () => {
     </Button>
   );
 
-  const overallLoading = isLoadingAuth || isLoadingProfile;
-
-  if (overallLoading && !userProfile) {
-    return <div className="flex justify-center items-center h-64"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
-  }
-
-  if (!user || !userProfile) {
-    return <div className="flex justify-center items-center h-64"><p>User data not available. Please try re-logging.</p></div>;
-  }
-
   return (
     <div className="container mx-auto px-0 py-0 space-y-8">
       <Card className="bg-card shadow-xl border-border/80">
@@ -191,7 +181,7 @@ export const ProfileDashboard = () => {
                   <Label htmlFor="email" className="font-medium">Email Address</Label>
                    <div className="relative mt-1">
                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="email" name="email" type="email" value={user.email || ''} readOnly disabled className="pl-9 bg-muted/50 cursor-not-allowed"/>
+                    <Input id="email" name="email" type="email" value={user?.email || ''} readOnly disabled className="pl-9 bg-muted/50 cursor-not-allowed"/>
                    </div>
                 </div>
               </div>
@@ -237,7 +227,7 @@ export const ProfileDashboard = () => {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full sm:w-auto font-semibold bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmittingProfile || isLoadingAuth}>
+              <Button type="submit" className="w-full sm:w-auto font-semibold bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmittingProfile}>
                 {isSubmittingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save size={16} className="mr-2" />}
                 Save Profile Changes
               </Button>
@@ -271,7 +261,7 @@ export const ProfileDashboard = () => {
                   </div>
                 </div>
                 {passwordError && <p className="text-sm text-destructive flex items-center gap-1"><AlertTriangle size={14}/> {passwordError}</p>}
-                <Button type="submit" className="w-full sm:w-auto font-semibold" variant="outline" disabled={isSubmittingPassword || isLoadingAuth}>
+                <Button type="submit" className="w-full sm:w-auto font-semibold" variant="outline" disabled={isSubmittingPassword}>
                   {isSubmittingPassword ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <KeyRound size={16} className="mr-2"/>}
                   Update Password
                 </Button>
@@ -286,8 +276,7 @@ export const ProfileDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                 {/* NOTE: This section is a placeholder for future social media integration. */}
-                 <p className="text-sm text-muted-foreground">Connect your accounts to enable the unified inbox and brand analytics.</p>
+                 <p className="text-sm text-muted-foreground">This feature is coming soon. Connecting your accounts will enable the unified inbox and brand analytics.</p>
                  <Button disabled className="w-full sm:w-auto">
                     <LinkIconLucide className="mr-2 h-4 w-4" /> Connect Facebook (Coming Soon)
                  </Button>

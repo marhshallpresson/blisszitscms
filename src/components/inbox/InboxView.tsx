@@ -44,9 +44,9 @@ export const InboxView = () => {
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
-      // NOTE: This timeout simulates fetching data.
+      // NOTE TO DEV: This timeout simulates fetching data.
       // In a real app, you would replace this with an API call to your backend
-      // which would, in turn, fetch data from social media APIs.
+      // which would, in turn, fetch data from social media APIs if they are connected.
       setIsLoading(true);
       setTimeout(() => {
         // e.g., fetch('/api/inbox').then(res => res.json()).then(data => setMessages(data));
@@ -63,9 +63,9 @@ export const InboxView = () => {
 
     const handleReply = () => {
         if (!replyText.trim() || !selectedMessage) return;
-        // NOTE: This is a placeholder for sending a real reply.
+        // NOTE TO DEV: This is a placeholder for sending a real reply via API.
         console.log(`Replying to ${selectedMessage.user} on ${selectedMessage.platform}: ${replyText}`);
-        toast({ title: "Reply Sent (Demo)", description: `Your reply to ${selectedMessage.user} has been logged.` });
+        toast({ title: "Reply Sent (Demo)", description: `This is a demo. No real message was sent.` });
         setReplyText('');
     };
     
@@ -111,10 +111,10 @@ export const InboxView = () => {
                         ) : filteredMessages.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-full p-8 text-center text-muted-foreground">
                                 <InboxIconLucide size={56} className="mb-4 opacity-70"/>
-                                <h3 className="text-xl font-semibold text-foreground">Inbox is Empty</h3>
-                                <p className="mt-2 text-sm">Connect your social accounts to see messages.</p>
-                                <Button asChild variant="link" className="mt-2">
-                                  <Link href="/app/settings">Connect Accounts</Link>
+                                <h3 className="text-xl font-semibold text-foreground">Connect Your Accounts</h3>
+                                <p className="mt-2 text-sm max-w-xs mx-auto">Connect your social accounts in settings to start receiving messages and comments here.</p>
+                                <Button asChild variant="default" className="mt-4">
+                                  <Link href="/app/settings"><LinkIcon className="mr-2 h-4 w-4" /> Go to Settings</Link>
                                 </Button>
                             </div>
                         ) : (

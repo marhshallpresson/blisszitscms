@@ -13,8 +13,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Download, BarChart3, Loader2, Link as LinkIcon, AlertTriangle } from 'lucide-react';
-import { ResponsiveContainer, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Line } from 'recharts';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 export const AnalyticsDashboard = () => {
     const [selectedPlatform, setSelectedPlatform] = useState<string>("Overall Performance");
@@ -30,9 +30,9 @@ export const AnalyticsDashboard = () => {
     const [chartData, setChartData] = useState([]);
 
     useEffect(() => {
-        // TODO: This is where you would fetch real analytics data from your backend
+        // NOTE TO DEV: This is where you would fetch real analytics data from your backend
         // or a third-party API based on the `selectedPlatform`.
-        // Example:
+        // This should only run if social media accounts are connected.
         //
         // const fetchData = async () => {
         //   try {
@@ -44,7 +44,7 @@ export const AnalyticsDashboard = () => {
         //     toast({ title: "Error", description: "Could not fetch analytics data.", variant: "destructive" });
         //   }
         // };
-        // fetchData();
+        // if(accountsConnected) fetchData();
 
         // For now, we keep the data empty to reflect the lack of integration.
         setKpis([]);
@@ -92,12 +92,14 @@ export const AnalyticsDashboard = () => {
     const EmptyState = () => (
       <div className="text-center py-20 border-2 border-dashed border-border/70 rounded-xl bg-card/50">
         <BarChart3 size={56} className="mx-auto text-muted-foreground opacity-70" />
-        <h3 className="mt-6 text-2xl font-semibold font-headline text-card-foreground">No Analytics Data</h3>
+        <h3 className="mt-6 text-2xl font-semibold font-headline text-card-foreground">Connect Your Accounts</h3>
         <p className="mt-2 text-muted-foreground font-body max-w-md mx-auto">
-          To see your analytics, connect your social media accounts in your profile settings. This feature is coming soon!
+          To see your analytics, you need to connect your social media accounts in your profile settings.
         </p>
-        <Button className="mt-6 bg-primary hover:bg-primary/90 text-primary-foreground" disabled>
-          <LinkIcon size={18} className="mr-2" /> Connect Accounts (Coming Soon)
+        <Button asChild className="mt-6 bg-primary hover:bg-primary/90 text-primary-foreground">
+          <Link href="/app/settings">
+            <LinkIcon size={18} className="mr-2" /> Connect Accounts
+          </Link>
         </Button>
       </div>
     );
@@ -138,40 +140,13 @@ export const AnalyticsDashboard = () => {
                     <EmptyState />
                  ) : (
                    <>
+                    {/* NOTE TO DEV: The content below will be rendered when `chartData` and `kpis` state variables are populated with real data. */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        {/* NOTE: This section will be populated by the `kpis` state variable when data is available. */}
-                        {kpis.map((kpi: any) => (
-                            <Card key={kpi.title} className="shadow-md border-border/70">
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium text-muted-foreground">{kpi.title}</CardTitle>
-                                    {/* Icon can be dynamic based on kpi.icon */}
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-3xl font-bold text-foreground">{kpi.value}</div>
-                                    <p className={`text-xs mt-1 ${kpi.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>{kpi.change} from last period</p>
-                                </CardContent>
-                            </Card>
-                        ))}
+                        {/* KPI cards will be mapped here */}
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <Card className="shadow-md border-border/70">
-                            <CardHeader><CardTitle className="font-headline text-xl">Follower Growth</CardTitle></CardHeader>
-                            <CardContent>
-                                <ResponsiveContainer width="100%" height={300}>
-                                    {/* NOTE: This chart will be populated by the `chartData` state variable. */}
-                                    <LineChart data={chartData}>
-                                        <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis dataKey="name" />
-                                        <YAxis />
-                                        <Tooltip />
-                                        <Legend />
-                                        <Line type="monotone" dataKey="followers" stroke="hsl(var(--primary))" strokeWidth={2} />
-                                    </LineChart>
-                                </ResponsiveContainer>
-                            </CardContent>
-                        </Card>
-                         {/* Add other charts as needed */}
+                       {/* Chart components will be mapped here */}
                     </div>
                   </>
                 )}

@@ -19,7 +19,11 @@ const appNavItems = [
   { href: "/app/settings", label: "Settings", icon: Settings },
 ];
 
-export const AppSidebar = () => {
+interface AppSidebarProps {
+  onNavigate?: () => void; // Optional callback for when a navigation link is clicked
+}
+
+export const AppSidebar = ({ onNavigate }: AppSidebarProps) => {
   const pathname = usePathname();
   const router = useRouter();
   const { signOut } = useAuth();
@@ -27,31 +31,35 @@ export const AppSidebar = () => {
 
   const handleSignOut = async () => {
     await signOut();
+    onNavigate?.();
     router.push("/auth");
   };
 
+  const handleNavigation = (href: string) => {
+    router.push(href);
+    onNavigate?.(); // Close mobile sheet on navigation
+  };
+
   return (
-    <aside className="w-64 bg-card text-card-foreground p-4 flex flex-col justify-between border-r border-border/70 shadow-md">
+    <aside className="w-full h-full bg-card text-card-foreground p-4 flex flex-col justify-between border-r border-border/70 shadow-md">
       <div>
         <div className="px-2 mb-8">
-          <Link href="/app/dashboard">
+          <Link href="/app/dashboard" onClick={onNavigate}>
             <AppLogo iconSize={32} showName={true} />
           </Link>
         </div>
         <nav className="space-y-2">
           {appNavItems.map((item) => {
-            const isActive = pathname.startsWith(item.href);
+            const isActive = pathname === item.href || (item.href !== "/app/dashboard" && pathname.startsWith(item.href));
             return (
               <Button
                 key={item.label}
                 variant={isActive ? "secondary" : "ghost"}
-                asChild
+                onClick={() => handleNavigation(item.href)}
                 className="w-full justify-start text-base py-3"
               >
-                <Link href={item.href}>
-                  <item.icon className="mr-3 h-5 w-5" />
-                  {item.label}
-                </Link>
+                <item.icon className="mr-3 h-5 w-5" />
+                {item.label}
               </Button>
             );
           })}

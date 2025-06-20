@@ -12,6 +12,7 @@ import { OnboardingModal } from '@/components/modals/OnboardingModal';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AiRecommendationCard } from '@/components/ai/AiRecommendationCard';
+import { AiWorkspaceGeneratorModal } from '../modals/AiWorkspaceGeneratorModal';
 
 interface WelcomeDashboardProps {
   isOnboardingCompleted: boolean;
@@ -20,7 +21,8 @@ interface WelcomeDashboardProps {
 export const WelcomeDashboard = ({ isOnboardingCompleted }: WelcomeDashboardProps) => {
   const { userProfile, updateUserProfile } = useAuth();
   const { workspaces, setCurrentWorkspaceId, isLoadingWorkspaces } = useWorkspace();
-  const [isWorkspaceCreatorOpen, setIsWorkspaceCreatorOpen] = useState(false);
+  const [isCreatorModalOpen, setIsCreatorModalOpen] = useState(false);
+  const [isAiGeneratorOpen, setIsAiGeneratorOpen] = useState(false);
   const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
   const router = useRouter();
 
@@ -32,21 +34,18 @@ export const WelcomeDashboard = ({ isOnboardingCompleted }: WelcomeDashboardProp
   const handleSaveInterests = async (interests: string[]) => {
     try {
       await updateUserProfile({ interests: interests });
-      // After saving, immediately close modal and let the AI card fetch new ideas.
       setIsOnboardingModalOpen(false);
     } catch(e) {
       console.error("Failed to save interests", e);
     }
   };
   
-  // NOTE: This logic triggers the onboarding modal if interests are not set.
   const handleOpenOnboardingIfNeeded = () => {
     if (!userProfile?.interests || userProfile.interests.length === 0) {
       setIsOnboardingModalOpen(true);
     }
   }
 
-  // Show only the 3 most recently created workspaces.
   const recentWorkspaces = workspaces.slice(0, 3); 
 
   return (
@@ -65,13 +64,13 @@ export const WelcomeDashboard = ({ isOnboardingCompleted }: WelcomeDashboardProp
                 </CardDescription>
               </div>
             </div>
-            <Button 
-              onClick={() => setIsWorkspaceCreatorOpen(true)} 
-              size="lg" 
-              className="font-bold shadow-md hover:shadow-lg transition-shadow bg-background/20 hover:bg-background/30 text-primary-foreground mt-3 sm:mt-0 w-full sm:w-auto"
-            >
-              <Plus size={22} className="mr-2" /> Create New Workspace
-            </Button>
+             <Button 
+                onClick={() => setIsAiGeneratorOpen(true)} 
+                size="lg" 
+                className="font-bold shadow-md hover:shadow-lg transition-shadow bg-background/20 hover:bg-background/30 text-primary-foreground mt-3 sm:mt-0 w-full sm:w-auto"
+              >
+                <Plus size={22} className="mr-2" /> Create New Workspace
+              </Button>
           </div>
         </CardHeader>
       </Card>
@@ -136,17 +135,24 @@ export const WelcomeDashboard = ({ isOnboardingCompleted }: WelcomeDashboardProp
             isOnboardingCompleted={isOnboardingCompleted}
           />
       </div>
-
+      
+      {/* Modals */}
       <WorkspaceCreatorModal
-        isOpen={isWorkspaceCreatorOpen}
-        onClose={() => setIsWorkspaceCreatorOpen(false)}
+        isOpen={isCreatorModalOpen}
+        onClose={() => setIsCreatorModalOpen(false)}
         onWorkspaceCreated={(id) => {
-          setIsWorkspaceCreatorOpen(false); 
-          if (id) {
-            handleNavigateToWorkspace(id);
-          }
+          setIsCreatorModalOpen(false); 
+          if (id) handleNavigateToWorkspace(id);
         }}
       />
+      <AiWorkspaceGeneratorModal
+        isOpen={isAiGeneratorOpen}
+        onClose={() => setIsAiGeneratorOpen(false)}
+        onWorkspaceCreated={(id) => {
+          setIsAiGeneratorOpen(false);
+          if (id) handleNavigateToWorkspace(id);
+        }}
+       />
        <OnboardingModal
         isOpen={isOnboardingModalOpen}
         onClose={() => setIsOnboardingModalOpen(false)}
