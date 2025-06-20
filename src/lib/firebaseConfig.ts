@@ -1,10 +1,6 @@
 
-import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
-import { getFirestore, Firestore } from 'firebase/firestore';
-import { getAuth, Auth } from 'firebase/auth';
-// import { getAnalytics } from "firebase/analytics"; // Analytics can be added if needed
-
 // Your web app's Firebase configuration directly embedded
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyA_e8VnGjnPALsVDYeBvAlQaWCvNDIUOYM",
   authDomain: "blisszits.firebaseapp.com",
@@ -12,12 +8,24 @@ const firebaseConfig = {
   storageBucket: "blisszits.firebasestorage.app",
   messagingSenderId: "668053435356",
   appId: "1:668053435356:web:7c0d83f6d9ee5c50a61519",
-  measurementId: "G-0FK5RSHQZ5" // measurementId is optional but included if provided
+  measurementId: "G-0FK5RSHQZ5"
 };
+
+// Import the functions you need from the SDKs you need
+// import { getAnalytics } from "firebase/analytics"; // Analytics can be added if needed
+
+import {initializeApp, getApps, type FirebaseApp} from 'firebase/app';
+import {getDatabase, type Database as RealtimeDatabase} from 'firebase/database';
+import {getFirestore, type Firestore} from 'firebase/firestore';
+import {getAuth, type Auth} from 'firebase/auth';
+
+// Your web app's Firebase configuration directly embedded
+// const firebaseConfig = { ... } // Already defined above
 
 let app: FirebaseApp;
 let db: Firestore;
 let auth: Auth;
+let rtdb: RealtimeDatabase; // Add this
 // let analytics; // Uncomment if getAnalytics is used
 
 if (typeof window !== 'undefined') {
@@ -26,20 +34,24 @@ if (typeof window !== 'undefined') {
       app = initializeApp(firebaseConfig);
       db = getFirestore(app);
       auth = getAuth(app);
+      rtdb = getDatabase(app); // Initialize RTDB
       // analytics = getAnalytics(app); // Initialize analytics if needed
     } catch (error) {
-      console.error("Firebase initialization error:", error);
+      console.error('Firebase initialization error:', error);
       // @ts-ignore
       app = undefined; 
       // @ts-ignore
       db = undefined; 
       // @ts-ignore
       auth = undefined;
+      // @ts-ignore
+      rtdb = undefined;
     }
   } else {
     app = getApps()[0];
     db = getFirestore(app);
     auth = getAuth(app);
+    rtdb = getDatabase(app); // Get RTDB instance
     // analytics = getAnalytics(app); // Get analytics instance if app is already initialized
   }
 } else {
@@ -52,6 +64,8 @@ if (typeof window !== 'undefined') {
   db = undefined;
    // @ts-ignore
   auth = undefined;
+   // @ts-ignore
+  rtdb = undefined;
 }
 
 // This APP_ID_IDENTIFIER is used for structuring data in Firestore (e.g., /artifacts/{APP_ID_IDENTIFIER}/users/...).
@@ -66,5 +80,5 @@ if (APP_ID_IDENTIFIER === 'default-app-id-replace-me' || APP_ID_IDENTIFIER === '
     );
 }
 
-export { app, db, auth, APP_ID_IDENTIFIER as APP_ID };
+export {app, db, auth, rtdb, APP_ID_IDENTIFIER as APP_ID}; // Export rtdb
 // export { app, db, auth, analytics, APP_ID_IDENTIFIER as APP_ID }; // export analytics if used

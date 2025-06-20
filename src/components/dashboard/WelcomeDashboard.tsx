@@ -9,6 +9,7 @@ import { Plus, Briefcase, ChevronRight } from 'lucide-react';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ClientFormattedDate } from '@/components/utils/ClientFormattedDate';
+import { RealtimeGreeting } from '@/components/rtdb/RealtimeGreeting';
 
 interface WelcomeDashboardProps {
   onSelectWorkspace: (id: string) => void;
@@ -85,6 +86,7 @@ export const WelcomeDashboard = ({ onSelectWorkspace, onNewWorkspace }: WelcomeD
           </div>
         )}
       </div>
+      <RealtimeGreeting />
       <AiRecommendationCard />
     </div>
   );
