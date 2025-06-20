@@ -18,6 +18,20 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/dashboard',
+        destination: '/app/dashboard',
+        permanent: true,
+      },
+      {
+        source: '/settings',
+        destination: '/app/settings',
+        permanent: true,
+      },
+    ]
+  },
 };
 
 export default nextConfig;
