@@ -14,7 +14,7 @@ export interface Workspace {
   name: string;
   description?: string;
   ownerId: string;
-  createdAt: Timestamp | Date; 
+  createdAt: Timestamp | Date;
   contentCount?: number;
 }
 
@@ -23,7 +23,7 @@ export interface ContentItem {
   title: string;
   idea?: string;
   script?: string;
-  dueDate?: string; 
+  dueDate?: string;
   status?: ContentStatus;
   createdAt?: Timestamp | Date;
   updatedAt?: Timestamp | Date;
@@ -57,7 +57,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
 
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
   const [isLoadingContent, setIsLoadingContent] = useState(false);
-  const [initialWorkspaceIdLoaded, setInitialWorkspaceIdLoaded] = useState(false);
+  const [isInitialRtdbLoadAttempted, setIsInitialRtdbLoadAttempted] = useState(false);
 
 
   // Effect for Firestore: fetching workspaces
@@ -65,8 +65,8 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
     if (!user) {
       setWorkspaces([]);
       setIsLoadingWorkspaces(false);
-      setCurrentWorkspaceIdState(null); 
-      setInitialWorkspaceIdLoaded(false);
+      setCurrentWorkspaceIdState(null);
+      setIsInitialRtdbLoadAttempted(false); // Reset RTDB load attempt status on sign out
       return;
     }
     setIsLoadingWorkspaces(true);
@@ -75,11 +75,11 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
       const workspacesData = await Promise.all(snapshot.docs.map(async (docData) => {
         const contentCol = collection(db, "artifacts", APP_ID, "users", user.uid, "workspaces", docData.id, "contentPlan");
         const contentSnapshot = await getDocs(contentCol);
-        return { 
-          id: docData.id, 
-          ...docData.data(), 
+        return {
+          id: docData.id,
+          ...docData.data(),
           createdAt: docData.data().createdAt?.toDate ? docData.data().createdAt.toDate() : new Date(),
-          contentCount: contentSnapshot.size 
+          contentCount: contentSnapshot.size
         } as Workspace;
       }));
       setWorkspaces(workspacesData);
@@ -91,32 +91,41 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, [user]);
 
-  // Effect for RTDB: fetching last selected workspace ID
+  // Effect for RTDB: fetching last selected workspace ID ONCE after user loads
   useEffect(() => {
-    if (!user || !rtdb) {
-      setInitialWorkspaceIdLoaded(true); // Mark as loaded if no user or rtdb
+    if (!user || !rtdb || isInitialRtdbLoadAttempted) {
+      // If user is available but we haven't attempted RTDB load, mark as attempted.
+      // This covers cases where RTDB path might be empty or listener doesn't fire immediately.
+      if (user && !isInitialRtdbLoadAttempted) {
+        setIsInitialRtdbLoadAttempted(true);
+      }
       return;
     }
 
     const preferencePath = `users/${user.uid}/preferences/lastSelectedWorkspaceId`;
     const userPreferenceRef = rtdbRef(rtdb, preferencePath);
 
+    // Use onValue with a cleanup to ensure it's called once effectively for initial load logic
     const listener = rtdbOnValue(userPreferenceRef, (snapshot) => {
-      const lastId = snapshot.val();
-      if (lastId && !initialWorkspaceIdLoaded && !currentWorkspaceId) { 
-        // Only set if it's the initial load and not already set by interaction
+      const lastId = snapshot.val() as string | null;
+      // Only set if currentWorkspaceId is still null (i.e., user hasn't interacted yet to set it)
+      // and this is the first successful load from RTDB for this session.
+      if (lastId && currentWorkspaceId === null) {
         setCurrentWorkspaceIdState(lastId);
       }
-      setInitialWorkspaceIdLoaded(true); 
+      setIsInitialRtdbLoadAttempted(true); // Mark that we've processed the initial RTDB value.
+      rtdbOff(userPreferenceRef, 'value', listener); // Detach after the first successful read or if value is null.
     }, (error) => {
       console.error("Error fetching last selected workspace ID from RTDB:", error);
-      setInitialWorkspaceIdLoaded(true); // Mark as loaded even on error
+      setIsInitialRtdbLoadAttempted(true); // Mark as attempted even on error.
+      rtdbOff(userPreferenceRef, 'value', listener); // Detach on error too.
     });
 
     return () => {
+      // Ensure listener is detached if component unmounts before it fires or on user change.
       rtdbOff(userPreferenceRef, 'value', listener);
     };
-  }, [user, initialWorkspaceIdLoaded, currentWorkspaceId]);
+  }, [user, isInitialRtdbLoadAttempted, currentWorkspaceId]); // currentWorkspaceId added to allow re-check if it becomes null by other means
 
 
   // Effect for Firestore: fetching content items for current workspace
@@ -129,8 +138,8 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
     setIsLoadingContent(true);
     const planQuery = query(collection(db, "artifacts", APP_ID, "users", user.uid, "workspaces", currentWorkspaceId, "contentPlan"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(planQuery, snapshot => {
-        setContentItems(snapshot.docs.map(docData => ({ 
-          id: docData.id, 
+        setContentItems(snapshot.docs.map(docData => ({
+          id: docData.id,
           ...docData.data(),
           createdAt: docData.data().createdAt?.toDate ? docData.data().createdAt.toDate() : new Date(),
           updatedAt: docData.data().updatedAt?.toDate ? docData.data().updatedAt.toDate() : new Date(),
@@ -152,9 +161,9 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
         console.error("Error saving last selected workspace ID to RTDB:", error);
       });
     }
-    if (id === null) { // When deselecting workspace, ensure initial load flag is reset for next login/selection
-        setInitialWorkspaceIdLoaded(false);
-    }
+    // If user explicitly deselects a workspace (sets id to null),
+    // we don't need to reset isInitialRtdbLoadAttempted.
+    // That flag is for the very first load from RTDB after authentication.
   }, [user]);
 
   const createWorkspace = async (name: string, description?: string) => {
@@ -166,13 +175,13 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
       createdAt: serverTimestamp(),
     });
   };
-  
+
   const createContentItem = async (item: Omit<ContentItem, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (!user || !currentWorkspaceId) throw new Error("User or workspace not available");
     const planCollection = collection(db, "artifacts", APP_ID, "users", user.uid, "workspaces", currentWorkspaceId, "contentPlan");
-    await addDoc(planCollection, { 
-      ...item, 
-      createdAt: serverTimestamp(), 
+    await addDoc(planCollection, {
+      ...item,
+      createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
       status: item.status || 'Draft'
     });
@@ -182,7 +191,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
     if (!user || !currentWorkspaceId) throw new Error("User or workspace not available");
     const itemRef = doc(db, "artifacts", APP_ID, "users", user.uid, "workspaces", currentWorkspaceId, "contentPlan", item.id);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id, ...dataToUpdate } = item; 
+    const { id, ...dataToUpdate } = item;
     await updateDoc(itemRef, {
       ...dataToUpdate,
       updatedAt: serverTimestamp()
@@ -200,12 +209,12 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
   const currentWorkspace = workspaces.find(ws => ws.id === currentWorkspaceId) || null;
 
   return (
-    <WorkspaceContext.Provider value={{ 
-        workspaces, 
-        currentWorkspace, 
-        currentWorkspaceId, 
-        isLoadingWorkspaces, 
-        setCurrentWorkspaceId, 
+    <WorkspaceContext.Provider value={{
+        workspaces,
+        currentWorkspace,
+        currentWorkspaceId,
+        isLoadingWorkspaces,
+        setCurrentWorkspaceId,
         createWorkspace,
         contentItems,
         isLoadingContent,
@@ -225,5 +234,4 @@ export const useWorkspace = (): WorkspaceContextType => {
   }
   return context;
 };
-
 
