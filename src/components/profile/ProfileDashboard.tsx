@@ -8,21 +8,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, KeyRound, ShieldAlert, Bell } from 'lucide-react';
-import { ReminderSetupModal } from '@/components/modals/ReminderSetupModal'; // Import ReminderSetupModal
+import { ArrowLeft, KeyRound, ShieldAlert, Bell, Loader2 } from 'lucide-react';
+import { ReminderSetupModal } from '@/components/modals/ReminderSetupModal'; 
 
 interface ProfileDashboardProps {
   onBack: () => void;
 }
 
 export const ProfileDashboard = ({ onBack }: ProfileDashboardProps) => {
-  const { user, updateUserPassword, isLoading } = useAuth();
+  const { user, updateUserPassword, isLoading: isAuthLoading } = useAuth();
   const { toast } = useToast();
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [isReminderModalOpen, setIsReminderModalOpen] = useState(false); // State for reminder modal
+  const [isReminderModalOpen, setIsReminderModalOpen] = useState(false); 
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,6 +123,7 @@ export const ProfileDashboard = ({ onBack }: ProfileDashboardProps) => {
                       placeholder="Enter new password"
                       className="pl-10"
                       required
+                      aria-required="true"
                     />
                   </div>
                 </div>
@@ -138,6 +139,7 @@ export const ProfileDashboard = ({ onBack }: ProfileDashboardProps) => {
                       placeholder="Confirm new password"
                       className="pl-10"
                       required
+                      aria-required="true"
                     />
                   </div>
                 </div>
@@ -145,8 +147,9 @@ export const ProfileDashboard = ({ onBack }: ProfileDashboardProps) => {
               {passwordError && (
                 <p className="text-sm text-destructive flex items-center gap-2"><ShieldAlert size={16}/> {passwordError}</p>
               )}
-              <Button type="submit" disabled={isLoading || !newPassword || !confirmPassword} className="font-semibold">
-                {isLoading ? 'Updating...' : 'Update Password'}
+              <Button type="submit" disabled={isAuthLoading || !newPassword || !confirmPassword} className="font-semibold">
+                {isAuthLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isAuthLoading ? 'Updating...' : 'Update Password'}
               </Button>
                <p className="text-xs text-muted-foreground">
                 Firebase may require you to re-authenticate for sensitive operations like changing your password if you haven't signed in recently.

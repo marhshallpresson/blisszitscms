@@ -24,14 +24,14 @@ import {
 
 interface AdminDashboardProps {
   onNavigateToWorkspace: (workspaceId: string) => void;
-  onCreateWorkspace: () => void; // To open the existing WorkspaceCreatorModal
+  onCreateWorkspace: () => void; 
 }
 
 export const AdminDashboard = ({ onNavigateToWorkspace, onCreateWorkspace }: AdminDashboardProps) => {
   const { user } = useAuth();
   const { workspaces, isLoadingWorkspaces, deleteWorkspace: contextDeleteWorkspace } = useWorkspace();
   const { toast } = useToast();
-  const [isDeleting, setIsDeleting] = useState<string | null>(null); // Store ID of workspace being deleted
+  const [isDeleting, setIsDeleting] = useState<string | null>(null); 
 
   const handleDeleteWorkspace = async (workspaceId: string, workspaceName: string) => {
     setIsDeleting(workspaceId);
@@ -54,7 +54,7 @@ export const AdminDashboard = ({ onNavigateToWorkspace, onCreateWorkspace }: Adm
   };
 
   if (!user) {
-    // This view should ideally be protected by auth Higher Order Component or route guard
+    
     return <p className="p-4">You must be an administrator to view this page.</p>;
   }
 
@@ -102,13 +102,13 @@ export const AdminDashboard = ({ onNavigateToWorkspace, onCreateWorkspace }: Adm
                         <ClientFormattedDate date={ws.createdAt as Date} />
                     </TableCell>
                     <TableCell className="text-right space-x-2">
-                      <Button variant="outline" size="sm" onClick={() => onNavigateToWorkspace(ws.id)}>
+                      <Button variant="outline" size="sm" onClick={() => onNavigateToWorkspace(ws.id)} aria-label={`Open workspace ${ws.name}`}>
                         <ExternalLink size={14} className="mr-1 md:mr-2" />
                         <span className="hidden md:inline">Open</span>
                       </Button>
                        <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="destructive" size="sm" disabled={isDeleting === ws.id}>
+                          <Button variant="destructive" size="sm" disabled={isDeleting === ws.id} aria-label={`Delete workspace ${ws.name}`}>
                             {isDeleting === ws.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={14} />}
                              <span className="ml-1 hidden md:inline">Delete</span>
                           </Button>
@@ -118,7 +118,7 @@ export const AdminDashboard = ({ onNavigateToWorkspace, onCreateWorkspace }: Adm
                             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                             <AlertDialogDescription>
                               This action cannot be undone. This will permanently delete the workspace
-                              <span className="font-semibold"> "{ws.name}"</span> and all of its content.
+                              <span className="font-semibold"> "{ws.name}"</span> and all of its content, including comments.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
@@ -152,7 +152,7 @@ export const AdminDashboard = ({ onNavigateToWorkspace, onCreateWorkspace }: Adm
             </CardFooter>
         )}
       </Card>
-      {/* Placeholder for other admin settings */}
+      
     </div>
   );
 };

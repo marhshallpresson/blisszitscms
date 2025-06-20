@@ -17,6 +17,7 @@ import { generateScriptOutline, type GenerateScriptOutlineInput, type GenerateSc
 import { draftCaption, type DraftCaptionInput, type DraftCaptionOutput } from '@/ai/flows/draft-caption';
 import { suggestHashtags, type SuggestHashtagsInput, type SuggestHashtagsOutput } from '@/ai/flows/suggest-hashtags';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Card } from '@/components/ui/card';
 
 
 interface ContentFormModalProps {
@@ -29,7 +30,7 @@ const initialFormData: Omit<ContentItem, 'id' | 'createdAt' | 'updatedAt'> = {
   title: '',
   idea: '',
   script: '',
-  caption: '', // Added caption
+  caption: '', 
   dueDate: '',
   status: 'Draft',
 };
@@ -46,14 +47,14 @@ export const ContentFormModal = ({ isOpen, onClose, item }: ContentFormModalProp
   useEffect(() => {
     if (item) {
       setFormData({
-        ...initialFormData, // Ensure all fields are present even if item is partial
+        ...initialFormData, 
         ...item,
         dueDate: item.dueDate ? new Date(item.dueDate).toISOString().split('T')[0] : '',
       });
     } else {
       setFormData(initialFormData);
     }
-    setAiResults({}); // Clear AI results when item changes or modal opens for new
+    setAiResults({}); 
   }, [item, isOpen]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -93,7 +94,7 @@ export const ContentFormModal = ({ isOpen, onClose, item }: ContentFormModalProp
 
   const handleAiAction = useCallback(async (actionType: 'ideas' | 'script' | 'caption' | 'hashtags') => {
     setAiLoading(prev => ({ ...prev, [actionType]: true }));
-    setAiResults(prev => ({ ...prev, [actionType]: null })); // Clear previous result for this action
+    setAiResults(prev => ({ ...prev, [actionType]: null })); 
 
     try {
       let result: any;
@@ -145,7 +146,7 @@ export const ContentFormModal = ({ isOpen, onClose, item }: ContentFormModalProp
     } else if (actionType === 'hashtags' && Array.isArray(result.hashtags)) {
         setFormData(prev => ({ ...prev, caption: `${prev.caption || ''}\n\n${result.hashtags.join(' ')}`}));
     }
-    setAiResults(prev => ({ ...prev, [actionType]: null })); // Clear after applying
+    setAiResults(prev => ({ ...prev, [actionType]: null })); 
   };
   
 
@@ -166,6 +167,7 @@ export const ContentFormModal = ({ isOpen, onClose, item }: ContentFormModalProp
               placeholder="Content Title (e.g., Mindset Monday - The 'Why')"
               className="w-full text-2xl font-bold p-2 bg-transparent focus:outline-none focus:ring-0 border-0 shadow-none focus-visible:ring-0 focus:bg-muted rounded-lg text-card-foreground"
               required
+              aria-required="true"
             />
           </div>
           <div>
@@ -189,7 +191,7 @@ export const ContentFormModal = ({ isOpen, onClose, item }: ContentFormModalProp
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-4 bg-muted/50 rounded-md space-y-4">
-                {/* AI Ideas */}
+                
                 <div>
                   <Button type="button" onClick={() => handleAiAction('ideas')} disabled={aiLoading['ideas']} className="w-full justify-start">
                     {aiLoading['ideas'] && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Brainstorm Ideas
@@ -208,7 +210,7 @@ export const ContentFormModal = ({ isOpen, onClose, item }: ContentFormModalProp
                   {aiResults.ideas?.error && <p className="text-destructive text-sm mt-1">{aiResults.ideas.error}</p>}
                 </div>
 
-                {/* AI Script */}
+                
                 <div>
                   <Button type="button" onClick={() => handleAiAction('script')} disabled={aiLoading['script'] || !formData.idea} className="w-full justify-start">
                     {aiLoading['script'] && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Generate Script Outline
@@ -222,7 +224,7 @@ export const ContentFormModal = ({ isOpen, onClose, item }: ContentFormModalProp
                   {aiResults.script?.error && <p className="text-destructive text-sm mt-1">{aiResults.script.error}</p>}
                 </div>
 
-                {/* AI Caption */}
+                
                 <div>
                   <Button type="button" onClick={() => handleAiAction('caption')} disabled={aiLoading['caption'] || (!formData.idea && !formData.title)} className="w-full justify-start">
                     {aiLoading['caption'] && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Draft Caption
@@ -236,7 +238,7 @@ export const ContentFormModal = ({ isOpen, onClose, item }: ContentFormModalProp
                   {aiResults.caption?.error && <p className="text-destructive text-sm mt-1">{aiResults.caption.error}</p>}
                 </div>
                 
-                {/* AI Hashtags */}
+                
                 <div>
                   <Button type="button" onClick={() => handleAiAction('hashtags')} disabled={aiLoading['hashtags'] || (!formData.caption && !formData.idea)} className="w-full justify-start">
                     {aiLoading['hashtags'] && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Suggest Hashtags
@@ -292,7 +294,7 @@ export const ContentFormModal = ({ isOpen, onClose, item }: ContentFormModalProp
             <div>
               <Label htmlFor="status" className="text-card-foreground">Status</Label>
               <Select name="status" value={formData.status || 'Draft'} onValueChange={handleSelectChange}>
-                <SelectTrigger className="w-full p-2 bg-muted rounded-lg text-card-foreground">
+                <SelectTrigger id="status" className="w-full p-2 bg-muted rounded-lg text-card-foreground">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>

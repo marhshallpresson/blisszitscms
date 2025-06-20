@@ -48,7 +48,7 @@ export const ContentDetailsModal = ({ isOpen, onClose, item }: ContentDetailsMod
       });
       return () => unsubscribe();
     } else {
-      setComments([]); // Clear comments when modal is closed or no item
+      setComments([]); 
     }
   }, [isOpen, item, getComments]);
 
@@ -103,7 +103,7 @@ export const ContentDetailsModal = ({ isOpen, onClose, item }: ContentDetailsMod
               </div>
             )}
 
-            {/* Comments Section */}
+            
             <div className="space-y-4 pt-4 border-t">
               <h4 className="font-semibold text-lg text-primary flex items-center gap-2"><MessageSquare size={20}/> Team Comments</h4>
               {isLoadingComments ? (
@@ -133,8 +133,9 @@ export const ContentDetailsModal = ({ isOpen, onClose, item }: ContentDetailsMod
                   className="flex-grow bg-input text-foreground"
                   rows={2}
                   disabled={isSubmittingComment}
+                  aria-label="Add a new comment"
                 />
-                <Button type="submit" size="icon" disabled={!newComment.trim() || isSubmittingComment}>
+                <Button type="submit" size="icon" disabled={!newComment.trim() || isSubmittingComment} aria-label="Send comment">
                   {isSubmittingComment ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send size={18}/>}
                   <span className="sr-only">Send comment</span>
                 </Button>

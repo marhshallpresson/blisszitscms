@@ -4,10 +4,12 @@
 import type { Workspace, ContentItem } from '@/contexts/WorkspaceContext';
 import { Button } from '@/components/ui/button';
 import { ContentItemCard } from './ContentItemCard';
-import { Plus, ArrowLeft, Edit3, Loader2 } from 'lucide-react';
+import { Plus, ArrowLeft, Edit3 } from 'lucide-react';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
+// Note: CalendarView and IdeaBoardView will be implemented in a future iteration.
+// For now, this dashboard focuses on the grid view of content items.
 
 interface ContentDashboardProps {
   workspace: Workspace;
@@ -43,10 +45,13 @@ export const ContentDashboard = ({
         </Button>
       </div>
       
+      {/* Placeholder for future Tabs (Grid, Calendar, Idea Board) */}
+      {/* <div className="my-6">Tabs will go here</div> */}
+
       {isLoadingContent ? (
         <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {Array.from({ length: 4 }).map((_, index) => (
-            <Card key={index} className="w-full">
+            <Card key={index} className="w-full" aria-label="Loading content item">
               <CardHeader>
                 <Skeleton className="h-6 w-3/4" />
                 <Skeleton className="h-4 w-1/4 mt-1" />

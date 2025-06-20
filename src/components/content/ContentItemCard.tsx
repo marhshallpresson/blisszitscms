@@ -5,7 +5,7 @@ import type { ContentItem } from '@/contexts/WorkspaceContext';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit3, Trash2, Calendar, Eye } from 'lucide-react'; // Added Eye icon
+import { Edit3, Trash2, Calendar, Eye, CheckCircle } from 'lucide-react'; 
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,8 +21,8 @@ interface ContentItemCardProps {
   item: ContentItem;
   onEdit: (item: ContentItem) => void;
   onDelete: (itemId: string) => void;
-  onViewDetails: (item: ContentItem) => void; // New prop
-  onMarkAsPublished: (item: ContentItem) => void; // New prop
+  onViewDetails: (item: ContentItem) => void; 
+  onMarkAsPublished: (item: ContentItem) => void; 
 }
 
 const getStatusColor = (status?: string) => {
@@ -41,7 +41,13 @@ export const ContentItemCard = ({ item, onEdit, onDelete, onViewDetails, onMarkA
 
   useEffect(() => {
     if (item.dueDate) {
-      setClientFormattedDueDate(new Date(item.dueDate).toLocaleDateString());
+      // Ensure date is valid before formatting
+      const dateObj = new Date(item.dueDate);
+      if (!isNaN(dateObj.getTime())) {
+        setClientFormattedDueDate(dateObj.toLocaleDateString());
+      } else {
+        setClientFormattedDueDate('Invalid date');
+      }
     } else {
       setClientFormattedDueDate('Not set');
     }
@@ -67,7 +73,7 @@ export const ContentItemCard = ({ item, onEdit, onDelete, onViewDetails, onMarkA
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="More options">
               <MoreVertical size={16} />
               <span className="sr-only">More options</span>
             </Button>

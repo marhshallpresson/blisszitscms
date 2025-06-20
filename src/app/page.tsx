@@ -16,7 +16,7 @@ import { ContentFormModal } from '@/components/modals/ContentFormModal';
 import { ContentDetailsModal } from '@/components/modals/ContentDetailsModal';
 import { MarkAsPublishedModal } from '@/components/modals/MarkAsPublishedModal';
 import { SelectWorkspaceForImportModal } from '@/components/modals/SelectWorkspaceForImportModal';
-import { OnboardingModal } from '@/components/modals/OnboardingModal'; // New Import
+import { OnboardingModal } from '@/components/modals/OnboardingModal'; 
 import { AppLogo } from '@/components/layout/AppLogo';
 import { useToast } from '@/hooks/use-toast';
 
@@ -34,7 +34,7 @@ import {
   SidebarMenuSkeleton,
 } from '@/components/ui/sidebar';
 import { LayoutDashboard, LogOut, Sparkles, UserCircle, Briefcase, BarChart2, MessageSquare, Shield } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+
 
 type ActiveView = 'welcome' | 'content' | 'profile' | 'admin' | 'analytics' | 'inbox';
 
@@ -59,10 +59,10 @@ export default function AppPage() {
   const [isSelectWorkspaceModalOpen, setIsSelectWorkspaceModalOpen] = useState(false);
   const [pendingAiImportData, setPendingAiImportData] = useState<{ title: string, description: string, caption?: string } | null>(null);
 
-  // Onboarding State
+  
   const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
-  const [isOnboardingCompleted, setIsOnboardingCompleted] = useState(false); // Store this in user profile later
-  const [userInterests, setUserInterests] = useState<string[]>([]); // Store this in user profile later
+  const [isOnboardingCompleted, setIsOnboardingCompleted] = useState(false); 
+  const [userInterests, setUserInterests] = useState<string[]>([]); 
 
 
   useEffect(() => {
@@ -165,20 +165,20 @@ export default function AppPage() {
     setActiveView(view);
   };
 
-  // Onboarding Modal Handlers
+  
   const handleOpenOnboardingModal = () => {
     setIsOnboardingModalOpen(true);
   };
 
   const handleSaveUserInterests = (interests: string[]) => {
     setUserInterests(interests);
-    setIsOnboardingCompleted(true); // Mark onboarding as complete
+    setIsOnboardingCompleted(true); 
     setIsOnboardingModalOpen(false);
     toast({
       title: "Interests Saved!",
       description: "Your content preferences have been updated.",
     });
-    // Future: Save interests to user profile in Firestore/RTDB
+    
     console.log("User interests saved:", interests);
   };
 
@@ -197,7 +197,7 @@ export default function AppPage() {
     return <AuthScreen />; 
   }
 
-  const sidebarProviderKey = `${resizeKey}-${isAuthReady}-${isAuthLoading}-${user?.uid || 'no-user'}`;
+  const sidebarProviderKey = `${resizeKey}-${isAuthReady}-${isAuthLoading}-${user?.uid || 'no-user'}-${currentWorkspaceId || 'no-workspace'}`;
 
   return (
     <SidebarProvider key={sidebarProviderKey} defaultOpen={true}>

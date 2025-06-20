@@ -7,21 +7,22 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox'; // Added Checkbox
+import { Checkbox } from '@/components/ui/checkbox'; 
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 interface WorkspaceCreatorModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onWorkspaceCreated?: (workspaceId: string) => void; // Optional callback
+  onWorkspaceCreated?: (workspaceId: string) => void; 
 }
 
 export const WorkspaceCreatorModal = ({ isOpen, onClose, onWorkspaceCreated }: WorkspaceCreatorModalProps) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [seedWithTemplate, setSeedWithTemplate] = useState(false); // State for checkbox
+  const [seedWithTemplate, setSeedWithTemplate] = useState(false); 
   const { createWorkspace, setCurrentWorkspaceId } = useWorkspace();
   const { user, isAuthReady } = useAuth();
   const { toast } = useToast();
@@ -46,13 +47,13 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose, onWorkspaceCreated }: W
     }
     setIsSubmitting(true);
     try {
-      const newWorkspaceId = await createWorkspace(name, description, seedWithTemplate); // Pass seedWithTemplate
+      const newWorkspaceId = await createWorkspace(name, description, seedWithTemplate); 
       toast({
         title: "Workspace Created",
         description: `Workspace "${name}" has been successfully created.`,
       });
       if (newWorkspaceId) {
-         setCurrentWorkspaceId(newWorkspaceId); // Optionally set as current
+         setCurrentWorkspaceId(newWorkspaceId); 
          if (onWorkspaceCreated) {
             onWorkspaceCreated(newWorkspaceId);
          }
@@ -99,6 +100,7 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose, onWorkspaceCreated }: W
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Q3 Marketing Campaign"
               className="col-span-3"
+              aria-required="true"
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
@@ -119,8 +121,9 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose, onWorkspaceCreated }: W
               id="ws-seed"
               checked={seedWithTemplate}
               onCheckedChange={(checked) => setSeedWithTemplate(checked as boolean)}
+              aria-labelledby="ws-seed-label"
             />
-            <Label htmlFor="ws-seed" className="text-sm font-normal text-card-foreground">
+            <Label htmlFor="ws-seed" id="ws-seed-label" className="text-sm font-normal text-card-foreground">
               Seed with 30-Day Challenge template?
             </Label>
           </div>
@@ -130,6 +133,7 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose, onWorkspaceCreated }: W
             <Button variant="outline" onClick={onClose}>Cancel</Button>
           </DialogClose>
           <Button type="submit" onClick={handleCreate} disabled={!user || !isAuthReady || isSubmitting}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isSubmitting ? 'Creating...' : 'Create Workspace'}
           </Button>
         </DialogFooter>

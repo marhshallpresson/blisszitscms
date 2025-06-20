@@ -25,7 +25,7 @@ export interface ContentItem {
   title: string;
   idea?: string;
   script?: string;
-  caption?: string; // Added caption field
+  caption?: string; 
   dueDate?: string;
   status?: ContentStatus;
   createdAt?: Timestamp | Date;
@@ -38,7 +38,7 @@ export const CONTENT_STATUSES: ContentStatus[] = ['Draft', 'In Progress', 'For R
 export interface Comment {
   id: string;
   text: string;
-  authorName: string; // Or authorId if you want to link to user profiles
+  authorName: string; 
   authorId: string;
   createdAt: Timestamp | Date;
 }
@@ -117,11 +117,14 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
 
     const listener = rtdbOnValue(userPreferenceRef, (snapshot) => {
       const lastId = snapshot.val() as string | null;
-      if (lastId && currentWorkspaceId === null) {
+      if (lastId && currentWorkspaceId === null && workspaces.some(ws => ws.id === lastId)) { // Check if lastId is a valid workspace
         setCurrentWorkspaceIdState(lastId);
       }
-      setIsInitialRtdbLoadAttempted(true);
-      rtdbOff(userPreferenceRef, 'value', listener);
+      setIsInitialRtdbLoadAttempted(true); // Mark as attempted regardless of finding a value
+      // Only detach listener after first successful read or if it's explicitly meant to be a one-time fetch
+      // For a preference that might update elsewhere and should reflect, keep listener or re-evaluate strategy.
+      // For now, assuming one-time load on app start is fine.
+      rtdbOff(userPreferenceRef, 'value', listener); 
     }, (error) => {
       console.error("Error fetching last selected workspace ID from RTDB:", error);
       setIsInitialRtdbLoadAttempted(true);
@@ -131,7 +134,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       rtdbOff(userPreferenceRef, 'value', listener);
     };
-  }, [user, isInitialRtdbLoadAttempted, currentWorkspaceId]);
+  }, [user, isInitialRtdbLoadAttempted, currentWorkspaceId, workspaces]);
 
 
   useEffect(() => {
@@ -181,7 +184,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
       const planCollectionRef = collection(db, "artifacts", APP_ID, "users", user.uid, "workspaces", newWorkspaceRef.id, "contentPlan");
       const batch = writeBatch(db);
       thirtyDayChallengeTemplate.forEach((item: ThirtyDayChallengeTemplateItem) => {
-        const docRef = doc(planCollectionRef); // Auto-generate ID
+        const docRef = doc(planCollectionRef); 
         const newItem: Omit<ContentItem, 'id' | 'updatedAt'> = {
           title: item.title,
           idea: item.coreIdea,
@@ -189,6 +192,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
           caption: item.caption,
           status: 'Draft',
           createdAt: serverTimestamp(),
+          // dueDate could be calculated based on 'day' if needed, e.g., Date.now() + (item.day * 24 * 60 * 60 * 1000)
         };
         batch.set(docRef, newItem);
       });
@@ -199,19 +203,30 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteWorkspace = async (workspaceId: string) => {
     if (!user) throw new Error("User not authenticated");
-    // Add logic to delete subcollections (contentPlan, comments) if necessary before deleting workspace doc
-    // For simplicity, this example only deletes the workspace doc.
-    // In a real app, a Firebase Function might be better for cascading deletes.
+    
     const contentPlanRef = collection(db, "artifacts", APP_ID, "users", user.uid, "workspaces", workspaceId, "contentPlan");
     const contentPlanSnapshot = await getDocs(contentPlanRef);
     const batch = writeBatch(db);
-    contentPlanSnapshot.forEach(docSnapshot => {
-      batch.delete(docSnapshot.ref);
-      // Could also queue deletion of comments subcollection here if needed
-    });
+
+    for (const contentDoc of contentPlanSnapshot.docs) {
+      // Delete comments subcollection for each content item
+      const commentsRef = collection(db, "artifacts", APP_ID, "users", user.uid, "workspaces", workspaceId, "contentPlan", contentDoc.id, "comments");
+      const commentsSnapshot = await getDocs(commentsRef);
+      commentsSnapshot.forEach(commentDoc => {
+        batch.delete(commentDoc.ref);
+      });
+      // Delete the content item itself
+      batch.delete(contentDoc.ref);
+    }
+    
+    // Delete the workspace document
+    batch.delete(doc(db, "artifacts", APP_ID, "users", user.uid, "workspaces", workspaceId));
+    
     await batch.commit();
 
-    await deleteDoc(doc(db, "artifacts", APP_ID, "users", user.uid, "workspaces", workspaceId));
+    if (currentWorkspaceId === workspaceId) {
+      setCurrentWorkspaceId(null); // Clear current workspace if it's the one deleted
+    }
   };
 
 
@@ -239,17 +254,21 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteContentItem = async (itemId: string) => {
     if (!user || !currentWorkspaceId) throw new Error("User or workspace not available");
-    if (window.confirm("Are you sure you want to delete this post? This action cannot be undone.")) {
-       // Also delete comments subcollection for this item
+    
+    const userConfirmed = window.confirm("Are you sure you want to delete this post and all its comments? This action cannot be undone.");
+    if (userConfirmed) {
+      const batch = writeBatch(db);
+      // Delete comments subcollection for this item
       const commentsRef = collection(db, "artifacts", APP_ID, "users", user.uid, "workspaces", currentWorkspaceId, "contentPlan", itemId, "comments");
       const commentsSnapshot = await getDocs(commentsRef);
-      const batch = writeBatch(db);
       commentsSnapshot.forEach(docSnapshot => {
         batch.delete(docSnapshot.ref);
       });
-      await batch.commit();
 
-      await deleteDoc(doc(db, "artifacts", APP_ID, "users", user.uid, "workspaces", currentWorkspaceId, "contentPlan", itemId));
+      // Delete the content item itself
+      batch.delete(doc(db, "artifacts", APP_ID, "users", user.uid, "workspaces", currentWorkspaceId, "contentPlan", itemId));
+      
+      await batch.commit();
     }
   };
 

@@ -7,29 +7,31 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, Instagram, MessageCircle, Linkedin, Video } from 'lucide-react'; // Using Video for TikTok for now
-import { ClientFormattedDate } from '@/components/utils/ClientFormattedDate'; // Assuming this component exists
+import { Send, Instagram, MessageCircle, Linkedin, Video } from 'lucide-react'; 
+import { ClientFormattedDate } from '@/components/utils/ClientFormattedDate'; 
+import { useToast } from '@/hooks/use-toast';
 
-// Mock Data (from old script, adapted)
-const initialInboxData = [
+// Mock Data from old script for Inbox
+const initialInboxMockData = [
     { id: '1', platform: 'Instagram', user: 'techie_tom', avatar: 'https://placehold.co/40x40.png', message: 'This AI tool tip is a game changer! 🔥 Thanks so much for sharing, Marshall! I was wondering if you could do a follow-up on advanced prompting techniques?', timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), read: false },
     { id: '2', platform: 'TikTok', user: 'sara_sings_official', avatar: 'https://placehold.co/40x40.png', message: 'Love your videos! Can you do one on color grading for short-form content? Specifically for a moody cinematic look. Keep up the great work!', timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), read: false },
     { id: '3', platform: 'LinkedIn', user: 'Jane Doe, Marketing Director', avatar: 'https://placehold.co/40x40.png', message: 'Hi Marshall, great insights on personal branding from your recent post. I\'d love to connect and discuss potential collaboration opportunities for our upcoming campaign.', timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), read: true },
     { id: '4', platform: 'Instagram', user: 'creative_carly', avatar: 'https://placehold.co/40x40.png', message: 'Your 30-day challenge is so inspiring! What editing software do you recommend for beginners?', timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), read: true },
 ];
 
-type Message = typeof initialInboxData[0];
+type Message = typeof initialInboxMockData[0];
 
 const platformIcons: Record<string, React.ReactNode> = {
     Instagram: <Instagram className="text-pink-600 h-5 w-5" />,
-    TikTok: <Video className="text-black h-5 w-5" />, // Lucide doesn't have a TikTok icon
+    TikTok: <Video className="text-black h-5 w-5" />, 
     LinkedIn: <Linkedin className="text-blue-700 h-5 w-5" />
 };
 
 export const InboxView = () => {
-    const [messages, setMessages] = useState<Message[]>(initialInboxData);
+    const [messages, setMessages] = useState<Message[]>(initialInboxMockData);
     const [selectedMessage, setSelectedMessage] = useState<Message | null>(messages.length > 0 ? messages[0] : null);
     const [replyText, setReplyText] = useState('');
+    const { toast } = useToast();
 
     const handleSelectMessage = (message: Message) => {
         setSelectedMessage(message);
@@ -39,17 +41,11 @@ export const InboxView = () => {
     const handleReply = () => {
         if (!replyText.trim() || !selectedMessage) return;
         console.log(`Replying to ${selectedMessage.user} on ${selectedMessage.platform}: ${replyText}`);
-        // Here you would integrate with actual messaging APIs
+        
         toast({ title: "Reply Sent (Demo)", description: `Your reply to ${selectedMessage.user} has been logged.` });
         setReplyText('');
     };
     
-    // Basic toast for demo
-    const toast = ({title, description}: {title: string, description: string}) => {
-        // In a real app, use the actual useToast hook here
-        alert(`${title}: ${description}`);
-    }
-
 
     return (
         <div className="p-4 md:p-8 h-full flex flex-col">
@@ -59,7 +55,7 @@ export const InboxView = () => {
             <Card className="flex-grow flex overflow-hidden shadow-xl">
                 <div className="w-full md:w-1/3 border-r border-border flex flex-col">
                     <div className="p-4 border-b border-border">
-                        <Input placeholder="Search messages..." className="bg-background" />
+                        <Input placeholder="Search messages..." className="bg-background" aria-label="Search messages"/>
                     </div>
                     <ScrollArea className="flex-grow">
                         {messages.length === 0 && <p className="p-4 text-center text-muted-foreground">No messages yet.</p>}
@@ -67,6 +63,10 @@ export const InboxView = () => {
                             <div
                                 key={msg.id}
                                 onClick={() => handleSelectMessage(msg)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSelectMessage(msg)}
+                                role="button"
+                                tabIndex={0}
+                                aria-label={`Message from ${msg.user} on ${msg.platform}`}
                                 className={`p-4 border-b border-border cursor-pointer hover:bg-muted/50 transition-colors
                                             ${selectedMessage?.id === msg.id ? 'bg-muted' : ''}
                                             ${!msg.read ? 'font-semibold' : ''}`}
@@ -100,14 +100,14 @@ export const InboxView = () => {
                                 </div>
                             </div>
                             <ScrollArea className="flex-grow p-4 space-y-3">
-                                {/* Mocking a single message display for now */}
+                                
                                 <div className="flex">
                                     <div className="p-3 rounded-lg bg-primary text-primary-foreground max-w-[75%]">
                                         <p>{selectedMessage.message}</p>
                                         <p className="text-xs text-primary-foreground/70 mt-1 text-right"><ClientFormattedDate date={selectedMessage.timestamp} options={{timeStyle: 'short'}}/></p>
                                     </div>
                                 </div>
-                                {/* Add more messages here for a conversation view */}
+                                
                             </ScrollArea>
                             <div className="p-4 border-t border-border bg-background">
                                <div className="flex items-center gap-2">
@@ -117,9 +117,10 @@ export const InboxView = () => {
                                     onChange={e => setReplyText(e.target.value)} 
                                     placeholder={`Reply to ${selectedMessage.user}...`} 
                                     className="flex-grow bg-muted focus-visible:ring-primary" 
+                                    aria-label={`Reply to ${selectedMessage.user}`}
                                     onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleReply())}
                                  />
-                                 <Button onClick={handleReply} disabled={!replyText.trim()} className="font-semibold">
+                                 <Button onClick={handleReply} disabled={!replyText.trim()} className="font-semibold" aria-label="Send reply">
                                     <Send size={16} className="mr-0 md:mr-2"/> <span className="hidden md:inline">Send</span>
                                  </Button>
                                </div>
