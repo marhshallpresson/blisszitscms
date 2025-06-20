@@ -42,7 +42,7 @@ export default function AppPage() {
   const [isContentFormModalOpen, setIsContentFormModalOpen] = useState(false);
   const [showingProfileSettings, setShowingProfileSettings] = useState(false);
   
-  const [sidebarKey, setSidebarKey] = useState(0);
+  const [resizeKey, setResizeKey] = useState(0); // Renamed from sidebarKey for clarity
 
   // State for AI import flow when no workspace is active
   const [isSelectWorkspaceModalOpen, setIsSelectWorkspaceModalOpen] = useState(false);
@@ -50,7 +50,7 @@ export default function AppPage() {
 
 
   useEffect(() => {
-    const handleResize = () => setSidebarKey(prev => prev + 1);
+    const handleResize = () => setResizeKey(prev => prev + 1);
     if (typeof window !== 'undefined') {
       window.addEventListener('resize', handleResize);
       return () => window.removeEventListener('resize', handleResize);
@@ -146,8 +146,11 @@ export default function AppPage() {
     return <AuthScreen />; 
   }
 
+  // Construct a more dynamic key for SidebarProvider
+  const sidebarProviderKey = `${resizeKey}-${isAuthReady}-${isAuthLoading}-${user?.uid || 'no-user'}`;
+
   return (
-    <SidebarProvider key={sidebarKey} defaultOpen={true}>
+    <SidebarProvider key={sidebarProviderKey} defaultOpen={true}>
       <Sidebar side="left" variant="sidebar" collapsible="icon" className="border-r">
         <SidebarHeader className="p-4">
           <div className="flex items-center justify-between">
