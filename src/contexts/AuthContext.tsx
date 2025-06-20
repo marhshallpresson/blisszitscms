@@ -13,10 +13,12 @@ import {
   signInWithPopup,
   RecaptchaVerifier,
   signInWithPhoneNumber as firebaseSignInWithPhoneNumber,
-  type ConfirmationResult
+  type ConfirmationResult,
+  updatePassword as firebaseUpdatePassword, // Added
 } from 'firebase/auth';
 import { auth } from '@/lib/firebaseConfig'; // Ensure auth is correctly initialized
 import type { EmailPasswordCredentials } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast'; // Import useToast
 
 interface AuthContextType {
   user: User | null;
@@ -28,6 +30,7 @@ interface AuthContextType {
   signInWithPhoneNumberFlow: (phoneNumber: string, appVerifier: RecaptchaVerifier) => Promise<ConfirmationResult | null>;
   confirmOtp: (otp: string) => Promise<User | null>;
   sendPasswordReset: (email: string) => Promise<void>;
+  updateUserPassword: (newPassword: string) => Promise<void>; // Added
   signOut: () => Promise<void>;
   confirmationResult: ConfirmationResult | null;
 }
@@ -39,7 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
-
+  const { toast } = useToast(); // Initialize useToast
 
   useEffect(() => {
     setIsLoading(true); 
@@ -154,7 +157,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-
   const sendPasswordReset = async (email: string): Promise<void> => {
     setIsLoading(true);
     try {
@@ -168,6 +170,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         );
       }
       throw error; 
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateUserPassword = async (newPassword: string): Promise<void> => {
+    setIsLoading(true);
+    if (!auth.currentUser) {
+      setIsLoading(false);
+      throw new Error("User not authenticated.");
+    }
+    try {
+      await firebaseUpdatePassword(auth.currentUser, newPassword);
+    } catch (error: any) {
+      console.error("Password update failed:", error);
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -196,6 +214,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         signInWithPhoneNumberFlow,
         confirmOtp,
         sendPasswordReset,
+        updateUserPassword, // Added
         signOut,
         confirmationResult
       }}>
@@ -210,10 +229,4 @@ export const useAuth = (): AuthContextType => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
-
-// Helper function for toast (assuming it's part of useToast hook elsewhere)
-// This is a placeholder, actual toast should come from your useToast hook
-const toast = (options: { title: string; description: string; variant?: "default" | "destructive" }) => {
-  console.log(`Toast: ${options.title} - ${options.description}`);
 };
