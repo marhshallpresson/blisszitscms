@@ -1,29 +1,22 @@
 
 "use client";
 
-import type { User, AuthProvider as FirebaseAuthProvider } from 'firebase/auth';
+import type { User } from 'firebase/auth';
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { 
   onAuthStateChanged, 
   signOut as firebaseSignOut,
-  GoogleAuthProvider,
-  FacebookAuthProvider, // Added for placeholder
-  OAuthProvider, // For Apple Sign-In
-  signInWithPopup,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   sendPasswordResetEmail
 } from 'firebase/auth';
 import { auth } from '@/lib/firebaseConfig';
-import type { EmailPasswordCredentials } from '@/lib/types'; // Will create this type
+import type { EmailPasswordCredentials } from '@/lib/types';
 
 interface AuthContextType {
   user: User | null;
   isAuthReady: boolean;
   isLoading: boolean;
-  signInWithGoogle: () => Promise<User | null>;
-  signInWithApple: () => Promise<User | null>;
-  signInWithFacebook: () => Promise<User | null>; // Placeholder
   signUpWithEmail: (credentials: EmailPasswordCredentials) => Promise<User | null>;
   signInWithEmail: (credentials: EmailPasswordCredentials) => Promise<User | null>;
   sendPasswordReset: (email: string) => Promise<void>;
@@ -46,32 +39,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
     return () => unsubscribe();
   }, []);
-
-  const handleSignInWithProvider = async (provider: FirebaseAuthProvider): Promise<User | null> => {
-    setIsLoading(true);
-    try {
-      const result = await signInWithPopup(auth, provider);
-      setUser(result.user);
-      return result.user;
-    } catch (error) {
-      console.error("Sign in with provider failed:", error);
-      // Consider using toast notifications for user feedback
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const signInWithGoogle = () => handleSignInWithProvider(new GoogleAuthProvider());
-  const signInWithApple = () => handleSignInWithProvider(new OAuthProvider('apple.com'));
-  
-  const signInWithFacebook = async (): Promise<User | null> => {
-    // Placeholder: Facebook sign-in requires app setup in Facebook Developer portal
-    console.warn("Facebook sign-in not fully implemented. Requires developer setup.");
-    // return handleSignInWithProvider(new FacebookAuthProvider()); // Uncomment when configured
-    alert("Facebook sign-in is a placeholder. Full implementation requires developer setup.");
-    return null;
-  };
 
   const signUpWithEmail = async ({ email, password }: EmailPasswordCredentials): Promise<User | null> => {
     setIsLoading(true);
@@ -130,9 +97,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user, 
         isAuthReady, 
         isLoading, 
-        signInWithGoogle,
-        signInWithApple,
-        signInWithFacebook,
         signUpWithEmail,
         signInWithEmail,
         sendPasswordReset,
