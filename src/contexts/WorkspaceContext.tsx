@@ -107,12 +107,21 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
     }
 
     setIsLoadingWorkspaces(true);
-    const q = query(collection(db, "workspaces"), where("ownerId", "==", user.uid), orderBy("createdAt", "desc"));
+    // Removed orderBy from the query to avoid composite index requirement
+    const q = query(collection(db, "workspaces"), where("ownerId", "==", user.uid));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const wsData: Workspace[] = [];
       snapshot.forEach(doc => {
         wsData.push({ id: doc.id, ...doc.data() } as Workspace);
       });
+
+      // Sort client-side to ensure descending order by creation date
+      wsData.sort((a, b) => {
+        const dateA = a.createdAt ? (a.createdAt as Timestamp).toDate().getTime() : 0;
+        const dateB = b.createdAt ? (b.createdAt as Timestamp).toDate().getTime() : 0;
+        return dateB - dateA;
+      });
+
       setWorkspaces(wsData);
       setIsLoadingWorkspaces(false);
     }, (error) => {
