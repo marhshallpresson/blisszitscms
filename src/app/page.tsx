@@ -184,8 +184,11 @@ export default function AppPage() {
         else setActiveView('welcome');
     } else {
         setActiveView(view);
+        // If navigating away from a workspace-specific view (not to another workspace view or profile/admin etc.)
+        // and the current view IS 'workspace', clear the currentWorkspaceId.
+        // This prevents staying "in" a workspace context when viewing global pages.
         if (view !== 'workspace' && view !== 'profile' && view !== 'manageWorkspaces' && view !== 'analytics' && view !== 'inbox') {
-           if(activeView === 'workspace') setCurrentWorkspaceId(null);
+           if(activeView === 'workspace' && currentWorkspaceId) setCurrentWorkspaceId(null);
         }
     }
   };
@@ -332,15 +335,20 @@ export default function AppPage() {
                 <span>Sign Out</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-             <Button variant="outline" size="sm" className="w-full mt-4 group-data-[collapsible=icon]:hidden text-sidebar-foreground border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" onClick={() => window.open("https://firebase.google.com/products/studio", "_blank")}>
-                Powered by Firebase Studio
+             <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full mt-4 group-data-[collapsible=icon]:hidden text-sidebar-foreground border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" 
+                onClick={() => window.open("https://web.facebook.com/marshallpresson68", "_blank")}
+              >
+                Developed by Marshall Presson
             </Button>
           </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
 
       <SidebarInset className="flex flex-col min-h-screen bg-background">
-        <header className="p-4 border-b md:hidden sticky top-0 bg-background z-10">
+        <header className="p-4 border-b md:hidden sticky top-0 bg-background z-10 shadow-sm">
             <div className="flex items-center justify-between">
                 <AppLogo showName={false} iconSize={28}/>
                 <SidebarTrigger className="text-foreground hover:text-primary hover:bg-muted" />
@@ -360,7 +368,7 @@ export default function AppPage() {
               onMarkAsPublished={openMarkAsPublishedModal}
             />
           )}
-          {activeView === 'welcome' && (
+          {activeView === 'welcome' && !currentWorkspaceId && (
             <WelcomeDashboard
               onSelectWorkspace={(id) => navigateTo('workspace', id)}
               onNewWorkspace={() => setCreatingWorkspace(true)}

@@ -28,8 +28,8 @@ h1, h2, h3, h4, h5, h6 {
     --accent-foreground: 0 0% 100%; /* White for text on accent */
     --destructive: 0 70% 55%; /* Clear Red */
     --destructive-foreground: 0 0% 98%; /* White for text on destructive */
-    --border: 220 20% 85%;
-    --input: 220 20% 85%;
+    --border: 220 20% 88%; /* Slightly lighter border for minimalism */
+    --input: 220 20% 90%; /* Lighter input for softer look */
     --ring: 190 70% 55%; /* Primary Teal for focus rings */
     --chart-1: 190 70% 50%; /* Teal variation */
     --chart-2: 30 90% 65%;  /* Orange variation */
@@ -66,8 +66,8 @@ h1, h2, h3, h4, h5, h6 {
     --accent-foreground: 0 0% 10%;
     --destructive: 0 60% 60%; /* Brighter red for dark mode */
     --destructive-foreground: 0 0% 98%;
-    --border: 220 15% 30%;
-    --input: 220 15% 30%;
+    --border: 220 15% 30%; /* Darker border */
+    --input: 220 15% 28%; /* Darker input */
     --ring: 190 65% 60%; /* Primary Teal for focus rings in dark mode */
 
     /* Sidebar specific colors for dark mode */
@@ -89,4 +89,20 @@ h1, h2, h3, h4, h5, h6 {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Custom scrollbar for IdeaBoard */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: hsl(var(--muted) / 0.5);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.6);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.8);
 }
