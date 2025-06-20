@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useWorkspace, type ContentItem } from '@/contexts/WorkspaceContext'; // Ensure ContentItem type is imported
+import { useWorkspace, type ContentItem, type Workspace } from '@/contexts/WorkspaceContext'; // Ensure ContentItem type is imported
 import { AuthScreen } from '@/components/auth/AuthScreen';
 import { WelcomeDashboard } from '@/components/dashboard/WelcomeDashboard';
 import { ContentDashboard } from '@/components/content/ContentDashboard';
@@ -11,7 +11,9 @@ import { ProfileDashboard } from '@/components/profile/ProfileDashboard';
 import { WorkspaceCreatorModal } from '@/components/modals/WorkspaceCreatorModal';
 import { ReminderSetupModal } from '@/components/modals/ReminderSetupModal';
 import { ContentFormModal } from '@/components/modals/ContentFormModal';
+import { SelectWorkspaceForImportModal } from '@/components/modals/SelectWorkspaceForImportModal'; // New Modal
 import { AppLogo } from '@/components/layout/AppLogo';
+import { useToast } from '@/hooks/use-toast';
 
 import {
   Sidebar,
@@ -31,7 +33,8 @@ import { Button } from '@/components/ui/button';
 
 export default function AppPage() {
   const { user, isAuthReady, isLoading: isAuthLoading, signOut } = useAuth();
-  const { currentWorkspace, currentWorkspaceId, setCurrentWorkspaceId, isLoadingWorkspaces } = useWorkspace();
+  const { workspaces, currentWorkspace, currentWorkspaceId, setCurrentWorkspaceId, isLoadingWorkspaces } = useWorkspace();
+  const { toast } = useToast();
 
   const [isCreatingWorkspace, setCreatingWorkspace] = useState(false);
   const [isSettingReminders, setSettingReminders] = useState(false);
@@ -40,6 +43,12 @@ export default function AppPage() {
   const [showingProfileSettings, setShowingProfileSettings] = useState(false);
   
   const [sidebarKey, setSidebarKey] = useState(0);
+
+  // State for AI import flow when no workspace is active
+  const [isSelectWorkspaceModalOpen, setIsSelectWorkspaceModalOpen] = useState(false);
+  const [pendingAiImportData, setPendingAiImportData] = useState<{ title: string, description: string } | null>(null);
+
+
   useEffect(() => {
     const handleResize = () => setSidebarKey(prev => prev + 1);
     if (typeof window !== 'undefined') {
@@ -65,18 +74,53 @@ export default function AppPage() {
   };
 
   const handleImportAiRecommendation = (title: string, description: string) => {
-    setEditingContentItem({
-      id: '', 
-      title: title,
-      idea: description,
-      script: '',
-      dueDate: '', 
-      status: 'Draft', 
-    } as ContentItem);
-    setIsContentFormModalOpen(true);
-    setShowingProfileSettings(false); // Ensure profile settings are hidden
-    setCurrentWorkspaceId(null); // Go to welcome dashboard to show the modal in context
+    if (currentWorkspaceId) { // If a workspace is already active
+      setEditingContentItem({
+        id: '', 
+        title: title,
+        idea: description,
+        script: '',
+        dueDate: '', 
+        status: 'Draft', 
+      } as ContentItem); // Cast to ContentItem for type consistency
+      setIsContentFormModalOpen(true);
+    } else { // No active workspace, user is on WelcomeDashboard
+      if (!workspaces || workspaces.length === 0) {
+          toast({
+              title: "No Workspace Found",
+              description: "Please create a workspace first before importing an AI idea.",
+              variant: "destructive",
+          });
+          setCreatingWorkspace(true); // Open workspace creator
+          return;
+      }
+      setPendingAiImportData({ title, description });
+      setIsSelectWorkspaceModalOpen(true);
+    }
   };
+
+  const handleWorkspaceSelectedForImport = (workspaceId: string) => {
+    setCurrentWorkspaceId(workspaceId); // Set this as the active workspace context
+    setIsSelectWorkspaceModalOpen(false);
+    if (pendingAiImportData) {
+      setEditingContentItem({
+        id: '',
+        title: pendingAiImportData.title,
+        idea: pendingAiImportData.description,
+        script: '',
+        dueDate: '',
+        status: 'Draft',
+      } as ContentItem); // Cast to ContentItem
+      setIsContentFormModalOpen(true);
+      setPendingAiImportData(null); // Clear pending data
+    }
+  };
+
+  const handleOpenCreateWorkspaceModalFromSelect = () => {
+    setIsSelectWorkspaceModalOpen(false); // Close the selection modal
+    setCreatingWorkspace(true); // Open the workspace creator modal
+  };
+
 
   const handleNavigateToDashboard = () => {
     setCurrentWorkspaceId(null);
@@ -198,7 +242,16 @@ export default function AppPage() {
         onClose={() => setIsContentFormModalOpen(false)} 
         item={editingContentItem} 
       />
+      <SelectWorkspaceForImportModal
+        isOpen={isSelectWorkspaceModalOpen}
+        onClose={() => {
+          setIsSelectWorkspaceModalOpen(false);
+          setPendingAiImportData(null); // Clear pending data if modal is closed without selection
+        }}
+        workspaces={workspaces || []}
+        onSelectWorkspace={handleWorkspaceSelectedForImport}
+        onOpenCreateWorkspace={handleOpenCreateWorkspaceModalFromSelect}
+      />
     </SidebarProvider>
   );
 }
-

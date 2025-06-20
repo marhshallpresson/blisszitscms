@@ -51,17 +51,26 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose }: WorkspaceCreatorModal
       setName('');
       setDescription('');
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to create workspace:", error);
       toast({
-        title: "Error",
-        description: "Failed to create workspace. Please try again.",
+        title: "Workspace Creation Failed",
+        description: error.message || "An unexpected error occurred. Please ensure you are connected and try again.",
         variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Reset form when modal opens/closes to avoid stale data if reopened
+  React.useEffect(() => {
+    if (!isOpen) {
+      setName('');
+      setDescription('');
+      setIsSubmitting(false);
+    }
+  }, [isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -71,11 +80,11 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose }: WorkspaceCreatorModal
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right text-card-foreground">
+            <Label htmlFor="ws-name" className="text-right text-card-foreground">
               Name
             </Label>
             <Input
-              id="name"
+              id="ws-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Q3 Marketing Campaign"
@@ -83,11 +92,11 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose }: WorkspaceCreatorModal
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="description" className="text-right text-card-foreground">
+            <Label htmlFor="ws-description" className="text-right text-card-foreground">
               Description
             </Label>
             <Textarea
-              id="description"
+              id="ws-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="A brief description of this workspace's goals (Optional)."
@@ -108,4 +117,3 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose }: WorkspaceCreatorModal
     </Dialog>
   );
 };
-
