@@ -25,7 +25,7 @@ import {
   SidebarMenuButton,
   SidebarMenuSkeleton,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, Bell, LogOut, Sparkles } from 'lucide-react'; // Added Sparkles
+import { LayoutDashboard, Bell, LogOut, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function AppPage() {
@@ -40,8 +40,10 @@ export default function AppPage() {
   const [sidebarKey, setSidebarKey] = useState(0);
   useEffect(() => {
     const handleResize = () => setSidebarKey(prev => prev + 1);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
   }, []);
 
   const handleSignOut = async () => {
@@ -61,7 +63,7 @@ export default function AppPage() {
 
   if (!isAuthReady || isAuthLoading) {
     return (
-      <div className="w-full h-screen flex flex-col items-center justify-center bg-background p-8 text-center">
+      <div className="w-full h-screen flex flex-col items-center justify-center bg-background p-8 text-center antialiased">
         <Sparkles className="text-primary w-24 h-24 mb-6 animate-pulse" />
         <h1 className="text-5xl font-bold text-foreground font-headline">Blisszits</h1>
         <p className="text-xl text-muted-foreground mt-4 font-body">Loading your AI content buddy...</p>
@@ -70,10 +72,9 @@ export default function AppPage() {
   }
 
   if (!user) {
-    return <AuthScreen />; // Shows login/signup options
+    return <AuthScreen />; 
   }
 
-  // User is signed in, show the main app
   return (
     <SidebarProvider key={sidebarKey} defaultOpen={true}>
       <Sidebar side="left" variant="sidebar" collapsible="icon" className="border-r">
@@ -147,7 +148,10 @@ export default function AppPage() {
         </main>
       </SidebarInset>
 
-      <WorkspaceCreatorModal isOpen={isCreatingWorkspace} onClose={() => setCreatingWorkspace(false)} />
+      <WorkspaceCreatorModal 
+        isOpen={isCreatingWorkspace} 
+        onClose={() => setCreatingWorkspace(false)} 
+      />
       <ReminderSetupModal isOpen={isSettingReminders} onClose={() => setSettingReminders(false)} />
       <ContentFormModal 
         isOpen={isContentFormModalOpen} 
