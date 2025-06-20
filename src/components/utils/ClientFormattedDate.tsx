@@ -15,9 +15,14 @@ export const ClientFormattedDate = ({ date, placeholder = "...", options }: Clie
   useEffect(() => {
     if (date) {
       try {
-        setFormattedDate(new Date(date).toLocaleDateString(undefined, options));
+        const d = new Date(date);
+        if (options && options.timeStyle) {
+          setFormattedDate(d.toLocaleString(undefined, options));
+        } else {
+          setFormattedDate(d.toLocaleDateString(undefined, options));
+        }
       } catch (error) {
-        console.error("Error formatting date:", error);
+        console.error("Error formatting date:", error, "with options:", options);
         setFormattedDate("Invalid date");
       }
     } else {
@@ -27,3 +32,4 @@ export const ClientFormattedDate = ({ date, placeholder = "...", options }: Clie
 
   return <>{formattedDate}</>;
 };
+
