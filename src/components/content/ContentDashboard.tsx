@@ -4,18 +4,18 @@
 import type { Workspace, ContentItem } from '@/contexts/WorkspaceContext';
 import { Button } from '@/components/ui/button';
 import { ContentItemCard } from './ContentItemCard';
-import { Plus, ArrowLeft, Edit3, Loader2 } from 'lucide-react'; // Added Loader2
+import { Plus, ArrowLeft, Edit3, Loader2 } from 'lucide-react';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
-import { Skeleton } from '@/components/ui/skeleton'; // Keep Skeleton for card
-import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card'; // Import Card and parts
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 
 interface ContentDashboardProps {
   workspace: Workspace;
   onBack: () => void;
   onNewContent: () => void;
   onEditContent: (item: ContentItem) => void;
-  onViewDetails: (item: ContentItem) => void; // New prop
-  onMarkAsPublished: (item: ContentItem) => void; // New prop
+  onViewDetails: (item: ContentItem) => void;
+  onMarkAsPublished: (item: ContentItem) => void;
 }
 
 export const ContentDashboard = ({ 
