@@ -1,4 +1,3 @@
-
 // src/contexts/WorkspaceContext.tsx
 "use client";
 
@@ -103,12 +102,24 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
     }
 
     setIsLoadingWorkspaces(true);
-    const q = query(collection(db, "workspaces"), where("ownerId", "==", user.uid), orderBy("createdAt", "desc"));
+    // Removed `orderBy` from the query to avoid needing a composite index.
+    const q = query(collection(db, "workspaces"), where("ownerId", "==", user.uid));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const wsData: Workspace[] = [];
       snapshot.forEach(doc => {
         wsData.push({ id: doc.id, ...doc.data() } as Workspace);
       });
+
+      // Sort workspaces on the client-side to maintain the desired order.
+      wsData.sort((a, b) => {
+        const toMillis = (d: Date | Timestamp | undefined): number => {
+          if (!d) return 0;
+          // Firestore Timestamps have toMillis(), JS Dates have getTime() which both return epoch milliseconds
+          return d instanceof Date ? d.getTime() : (d as Timestamp).toMillis();
+        };
+        return toMillis(b.createdAt) - toMillis(a.createdAt);
+      });
+
       setWorkspaces(wsData);
       setIsLoadingWorkspaces(false);
     }, (error) => {
