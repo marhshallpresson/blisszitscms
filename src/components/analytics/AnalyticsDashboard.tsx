@@ -13,21 +13,19 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Download, LayoutDashboard, Video, BarChart3, Edit3, Loader2 } from 'lucide-react'; 
+import { Download, LayoutDashboard, Video, BarChart3, Edit3, Loader2, Info } from 'lucide-react'; 
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useToast } from '@/hooks/use-toast';
 
-// Mock Data from old script for Analytics
-const analyticsMockData = {
-    Instagram: { kpis: [ { title: "Follower Growth", value: "+1,380", change: "+27%" }, { title: "Engagement", value: "8,945", change: "+45%" }, { title: "Reach", value: "198.1k", change: "+75%" }, { title: "Profile Visits", value: "11.4k", change: "+62%" }], followerData: [{ name: 'W1', followers: 5120 }, { name: 'W2', followers: 5340 }, { name: 'W3', followers: 5890 }, { name: 'W4', followers: 6500 }], viewsData: [{ name: 'P1', views: 21400 }, { name: 'P2', views: 35500 }, { name: 'P3', views: 41800 }, { name: 'P4', views: 39200 }, { name: 'P5', views: 45100 }, { name: 'P6', views: 52300 }] },
-    TikTok: { kpis: [ { title: "Follower Growth", value: "+10,200", change: "+90%" }, { title: "Video Views", value: "2.4M", change: "+150%" }, { title: "Shares", value: "55.2k", change: "+120%" }, { title: "Profile Views", value: "48.7k", change: "+110%" }], followerData: [{ name: 'W1', followers: 11250 }, { name: 'W2', followers: 13800 }, { name: 'W3', followers: 17200 }, { name: 'W4', followers: 21450 }], viewsData: [{ name: 'P1', views: 180500 }, { name: 'P2', views: 250100 }, { name: 'P3', views: 450600 }, { name: 'P4', views: 390800 }, { name: 'P5', views: 510200 }, { name: 'P6', views: 680000 }] },
-    LinkedIn: { kpis: [ { title: "Connections", value: "+235", change: "+19%" }, { title: "Post Impressions", value: "56.2k", change: "+35%" }, { title: "Engagement Rate", value: "4.8%", change: "+15%" }, { title: "Search Apps", value: "1,240", change: "+22%" }], followerData: [{ name: 'W1', connections: 1240 }, { name: 'W2', connections: 1295 }, { name: 'W3', connections: 1380 }, { name: 'W4', connections: 1475 }], viewsData: [{ name: 'P1', views: 5200 }, { name: 'P2', views: 7800 }, { name: 'P3', views: 9100 }, { name: 'P4', views: 8400 }, { name: 'P5', views: 11500 }, { name: 'P6', views: 14200 }] }
-};
-type Platform = keyof typeof analyticsMockData;
-const platforms = Object.keys(analyticsMockData) as Platform[];
+// Removed mock data arrays. Data will be passed as props or fetched in a real scenario.
+// For this component as a standalone dashboard, it will now show placeholders.
+// When integrated into ContentDashboard, it might receive workspace-specific (mocked) data.
 
-const sentimentMockData = [ { name: 'Positive', value: 480, color: '#10B981' }, { name: 'Neutral', value: 320, color: '#6B7280' }, { name: 'Negative', value: 85, color: '#EF4444' }];
-const bestTimeMockData = Array.from({ length: 7 }, () => Array.from({ length: 24 }, () => Math.random())); // Days x Hours
+// Sample data structures for charts (to define shapes, actual data is placeholder)
+const sampleFollowerData = [{ name: 'W1', followers: 0 }, { name: 'W2', followers: 0 }, { name: 'W3', followers: 0 }, { name: 'W4', followers: 0 }];
+const sampleViewsData = [{ name: 'P1', views: 0 }, { name: 'P2', views: 0 }, { name: 'P3', views: 0 }];
+const sampleSentimentData = [ { name: 'Positive', value: 0, color: '#10B981' }, { name: 'Neutral', value: 0, color: '#6B7280' }, { name: 'Negative', value: 0, color: '#EF4444' }];
+const sampleBestTimeData = Array.from({ length: 7 }, () => Array.from({ length: 24 }, () => 0)); // Days x Hours
 
 const kpiIcons: Record<number, React.ReactNode> = {
     0: <LayoutDashboard size={20} className="text-primary"/>,
@@ -36,19 +34,26 @@ const kpiIcons: Record<number, React.ReactNode> = {
     3: <Edit3 size={20} className="text-primary"/>
 };
 
+// Sample KPIs - these would normally come from fetched data
+const sampleKpis = [
+    { title: "Follower Growth", value: "N/A", change: "" },
+    { title: "Engagement", value: "N/A", change: "" },
+    { title: "Reach", value: "N/A", change: "" },
+    { title: "Profile Visits", value: "N/A", change: "" }
+];
+
 export const AnalyticsDashboard = () => {
-    const [selectedPlatform, setSelectedPlatform] = useState<Platform>(platforms[0]);
+    const [selectedPlatform, setSelectedPlatform] = useState<string>("Overall"); // Default to "Overall" or a sample platform
+    const platforms = ["Overall", "Instagram", "TikTok", "LinkedIn"]; // Sample platforms
     const [pdfLibsLoaded, setPdfLibsLoaded] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     const reportRef = useRef<HTMLDivElement>(null);
     const { toast } = useToast();
 
     useEffect(() => {
-        
         if (window.jspdf && window.html2canvas) {
             setPdfLibsLoaded(true);
         } else {
-            
             let attempts = 0;
             const interval = setInterval(() => {
                 attempts++;
@@ -64,8 +69,13 @@ export const AnalyticsDashboard = () => {
         }
     }, []);
 
+    // Data for the selected platform (currently using sample data)
+    const currentPlatformKpis = sampleKpis;
+    const currentFollowerData = sampleFollowerData;
+    const currentViewsData = sampleViewsData;
+    const currentSentimentData = sampleSentimentData;
+    const currentBestTimeData = sampleBestTimeData;
 
-    const currentPlatformData = analyticsMockData[selectedPlatform];
 
     const exportToPdf = async () => {
         if (!pdfLibsLoaded || !reportRef.current) {
@@ -116,10 +126,10 @@ export const AnalyticsDashboard = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 className="text-4xl font-bold text-foreground font-headline">Analytics Overview</h1>
-                    <p className="text-lg text-muted-foreground mt-1">Track your content performance across platforms.</p>
+                    <p className="text-lg text-muted-foreground mt-1">Track your content performance.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <Select value={selectedPlatform} onValueChange={(value) => setSelectedPlatform(value as Platform)}>
+                    <Select value={selectedPlatform} onValueChange={(value) => setSelectedPlatform(value as string)}>
                         <SelectTrigger className="w-[180px]" aria-label="Select analytics platform">
                             <SelectValue placeholder="Select Platform" />
                         </SelectTrigger>
@@ -138,7 +148,7 @@ export const AnalyticsDashboard = () => {
                 <h2 className="text-2xl font-bold text-foreground font-headline mb-6 pl-2 md:pl-0">{selectedPlatform} Performance</h2>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    {currentPlatformData.kpis.map((kpi, index) => (
+                    {currentPlatformKpis.map((kpi, index) => (
                         <Card key={kpi.title} className="shadow-md">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium text-muted-foreground">{kpi.title}</CardTitle>
@@ -146,7 +156,7 @@ export const AnalyticsDashboard = () => {
                             </CardHeader>
                             <CardContent>
                                 <div className="text-3xl font-bold text-foreground">{kpi.value}</div>
-                                <p className={`text-xs mt-1 ${kpi.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>{kpi.change} from last period</p>
+                                {kpi.change && <p className={`text-xs mt-1 ${kpi.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>{kpi.change} from last period</p>}
                             </CardContent>
                         </Card>
                     ))}
@@ -155,39 +165,51 @@ export const AnalyticsDashboard = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                     <Card className="shadow-md">
                         <CardHeader><CardTitle className="font-headline">{selectedPlatform === 'LinkedIn' ? 'Connections Growth' : 'Follower Growth'}</CardTitle></CardHeader>
-                        <CardContent className="h-[300px] md:h-[350px]"><ResponsiveContainer width="100%" height="100%"><LineChart data={currentPlatformData.followerData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" strokeOpacity={0.3} /><XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} /><YAxis domain={['dataMin - 100', 'dataMax + 100']} stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(value) => typeof value === 'number' ? value.toLocaleString() : value} /><Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 'var(--radius)' }}/><Legend wrapperStyle={{fontSize: "12px"}}/><Line type="monotone" dataKey={selectedPlatform === 'LinkedIn' ? 'connections' : 'followers'} stroke="hsl(var(--primary))" strokeWidth={2} activeDot={{ r: 6 }} /></LineChart></ResponsiveContainer></CardContent>
+                        <CardContent className="h-[300px] md:h-[350px]">
+                          {currentFollowerData.every(d => d.followers === 0 || d.connections === 0) ? (
+                            <div className="flex items-center justify-center h-full text-muted-foreground"><Info size={20} className="mr-2"/>No data to display for follower growth.</div>
+                          ) : (
+                            <ResponsiveContainer width="100%" height="100%"><LineChart data={currentFollowerData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" strokeOpacity={0.3} /><XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} /><YAxis domain={['dataMin - 100', 'dataMax + 100']} stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(value) => typeof value === 'number' ? value.toLocaleString() : value} /><Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 'var(--radius)' }}/><Legend wrapperStyle={{fontSize: "12px"}}/><Line type="monotone" dataKey={selectedPlatform === 'LinkedIn' ? 'connections' : 'followers'} stroke="hsl(var(--primary))" strokeWidth={2} activeDot={{ r: 6 }} /></LineChart></ResponsiveContainer>
+                          )}
+                        </CardContent>
                     </Card>
                     <Card className="shadow-md">
-                        <CardHeader><CardTitle className="font-headline">{selectedPlatform === 'LinkedIn' ? 'Impressions' : 'Views (5-Day Periods)'}</CardTitle></CardHeader>
-                        <CardContent className="h-[300px] md:h-[350px]"><ResponsiveContainer width="100%" height="100%"><BarChart data={currentPlatformData.viewsData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" strokeOpacity={0.3}/><XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} /><YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(value) => typeof value === 'number' ? value.toLocaleString() : value} /><Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 'var(--radius)' }}/><Legend wrapperStyle={{fontSize: "12px"}}/><Bar dataKey="views" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer></CardContent>
+                        <CardHeader><CardTitle className="font-headline">{selectedPlatform === 'LinkedIn' ? 'Impressions' : 'Views'}</CardTitle></CardHeader>
+                        <CardContent className="h-[300px] md:h-[350px]">
+                          {currentViewsData.every(d => d.views === 0) ? (
+                            <div className="flex items-center justify-center h-full text-muted-foreground"><Info size={20} className="mr-2"/>No data to display for views.</div>
+                          ) : (
+                            <ResponsiveContainer width="100%" height="100%"><BarChart data={currentViewsData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" strokeOpacity={0.3}/><XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} /><YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(value) => typeof value === 'number' ? value.toLocaleString() : value} /><Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 'var(--radius)' }}/><Legend wrapperStyle={{fontSize: "12px"}}/><Bar dataKey="views" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer>
+                          )}
+                        </CardContent>
                     </Card>
                 </div>
                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <Card className="shadow-md">
-                        <CardHeader><CardTitle className="font-headline">Sentiment Analysis (Mock)</CardTitle></CardHeader>
+                        <CardHeader><CardTitle className="font-headline">Sentiment Analysis</CardTitle></CardHeader>
                         <CardContent className="h-[300px] md:h-[350px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie data={sentimentMockData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={"80%"} labelLine={false} label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }) => { const radius = innerRadius + (outerRadius - innerRadius) * 1.2; const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180)); const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180)); return (<text x={x} y={y} fill="hsl(var(--foreground))" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={12}>{`${name} (${(percent * 100).toFixed(0)}%)`}</text>);}}>
-                                        {sentimentMockData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} stroke="hsl(var(--background))" strokeWidth={2}/>)}
-                                    </Pie><Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 'var(--radius)' }}/><Legend wrapperStyle={{fontSize: "12px"}}/>
-                                </PieChart>
-                            </ResponsiveContainer>
+                           {currentSentimentData.every(d => d.value === 0) ? (
+                            <div className="flex items-center justify-center h-full text-muted-foreground"><Info size={20} className="mr-2"/>No sentiment data available.</div>
+                          ) : (
+                            <ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={currentSentimentData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={"80%"} labelLine={false} label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }) => { const radius = innerRadius + (outerRadius - innerRadius) * 1.2; const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180)); const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180)); return (<text x={x} y={y} fill="hsl(var(--foreground))" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={12}>{`${name} (${(percent * 100).toFixed(0)}%)`}</text>);}}>{currentSentimentData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} stroke="hsl(var(--background))" strokeWidth={2}/>)}</Pie><Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 'var(--radius)' }}/><Legend wrapperStyle={{fontSize: "12px"}}/></PieChart></ResponsiveContainer>
+                           )}
                         </CardContent>
                     </Card>
                     <Card className="shadow-md">
-                        <CardHeader><CardTitle className="font-headline">Best Times to Post (Mock Heatmap)</CardTitle></CardHeader>
+                        <CardHeader><CardTitle className="font-headline">Best Times to Post (Engagement Heatmap)</CardTitle></CardHeader>
                         <CardContent>
                            <div className="grid grid-cols-7 gap-1 text-center text-xs mt-2">
                                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => <div key={day} className="font-semibold text-muted-foreground pb-1">{day}</div>)}
-                               {bestTimeMockData.flat().map((value, i) => <div key={i} className="h-6 md:h-8 rounded-sm border border-border/30" style={{ backgroundColor: `hsla(var(--primary-raw, 240 50% 60%), ${value * 0.8 + 0.1})` }} title={`${Math.floor(i/7)}:00-${Math.floor(i/7)+1}:00 on ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][i%7]}`}></div>)}
+                               {currentBestTimeData.flat().map((value, i) => <div key={i} className="h-6 md:h-8 rounded-sm border border-border/30" style={{ backgroundColor: `hsla(var(--primary-raw, 240 50% 60%), ${value * 0.8 + 0.1})` }} title={`${Math.floor(i/7)}:00-${Math.floor(i/7)+1}:00 on ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][i%7]}`}></div>)}
                            </div>
-                           <p className="text-xs text-muted-foreground text-center mt-2">Darker means higher engagement (mock data).</p>
+                           <p className="text-xs text-muted-foreground text-center mt-2">Darker means higher engagement. (Illustrative)</p>
                         </CardContent>
                     </Card>
                  </div>
             </div>
-             <p className="text-sm text-muted-foreground mt-6 text-center">Note: All analytics data is currently mocked for demonstration purposes.</p>
+             <p className="text-sm text-muted-foreground mt-6 text-center">Note: Analytics data is illustrative. Real data integration is required for accurate insights.</p>
         </div>
     );
 };
+
+    

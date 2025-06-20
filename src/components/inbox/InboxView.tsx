@@ -7,19 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, Instagram, MessageCircle, Linkedin, Video } from 'lucide-react'; 
+import { Send, Instagram, MessageCircle, Linkedin, Video, InboxIcon } from 'lucide-react'; 
 import { ClientFormattedDate } from '@/components/utils/ClientFormattedDate'; 
 import { useToast } from '@/hooks/use-toast';
 
-// Mock Data from old script for Inbox
-const initialInboxMockData = [
-    { id: '1', platform: 'Instagram', user: 'techie_tom', avatar: 'https://placehold.co/40x40.png', message: 'This AI tool tip is a game changer! 🔥 Thanks so much for sharing, Marshall! I was wondering if you could do a follow-up on advanced prompting techniques?', timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), read: false },
-    { id: '2', platform: 'TikTok', user: 'sara_sings_official', avatar: 'https://placehold.co/40x40.png', message: 'Love your videos! Can you do one on color grading for short-form content? Specifically for a moody cinematic look. Keep up the great work!', timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), read: false },
-    { id: '3', platform: 'LinkedIn', user: 'Jane Doe, Marketing Director', avatar: 'https://placehold.co/40x40.png', message: 'Hi Marshall, great insights on personal branding from your recent post. I\'d love to connect and discuss potential collaboration opportunities for our upcoming campaign.', timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), read: true },
-    { id: '4', platform: 'Instagram', user: 'creative_carly', avatar: 'https://placehold.co/40x40.png', message: 'Your 30-day challenge is so inspiring! What editing software do you recommend for beginners?', timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), read: true },
-];
-
-type Message = typeof initialInboxMockData[0];
+// Removed mock data. This component will now show a placeholder.
+// type Message = { id: string; platform: string; user: string; avatar: string; message: string; timestamp: string; read: boolean; };
+type Message = any; // Using 'any' as data structure might change with real integration
 
 const platformIcons: Record<string, React.ReactNode> = {
     Instagram: <Instagram className="text-pink-600 h-5 w-5" />,
@@ -28,18 +22,25 @@ const platformIcons: Record<string, React.ReactNode> = {
 };
 
 export const InboxView = () => {
-    const [messages, setMessages] = useState<Message[]>(initialInboxMockData);
-    const [selectedMessage, setSelectedMessage] = useState<Message | null>(messages.length > 0 ? messages[0] : null);
+    const [messages, setMessages] = useState<Message[]>([]); // No initial mock data
+    const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
     const [replyText, setReplyText] = useState('');
     const { toast } = useToast();
 
+    // In a real app, messages would be fetched here via useEffect
+    // useEffect(() => {
+    //   // Fetch messages logic
+    // }, []);
+
     const handleSelectMessage = (message: Message) => {
         setSelectedMessage(message);
+        // In a real app, mark as read in backend
         setMessages(msgs => msgs.map(m => m.id === message.id ? {...m, read: true} : m));
     };
 
     const handleReply = () => {
         if (!replyText.trim() || !selectedMessage) return;
+        // Real reply logic would go here (API call to social platform)
         console.log(`Replying to ${selectedMessage.user} on ${selectedMessage.platform}: ${replyText}`);
         
         toast({ title: "Reply Sent (Demo)", description: `Your reply to ${selectedMessage.user} has been logged.` });
@@ -58,7 +59,14 @@ export const InboxView = () => {
                         <Input placeholder="Search messages..." className="bg-background" aria-label="Search messages"/>
                     </div>
                     <ScrollArea className="flex-grow">
-                        {messages.length === 0 && <p className="p-4 text-center text-muted-foreground">No messages yet.</p>}
+                        {messages.length === 0 && (
+                            <div className="flex flex-col items-center justify-center h-full p-8 text-center text-muted-foreground">
+                                <InboxIcon size={48} className="mb-4"/>
+                                <h3 className="text-lg font-semibold">No Messages Yet</h3>
+                                <p className="text-sm">Connect your social accounts to see messages here.</p>
+                                <p className="text-xs mt-4">(Demo: This inbox currently uses placeholder data.)</p>
+                            </div>
+                        )}
                         {messages.map(msg => (
                             <div
                                 key={msg.id}
@@ -91,8 +99,8 @@ export const InboxView = () => {
                         <>
                             <div className="p-4 border-b border-border flex items-center gap-3">
                                 <Avatar>
-                                    <AvatarImage src={selectedMessage.avatar} alt={selectedMessage.user} data-ai-hint="profile avatar" />
-                                    <AvatarFallback>{selectedMessage.user.substring(0,2).toUpperCase()}</AvatarFallback>
+                                    <AvatarImage src={selectedMessage.avatar || `https://placehold.co/40x40.png`} alt={selectedMessage.user} data-ai-hint="profile avatar"/>
+                                    <AvatarFallback>{selectedMessage.user?.substring(0,2).toUpperCase() || '??'}</AvatarFallback>
                                 </Avatar>
                                 <div>
                                     <h3 className="font-semibold text-foreground">{selectedMessage.user}</h3>
@@ -131,12 +139,15 @@ export const InboxView = () => {
                             <div className="text-center text-muted-foreground">
                                 <MessageCircle size={48} className="mx-auto mb-2" />
                                 <p>Select a message to view and reply.</p>
+                                {messages.length === 0 && <p className="text-xs mt-2">(No messages available to select)</p>}
                             </div>
                         </div>
                     )}
                 </div>
             </Card>
-            <p className="text-sm text-muted-foreground mt-6 text-center">Note: Inbox is a demo with mock data. Actual social media integration is required.</p>
+            <p className="text-sm text-muted-foreground mt-6 text-center">Note: Inbox is a demo. Actual social media integration is required for full functionality.</p>
         </div>
     );
 };
+
+    

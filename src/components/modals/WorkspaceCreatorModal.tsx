@@ -50,7 +50,7 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose, onWorkspaceCreated }: W
       const newWorkspaceId = await createWorkspace(name, description, seedWithTemplate); 
       toast({
         title: "Workspace Created",
-        description: `Workspace "${name}" has been successfully created.`,
+        description: `Workspace "${name}" has been successfully created. ${seedWithTemplate ? 'Content template applied.' : ''}`,
       });
       if (newWorkspaceId) {
          setCurrentWorkspaceId(newWorkspaceId); 
@@ -141,3 +141,5 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose, onWorkspaceCreated }: W
     </Dialog>
   );
 };
+
+    

@@ -43,6 +43,16 @@ export interface Comment {
   createdAt: Timestamp | Date;
 }
 
+export type IdeaBoardStatus = 'Ideas' | 'Scripting' | 'Filming' | 'Editing' | 'Published';
+export const IDEA_BOARD_STATUSES: IdeaBoardStatus[] = ['Ideas', 'Scripting', 'Filming', 'Editing', 'Published'];
+
+export interface Idea {
+  id: string;
+  text: string;
+  status: IdeaBoardStatus;
+  createdAt: Timestamp | Date;
+}
+
 
 interface WorkspaceContextType {
   workspaces: Workspace[];
@@ -52,13 +62,22 @@ interface WorkspaceContextType {
   setCurrentWorkspaceId: (id: string | null) => void;
   createWorkspace: (name: string, description?: string, seedWithTemplate?: boolean) => Promise<string | undefined>;
   deleteWorkspace: (workspaceId: string) => Promise<void>;
+  
   contentItems: ContentItem[];
   isLoadingContent: boolean;
   createContentItem: (item: Omit<ContentItem, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   updateContentItem: (item: ContentItem) => Promise<void>;
   deleteContentItem: (itemId: string) => Promise<void>;
+  
   getComments: (contentItemId: string, callback: (comments: Comment[]) => void) => () => void;
   addComment: (contentItemId: string, text: string) => Promise<void>;
+
+  ideas: Idea[];
+  isLoadingIdeas: boolean;
+  getIdeas: (callback: (ideas: Idea[]) => void) => () => void;
+  addIdea: (text: string) => Promise<void>;
+  updateIdeaStatus: (ideaId: string, status: IdeaBoardStatus) => Promise<void>;
+  deleteIdea: (ideaId: string) => Promise<void>;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
@@ -71,6 +90,10 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
 
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
   const [isLoadingContent, setIsLoadingContent] = useState(false);
+  
+  const [ideas, setIdeas] = useState<Idea[]>([]);
+  const [isLoadingIdeas, setIsLoadingIdeas] = useState(false);
+
   const [isInitialRtdbLoadAttempted, setIsInitialRtdbLoadAttempted] = useState(false);
 
 
@@ -79,7 +102,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
       setWorkspaces([]);
       setIsLoadingWorkspaces(false);
       setCurrentWorkspaceIdState(null);
-      setIsInitialRtdbLoadAttempted(false);
+      setIsInitialRtdbLoadAttempted(false); // Reset for potential re-login
       return;
     }
     setIsLoadingWorkspaces(true);
@@ -106,7 +129,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!user || !rtdb || isInitialRtdbLoadAttempted) {
-      if (user && !isInitialRtdbLoadAttempted) {
+      if (user && !isInitialRtdbLoadAttempted) { // If user is present but load not attempted, mark it
         setIsInitialRtdbLoadAttempted(true);
       }
       return;
@@ -117,13 +140,10 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
 
     const listener = rtdbOnValue(userPreferenceRef, (snapshot) => {
       const lastId = snapshot.val() as string | null;
-      if (lastId && currentWorkspaceId === null && workspaces.some(ws => ws.id === lastId)) { // Check if lastId is a valid workspace
+      if (lastId && currentWorkspaceId === null && workspaces.some(ws => ws.id === lastId)) {
         setCurrentWorkspaceIdState(lastId);
       }
-      setIsInitialRtdbLoadAttempted(true); // Mark as attempted regardless of finding a value
-      // Only detach listener after first successful read or if it's explicitly meant to be a one-time fetch
-      // For a preference that might update elsewhere and should reflect, keep listener or re-evaluate strategy.
-      // For now, assuming one-time load on app start is fine.
+      setIsInitialRtdbLoadAttempted(true);
       rtdbOff(userPreferenceRef, 'value', listener); 
     }, (error) => {
       console.error("Error fetching last selected workspace ID from RTDB:", error);
@@ -187,12 +207,11 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
         const docRef = doc(planCollectionRef); 
         const newItem: Omit<ContentItem, 'id' | 'updatedAt'> = {
           title: item.title,
-          idea: item.coreIdea,
+          idea: item.idea,
           script: item.script,
           caption: item.caption,
           status: 'Draft',
           createdAt: serverTimestamp(),
-          // dueDate could be calculated based on 'day' if needed, e.g., Date.now() + (item.day * 24 * 60 * 60 * 1000)
         };
         batch.set(docRef, newItem);
       });
@@ -204,20 +223,23 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
   const deleteWorkspace = async (workspaceId: string) => {
     if (!user) throw new Error("User not authenticated");
     
-    const contentPlanRef = collection(db, "artifacts", APP_ID, "users", user.uid, "workspaces", workspaceId, "contentPlan");
-    const contentPlanSnapshot = await getDocs(contentPlanRef);
+    // Batch delete for contentPlan items and their comments, and ideas
     const batch = writeBatch(db);
 
+    // Delete contentPlan items and their comments
+    const contentPlanRef = collection(db, "artifacts", APP_ID, "users", user.uid, "workspaces", workspaceId, "contentPlan");
+    const contentPlanSnapshot = await getDocs(contentPlanRef);
     for (const contentDoc of contentPlanSnapshot.docs) {
-      // Delete comments subcollection for each content item
-      const commentsRef = collection(db, "artifacts", APP_ID, "users", user.uid, "workspaces", workspaceId, "contentPlan", contentDoc.id, "comments");
+      const commentsRef = collection(contentPlanRef, contentDoc.id, "comments");
       const commentsSnapshot = await getDocs(commentsRef);
-      commentsSnapshot.forEach(commentDoc => {
-        batch.delete(commentDoc.ref);
-      });
-      // Delete the content item itself
-      batch.delete(contentDoc.ref);
+      commentsSnapshot.forEach(commentDoc => batch.delete(commentDoc.ref));
+      batch.delete(contentDoc.ref); // Delete the content item itself
     }
+
+    // Delete ideas
+    const ideasRef = collection(db, "artifacts", APP_ID, "users", user.uid, "workspaces", workspaceId, "ideas");
+    const ideasSnapshot = await getDocs(ideasRef);
+    ideasSnapshot.forEach(ideaDoc => batch.delete(ideaDoc.ref));
     
     // Delete the workspace document
     batch.delete(doc(db, "artifacts", APP_ID, "users", user.uid, "workspaces", workspaceId));
@@ -225,7 +247,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
     await batch.commit();
 
     if (currentWorkspaceId === workspaceId) {
-      setCurrentWorkspaceId(null); // Clear current workspace if it's the one deleted
+      setCurrentWorkspaceId(null); 
     }
   };
 
@@ -258,16 +280,10 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
     const userConfirmed = window.confirm("Are you sure you want to delete this post and all its comments? This action cannot be undone.");
     if (userConfirmed) {
       const batch = writeBatch(db);
-      // Delete comments subcollection for this item
       const commentsRef = collection(db, "artifacts", APP_ID, "users", user.uid, "workspaces", currentWorkspaceId, "contentPlan", itemId, "comments");
       const commentsSnapshot = await getDocs(commentsRef);
-      commentsSnapshot.forEach(docSnapshot => {
-        batch.delete(docSnapshot.ref);
-      });
-
-      // Delete the content item itself
+      commentsSnapshot.forEach(docSnapshot => batch.delete(docSnapshot.ref));
       batch.delete(doc(db, "artifacts", APP_ID, "users", user.uid, "workspaces", currentWorkspaceId, "contentPlan", itemId));
-      
       await batch.commit();
     }
   };
@@ -306,6 +322,64 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  // Idea Board Logic
+  const getIdeas = useCallback((callback: (ideas: Idea[]) => void) => {
+    if (!user || !currentWorkspaceId) {
+      callback([]);
+      setIsLoadingIdeas(false);
+      return () => {};
+    }
+    setIsLoadingIdeas(true);
+    const ideasQuery = query(
+      collection(db, "artifacts", APP_ID, "users", user.uid, "workspaces", currentWorkspaceId, "ideas"),
+      orderBy("createdAt", "desc")
+    );
+    const unsubscribe = onSnapshot(ideasQuery, snapshot => {
+      const fetchedIdeas = snapshot.docs.map(docData => ({
+        id: docData.id,
+        ...docData.data(),
+        createdAt: docData.data().createdAt?.toDate ? docData.data().createdAt.toDate() : new Date(),
+      } as Idea));
+      setIdeas(fetchedIdeas);
+      callback(fetchedIdeas);
+      setIsLoadingIdeas(false);
+    }, (error) => {
+      console.error("Error fetching ideas:", error);
+      callback([]);
+      setIsLoadingIdeas(false);
+    });
+    return unsubscribe;
+  }, [user, currentWorkspaceId]);
+
+  useEffect(() => {
+    // Automatic initial fetch for the provider state `ideas`
+    const unsubscribe = getIdeas(setIdeas);
+    return unsubscribe;
+  }, [getIdeas]);
+
+
+  const addIdea = async (text: string) => {
+    if (!user || !currentWorkspaceId) throw new Error("User or workspace not available");
+    if (!text.trim()) throw new Error("Idea text cannot be empty");
+    await addDoc(collection(db, "artifacts", APP_ID, "users", user.uid, "workspaces", currentWorkspaceId, "ideas"), {
+      text,
+      status: 'Ideas', 
+      createdAt: serverTimestamp(),
+    });
+  };
+
+  const updateIdeaStatus = async (ideaId: string, status: IdeaBoardStatus) => {
+    if (!user || !currentWorkspaceId) throw new Error("User or workspace not available");
+    const ideaRef = doc(db, "artifacts", APP_ID, "users", user.uid, "workspaces", currentWorkspaceId, "ideas", ideaId);
+    await updateDoc(ideaRef, { status });
+  };
+
+  const deleteIdea = async (ideaId: string) => {
+    if (!user || !currentWorkspaceId) throw new Error("User or workspace not available");
+    await deleteDoc(doc(db, "artifacts", APP_ID, "users", user.uid, "workspaces", currentWorkspaceId, "ideas", ideaId));
+  };
+
+
   const currentWorkspace = workspaces.find(ws => ws.id === currentWorkspaceId) || null;
 
   return (
@@ -317,13 +391,22 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
         setCurrentWorkspaceId,
         createWorkspace,
         deleteWorkspace,
+        
         contentItems,
         isLoadingContent,
         createContentItem,
         updateContentItem,
         deleteContentItem,
+        
         getComments,
         addComment,
+
+        ideas,
+        isLoadingIdeas,
+        getIdeas,
+        addIdea,
+        updateIdeaStatus,
+        deleteIdea,
     }}>
       {children}
     </WorkspaceContext.Provider>
@@ -337,3 +420,5 @@ export const useWorkspace = (): WorkspaceContextType => {
   }
   return context;
 };
+
+    
