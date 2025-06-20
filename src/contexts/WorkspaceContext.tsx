@@ -4,8 +4,9 @@
 import type { User } from 'firebase/auth';
 import type { Timestamp } from 'firebase/firestore';
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { collection, query, orderBy, onSnapshot, getDocs, doc, addDoc, deleteDoc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
-import { db, APP_ID } from '@/lib/firebaseConfig';
+import { collection, query, orderBy, onSnapshot, getDocs, doc, addDoc, deleteDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { db, APP_ID, rtdb } from '@/lib/firebaseConfig'; // Import rtdb
+import { ref as rtdbRef, set as rtdbSet, onValue as rtdbOnValue, off as rtdbOff } from 'firebase/database'; // RTDB functions
 import { useAuth } from './AuthContext';
 
 export interface Workspace {
@@ -13,7 +14,7 @@ export interface Workspace {
   name: string;
   description?: string;
   ownerId: string;
-  createdAt: Timestamp | Date; // Firestore Timestamp or Date object after conversion
+  createdAt: Timestamp | Date; 
   contentCount?: number;
 }
 
@@ -22,7 +23,7 @@ export interface ContentItem {
   title: string;
   idea?: string;
   script?: string;
-  dueDate?: string; // Store as ISO string e.g. YYYY-MM-DD
+  dueDate?: string; 
   status?: ContentStatus;
   createdAt?: Timestamp | Date;
   updatedAt?: Timestamp | Date;
@@ -56,11 +57,16 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
 
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
   const [isLoadingContent, setIsLoadingContent] = useState(false);
+  const [initialWorkspaceIdLoaded, setInitialWorkspaceIdLoaded] = useState(false);
 
+
+  // Effect for Firestore: fetching workspaces
   useEffect(() => {
     if (!user) {
       setWorkspaces([]);
       setIsLoadingWorkspaces(false);
+      setCurrentWorkspaceIdState(null); 
+      setInitialWorkspaceIdLoaded(false);
       return;
     }
     setIsLoadingWorkspaces(true);
@@ -72,22 +78,52 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
         return { 
           id: docData.id, 
           ...docData.data(), 
-          createdAt: docData.data().createdAt?.toDate ? docData.data().createdAt.toDate() : new Date(), // Convert Timestamp
+          createdAt: docData.data().createdAt?.toDate ? docData.data().createdAt.toDate() : new Date(),
           contentCount: contentSnapshot.size 
         } as Workspace;
       }));
       setWorkspaces(workspacesData);
       setIsLoadingWorkspaces(false);
     }, (error) => {
-      console.error("Error fetching workspaces:", error);
+      console.error("Error fetching workspaces from Firestore:", error);
       setIsLoadingWorkspaces(false);
     });
     return () => unsubscribe();
   }, [user]);
 
+  // Effect for RTDB: fetching last selected workspace ID
+  useEffect(() => {
+    if (!user || !rtdb) {
+      setInitialWorkspaceIdLoaded(true); // Mark as loaded if no user or rtdb
+      return;
+    }
+
+    const preferencePath = `users/${user.uid}/preferences/lastSelectedWorkspaceId`;
+    const userPreferenceRef = rtdbRef(rtdb, preferencePath);
+
+    const listener = rtdbOnValue(userPreferenceRef, (snapshot) => {
+      const lastId = snapshot.val();
+      if (lastId && !initialWorkspaceIdLoaded && !currentWorkspaceId) { 
+        // Only set if it's the initial load and not already set by interaction
+        setCurrentWorkspaceIdState(lastId);
+      }
+      setInitialWorkspaceIdLoaded(true); 
+    }, (error) => {
+      console.error("Error fetching last selected workspace ID from RTDB:", error);
+      setInitialWorkspaceIdLoaded(true); // Mark as loaded even on error
+    });
+
+    return () => {
+      rtdbOff(userPreferenceRef, 'value', listener);
+    };
+  }, [user, initialWorkspaceIdLoaded, currentWorkspaceId]);
+
+
+  // Effect for Firestore: fetching content items for current workspace
   useEffect(() => {
     if (!user || !currentWorkspaceId) {
       setContentItems([]);
+      setIsLoadingContent(false);
       return;
     }
     setIsLoadingContent(true);
@@ -101,16 +137,25 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
         } as ContentItem)));
         setIsLoadingContent(false);
     }, (error) => {
-      console.error("Error fetching content items:", error);
+      console.error("Error fetching content items from Firestore:", error);
       setIsLoadingContent(false);
     });
     return () => unsubscribe();
   }, [user, currentWorkspaceId]);
 
 
-  const setCurrentWorkspaceId = (id: string | null) => {
+  const setCurrentWorkspaceId = useCallback((id: string | null) => {
     setCurrentWorkspaceIdState(id);
-  };
+    if (user && rtdb) {
+      const preferencePath = `users/${user.uid}/preferences/lastSelectedWorkspaceId`;
+      rtdbSet(rtdbRef(rtdb, preferencePath), id).catch(error => {
+        console.error("Error saving last selected workspace ID to RTDB:", error);
+      });
+    }
+    if (id === null) { // When deselecting workspace, ensure initial load flag is reset for next login/selection
+        setInitialWorkspaceIdLoaded(false);
+    }
+  }, [user]);
 
   const createWorkspace = async (name: string, description?: string) => {
     if (!user) throw new Error("User not authenticated");
@@ -137,7 +182,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
     if (!user || !currentWorkspaceId) throw new Error("User or workspace not available");
     const itemRef = doc(db, "artifacts", APP_ID, "users", user.uid, "workspaces", currentWorkspaceId, "contentPlan", item.id);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id, ...dataToUpdate } = item; // Exclude id from data payload
+    const { id, ...dataToUpdate } = item; 
     await updateDoc(itemRef, {
       ...dataToUpdate,
       updatedAt: serverTimestamp()
@@ -146,8 +191,9 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteContentItem = async (itemId: string) => {
     if (!user || !currentWorkspaceId) throw new Error("User or workspace not available");
+    // Consider adding a confirmation dialog here in a real app
     if (window.confirm("Are you sure you want to delete this post?")) {
-        await deleteDoc(doc(db, "artifacts", APP_ID, "users", user.uid, "workspaces", currentWorkspaceId, "contentPlan", itemId));
+      await deleteDoc(doc(db, "artifacts", APP_ID, "users", user.uid, "workspaces", currentWorkspaceId, "contentPlan", itemId));
     }
   };
 
@@ -179,4 +225,5 @@ export const useWorkspace = (): WorkspaceContextType => {
   }
   return context;
 };
+
 
