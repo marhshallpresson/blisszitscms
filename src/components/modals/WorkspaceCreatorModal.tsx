@@ -1,12 +1,13 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox'; // Added Checkbox
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -14,12 +15,14 @@ import { useToast } from '@/hooks/use-toast';
 interface WorkspaceCreatorModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onWorkspaceCreated?: (workspaceId: string) => void; // Optional callback
 }
 
-export const WorkspaceCreatorModal = ({ isOpen, onClose }: WorkspaceCreatorModalProps) => {
+export const WorkspaceCreatorModal = ({ isOpen, onClose, onWorkspaceCreated }: WorkspaceCreatorModalProps) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const { createWorkspace } = useWorkspace();
+  const [seedWithTemplate, setSeedWithTemplate] = useState(false); // State for checkbox
+  const { createWorkspace, setCurrentWorkspaceId } = useWorkspace();
   const { user, isAuthReady } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,13 +46,20 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose }: WorkspaceCreatorModal
     }
     setIsSubmitting(true);
     try {
-      await createWorkspace(name, description);
+      const newWorkspaceId = await createWorkspace(name, description, seedWithTemplate); // Pass seedWithTemplate
       toast({
         title: "Workspace Created",
         description: `Workspace "${name}" has been successfully created.`,
       });
+      if (newWorkspaceId) {
+         setCurrentWorkspaceId(newWorkspaceId); // Optionally set as current
+         if (onWorkspaceCreated) {
+            onWorkspaceCreated(newWorkspaceId);
+         }
+      }
       setName('');
       setDescription('');
+      setSeedWithTemplate(false);
       onClose();
     } catch (error: any) {
       console.error("Failed to create workspace:", error);
@@ -63,11 +73,11 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose }: WorkspaceCreatorModal
     }
   };
 
-  // Reset form when modal opens/closes to avoid stale data if reopened
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isOpen) {
       setName('');
       setDescription('');
+      setSeedWithTemplate(false);
       setIsSubmitting(false);
     }
   }, [isOpen]);
@@ -103,6 +113,16 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose }: WorkspaceCreatorModal
               className="col-span-3"
               rows={3}
             />
+          </div>
+          <div className="flex items-center space-x-2 col-start-2 col-span-3">
+            <Checkbox
+              id="ws-seed"
+              checked={seedWithTemplate}
+              onCheckedChange={(checked) => setSeedWithTemplate(checked as boolean)}
+            />
+            <Label htmlFor="ws-seed" className="text-sm font-normal text-card-foreground">
+              Seed with 30-Day Challenge template?
+            </Label>
           </div>
         </div>
         <DialogFooter>

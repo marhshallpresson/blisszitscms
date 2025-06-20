@@ -1,5 +1,6 @@
 
 import type { Metadata } from 'next';
+import Script from 'next/script'; // Import Script component
 import { AuthProvider } from '@/contexts/AuthContext';
 import { WorkspaceProvider } from '@/contexts/WorkspaceContext';
 import { Toaster } from '@/components/ui/toaster';
@@ -30,6 +31,9 @@ export default function RootLayout({
             <Toaster />
           </WorkspaceProvider>
         </AuthProvider>
+        {/* Scripts for PDF Export functionality in Analytics */}
+        <Script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" strategy="lazyOnload" />
+        <Script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" strategy="lazyOnload" />
       </body>
     </html>
   );

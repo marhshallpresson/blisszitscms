@@ -1,17 +1,22 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useWorkspace, type ContentItem, type Workspace } from '@/contexts/WorkspaceContext'; // Ensure ContentItem type is imported
+import { useWorkspace, type ContentItem, type Workspace } from '@/contexts/WorkspaceContext';
 import { AuthScreen } from '@/components/auth/AuthScreen';
 import { WelcomeDashboard } from '@/components/dashboard/WelcomeDashboard';
 import { ContentDashboard } from '@/components/content/ContentDashboard';
 import { ProfileDashboard } from '@/components/profile/ProfileDashboard';
+import { AdminDashboard } from '@/components/admin/AdminDashboard'; // New
+import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard'; // New
+import { InboxView } from '@/components/inbox/InboxView'; // New
 import { WorkspaceCreatorModal } from '@/components/modals/WorkspaceCreatorModal';
-import { ReminderSetupModal } from '@/components/modals/ReminderSetupModal';
+// ReminderSetupModal is now accessed from ProfileDashboard
 import { ContentFormModal } from '@/components/modals/ContentFormModal';
-import { SelectWorkspaceForImportModal } from '@/components/modals/SelectWorkspaceForImportModal'; // New Modal
+import { ContentDetailsModal } from '@/components/modals/ContentDetailsModal'; // New
+import { MarkAsPublishedModal } from '@/components/modals/MarkAsPublishedModal'; // New
+import { SelectWorkspaceForImportModal } from '@/components/modals/SelectWorkspaceForImportModal';
 import { AppLogo } from '@/components/layout/AppLogo';
 import { useToast } from '@/hooks/use-toast';
 
@@ -28,25 +33,32 @@ import {
   SidebarMenuButton,
   SidebarMenuSkeleton,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, Bell, LogOut, Sparkles, UserCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { LayoutDashboard, LogOut, Sparkles, UserCircle, Briefcase, BarChart2, MessageSquare, Shield } from 'lucide-react'; // Added new icons
+import { Button } from '@/components/ui/button'; // Button might be used in main content
+
+type ActiveView = 'welcome' | 'content' | 'profile' | 'admin' | 'analytics' | 'inbox';
+
 
 export default function AppPage() {
   const { user, isAuthReady, isLoading: isAuthLoading, signOut } = useAuth();
   const { workspaces, currentWorkspace, currentWorkspaceId, setCurrentWorkspaceId, isLoadingWorkspaces } = useWorkspace();
   const { toast } = useToast();
 
+  const [activeView, setActiveView] = useState<ActiveView>('welcome');
   const [isCreatingWorkspace, setCreatingWorkspace] = useState(false);
-  const [isSettingReminders, setSettingReminders] = useState(false);
+  // const [isSettingReminders, setSettingReminders] = useState(false); // Removed, handled in ProfileDashboard
   const [editingContentItem, setEditingContentItem] = useState<ContentItem | null>(null);
-  const [isContentFormModalOpen, setIsContentFormModalOpen] = useState(false);
-  const [showingProfileSettings, setShowingProfileSettings] = useState(false);
-  
-  const [resizeKey, setResizeKey] = useState(0); // Renamed from sidebarKey for clarity
+  const [viewingContentItem, setViewingContentItem] = useState<ContentItem | null>(null); // For Details Modal
+  const [markingContentItem, setMarkingContentItem] = useState<ContentItem | null>(null); // For MarkAsPublished Modal
 
-  // State for AI import flow when no workspace is active
+  const [isContentFormModalOpen, setIsContentFormModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isMarkAsPublishedModalOpen, setIsMarkAsPublishedModalOpen] = useState(false);
+  
+  const [resizeKey, setResizeKey] = useState(0); 
+
   const [isSelectWorkspaceModalOpen, setIsSelectWorkspaceModalOpen] = useState(false);
-  const [pendingAiImportData, setPendingAiImportData] = useState<{ title: string, description: string } | null>(null);
+  const [pendingAiImportData, setPendingAiImportData] = useState<{ title: string, description: string, caption?: string } | null>(null);
 
 
   useEffect(() => {
@@ -57,10 +69,19 @@ export default function AppPage() {
     }
   }, []);
 
+  // Determine active view based on currentWorkspaceId and activeView state
+  useEffect(() => {
+    if (currentWorkspaceId && activeView !== 'profile' && activeView !== 'admin' && activeView !== 'analytics' && activeView !== 'inbox') {
+      setActiveView('content');
+    } else if (!currentWorkspaceId && (activeView === 'content')) {
+      setActiveView('welcome');
+    }
+  }, [currentWorkspaceId, activeView]);
+
   const handleSignOut = async () => {
     await signOut();
     setCurrentWorkspaceId(null);
-    setShowingProfileSettings(false);
+    setActiveView('welcome'); // Navigate to welcome on sign out
   };
 
   const openNewContentModal = () => {
@@ -73,64 +94,74 @@ export default function AppPage() {
     setIsContentFormModalOpen(true);
   };
 
-  const handleImportAiRecommendation = (title: string, description: string) => {
-    if (currentWorkspaceId) { // If a workspace is already active
+  const openDetailsModal = (item: ContentItem) => {
+    setViewingContentItem(item);
+    setIsDetailsModalOpen(true);
+  };
+
+  const openMarkAsPublishedModal = (item: ContentItem) => {
+    setMarkingContentItem(item);
+    setIsMarkAsPublishedModalOpen(true);
+  }
+
+  const handleImportAiRecommendation = (title: string, description: string, caption?: string) => {
+    if (currentWorkspaceId) {
       setEditingContentItem({
         id: '', 
         title: title,
         idea: description,
+        caption: caption || '',
         script: '',
         dueDate: '', 
         status: 'Draft', 
-      } as ContentItem); // Cast to ContentItem for type consistency
+      } as ContentItem);
       setIsContentFormModalOpen(true);
-    } else { // No active workspace, user is on WelcomeDashboard
+    } else {
       if (!workspaces || workspaces.length === 0) {
           toast({
               title: "No Workspace Found",
               description: "Please create a workspace first before importing an AI idea.",
               variant: "destructive",
           });
-          setCreatingWorkspace(true); // Open workspace creator
+          setCreatingWorkspace(true); 
           return;
       }
-      setPendingAiImportData({ title, description });
+      setPendingAiImportData({ title, description, caption });
       setIsSelectWorkspaceModalOpen(true);
     }
   };
 
   const handleWorkspaceSelectedForImport = (workspaceId: string) => {
-    setCurrentWorkspaceId(workspaceId); // Set this as the active workspace context
+    setCurrentWorkspaceId(workspaceId); 
+    setActiveView('content'); // Switch to content view
     setIsSelectWorkspaceModalOpen(false);
     if (pendingAiImportData) {
       setEditingContentItem({
         id: '',
         title: pendingAiImportData.title,
         idea: pendingAiImportData.description,
+        caption: pendingAiImportData.caption || '',
         script: '',
         dueDate: '',
         status: 'Draft',
-      } as ContentItem); // Cast to ContentItem
+      } as ContentItem);
       setIsContentFormModalOpen(true);
-      setPendingAiImportData(null); // Clear pending data
+      setPendingAiImportData(null); 
     }
   };
 
   const handleOpenCreateWorkspaceModalFromSelect = () => {
-    setIsSelectWorkspaceModalOpen(false); // Close the selection modal
-    setCreatingWorkspace(true); // Open the workspace creator modal
+    setIsSelectWorkspaceModalOpen(false);
+    setCreatingWorkspace(true); 
   };
 
-
-  const handleNavigateToDashboard = () => {
-    setCurrentWorkspaceId(null);
-    setShowingProfileSettings(false);
+  const navigateTo = (view: ActiveView, workspaceId?: string | null) => {
+    if (workspaceId !== undefined) { // Allows explicitly setting workspace to null for welcome/profile etc.
+        setCurrentWorkspaceId(workspaceId);
+    }
+    setActiveView(view);
   };
 
-  const handleNavigateToProfile = () => {
-    setShowingProfileSettings(true);
-    setCurrentWorkspaceId(null); // Ensure workspace view is hidden
-  };
 
   if (!isAuthReady || isAuthLoading) {
     return (
@@ -146,7 +177,6 @@ export default function AppPage() {
     return <AuthScreen />; 
   }
 
-  // Construct a more dynamic key for SidebarProvider
   const sidebarProviderKey = `${resizeKey}-${isAuthReady}-${isAuthLoading}-${user?.uid || 'no-user'}`;
 
   return (
@@ -164,8 +194,8 @@ export default function AppPage() {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
-                onClick={handleNavigateToDashboard}
-                isActive={!currentWorkspaceId && !showingProfileSettings}
+                onClick={() => navigateTo('welcome', null)}
+                isActive={activeView === 'welcome'}
                 tooltip="Dashboard"
               >
                 <LayoutDashboard />
@@ -174,21 +204,48 @@ export default function AppPage() {
             </SidebarMenuItem>
              <SidebarMenuItem>
               <SidebarMenuButton 
-                onClick={handleNavigateToProfile} 
-                isActive={showingProfileSettings}
+                onClick={() => navigateTo('profile', null)} 
+                isActive={activeView === 'profile'}
                 tooltip="Profile Settings"
               >
                 <UserCircle />
                 <span>Profile</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            {/* New Sidebar Items */}
             <SidebarMenuItem>
-              <SidebarMenuButton onClick={() => setSettingReminders(true)} tooltip="Reminders">
-                <Bell />
-                <span>Reminders</span>
+              <SidebarMenuButton 
+                onClick={() => navigateTo('inbox', null)} 
+                isActive={activeView === 'inbox'}
+                tooltip="Inbox"
+              >
+                <MessageSquare />
+                <span>Inbox</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            {(isLoadingWorkspaces && !currentWorkspaceId && !showingProfileSettings) && (
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => navigateTo('analytics', null)} 
+                isActive={activeView === 'analytics'}
+                tooltip="Analytics"
+              >
+                <BarChart2 />
+                <span>Analytics</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => navigateTo('admin', null)} 
+                isActive={activeView === 'admin'}
+                tooltip="Admin Panel"
+              >
+                <Shield />
+                <span>Admin</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            {/* End New Sidebar Items */}
+            
+            {(isLoadingWorkspaces && activeView === 'welcome') && (
               <>
                 <SidebarMenuSkeleton showIcon />
                 <SidebarMenuSkeleton showIcon />
@@ -216,18 +273,23 @@ export default function AppPage() {
             </div>
         </header>
         <main className="flex-1 overflow-y-auto">
-          {showingProfileSettings ? (
-            <ProfileDashboard onBack={handleNavigateToDashboard} />
-          ) : currentWorkspace ? (
+          {activeView === 'profile' && <ProfileDashboard onBack={() => navigateTo('welcome', null)} />}
+          {activeView === 'admin' && <AdminDashboard onNavigateToWorkspace={(id) => navigateTo('content', id)} onCreateWorkspace={() => setCreatingWorkspace(true)} />}
+          {activeView === 'analytics' && <AnalyticsDashboard />}
+          {activeView === 'inbox' && <InboxView />}
+          {activeView === 'content' && currentWorkspace && (
             <ContentDashboard
               workspace={currentWorkspace}
-              onBack={handleNavigateToDashboard}
+              onBack={() => navigateTo('welcome', null)}
               onNewContent={openNewContentModal}
               onEditContent={openEditContentModal}
+              onViewDetails={openDetailsModal}
+              onMarkAsPublished={openMarkAsPublishedModal}
             />
-          ) : (
+          )}
+          {activeView === 'welcome' && (
             <WelcomeDashboard
-              onSelectWorkspace={(id) => { setCurrentWorkspaceId(id); setShowingProfileSettings(false); }}
+              onSelectWorkspace={(id) => navigateTo('content', id)}
               onNewWorkspace={() => setCreatingWorkspace(true)}
               onImportAiRecommendation={handleImportAiRecommendation}
             />
@@ -238,18 +300,32 @@ export default function AppPage() {
       <WorkspaceCreatorModal 
         isOpen={isCreatingWorkspace} 
         onClose={() => setCreatingWorkspace(false)} 
+        onWorkspaceCreated={(newId) => {
+            setCurrentWorkspaceId(newId); // Set as current workspace
+            setActiveView('content'); // Navigate to content view of new workspace
+        }}
       />
-      <ReminderSetupModal isOpen={isSettingReminders} onClose={() => setSettingReminders(false)} />
+      {/* ReminderSetupModal is now launched from ProfileDashboard */}
       <ContentFormModal 
         isOpen={isContentFormModalOpen} 
         onClose={() => setIsContentFormModalOpen(false)} 
         item={editingContentItem} 
       />
+      <ContentDetailsModal
+        isOpen={isDetailsModalOpen}
+        onClose={() => setIsDetailsModalOpen(false)}
+        item={viewingContentItem}
+      />
+      <MarkAsPublishedModal
+        isOpen={isMarkAsPublishedModalOpen}
+        onClose={() => setIsMarkAsPublishedModalOpen(false)}
+        item={markingContentItem}
+      />
       <SelectWorkspaceForImportModal
         isOpen={isSelectWorkspaceModalOpen}
         onClose={() => {
           setIsSelectWorkspaceModalOpen(false);
-          setPendingAiImportData(null); // Clear pending data if modal is closed without selection
+          setPendingAiImportData(null); 
         }}
         workspaces={workspaces || []}
         onSelectWorkspace={handleWorkspaceSelectedForImport}

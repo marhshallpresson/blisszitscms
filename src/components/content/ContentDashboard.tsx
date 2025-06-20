@@ -4,18 +4,28 @@
 import type { Workspace, ContentItem } from '@/contexts/WorkspaceContext';
 import { Button } from '@/components/ui/button';
 import { ContentItemCard } from './ContentItemCard';
-import { Plus, ArrowLeft, Edit3, Trash2 } from 'lucide-react';
+import { Plus, ArrowLeft, Edit3, Loader2 } from 'lucide-react'; // Added Loader2
 import { useWorkspace } from '@/contexts/WorkspaceContext';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton'; // Keep Skeleton for card
+import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card'; // Import Card and parts
 
 interface ContentDashboardProps {
   workspace: Workspace;
   onBack: () => void;
   onNewContent: () => void;
   onEditContent: (item: ContentItem) => void;
+  onViewDetails: (item: ContentItem) => void; // New prop
+  onMarkAsPublished: (item: ContentItem) => void; // New prop
 }
 
-export const ContentDashboard = ({ workspace, onBack, onNewContent, onEditContent }: ContentDashboardProps) => {
+export const ContentDashboard = ({ 
+    workspace, 
+    onBack, 
+    onNewContent, 
+    onEditContent,
+    onViewDetails,
+    onMarkAsPublished
+}: ContentDashboardProps) => {
   const { contentItems, isLoadingContent, deleteContentItem } = useWorkspace();
 
   return (
@@ -44,9 +54,12 @@ export const ContentDashboard = ({ workspace, onBack, onNewContent, onEditConten
               <CardContent>
                 <Skeleton className="h-4 w-full mb-2" />
                 <Skeleton className="h-4 w-5/6" />
+                 <Skeleton className="h-3 w-full mt-2 mb-1" />
+                 <Skeleton className="h-3 w-5/6" />
               </CardContent>
-              <CardFooter>
-                <Skeleton className="h-4 w-1/2" />
+              <CardFooter className="flex justify-between">
+                <Skeleton className="h-4 w-1/3" />
+                <Skeleton className="h-8 w-8 rounded-md" />
               </CardFooter>
             </Card>
           ))}
@@ -58,7 +71,9 @@ export const ContentDashboard = ({ workspace, onBack, onNewContent, onEditConten
               key={item.id} 
               item={item} 
               onEdit={() => onEditContent(item)} 
-              onDelete={() => deleteContentItem(item.id)} 
+              onDelete={() => deleteContentItem(item.id)}
+              onViewDetails={() => onViewDetails(item)}
+              onMarkAsPublished={() => onMarkAsPublished(item)}
             />
           ))}
         </div>

@@ -5,12 +5,13 @@ import type { ContentItem } from '@/contexts/WorkspaceContext';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit3, Trash2, Calendar } from 'lucide-react';
+import { Edit3, Trash2, Calendar, Eye } from 'lucide-react'; // Added Eye icon
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
 import { useState, useEffect } from 'react';
@@ -20,6 +21,8 @@ interface ContentItemCardProps {
   item: ContentItem;
   onEdit: (item: ContentItem) => void;
   onDelete: (itemId: string) => void;
+  onViewDetails: (item: ContentItem) => void; // New prop
+  onMarkAsPublished: (item: ContentItem) => void; // New prop
 }
 
 const getStatusColor = (status?: string) => {
@@ -33,7 +36,7 @@ const getStatusColor = (status?: string) => {
   }
 }
 
-export const ContentItemCard = ({ item, onEdit, onDelete }: ContentItemCardProps) => {
+export const ContentItemCard = ({ item, onEdit, onDelete, onViewDetails, onMarkAsPublished }: ContentItemCardProps) => {
   const [clientFormattedDueDate, setClientFormattedDueDate] = useState('Loading date...');
 
   useEffect(() => {
@@ -53,7 +56,9 @@ export const ContentItemCard = ({ item, onEdit, onDelete }: ContentItemCardProps
         <CardTitle className="font-headline text-xl mt-2 text-card-foreground pr-10 line-clamp-2">{item.title}</CardTitle>
       </CardHeader>
       <CardContent className="flex-grow pt-0">
-        <p className="text-muted-foreground text-sm line-clamp-3 h-16 font-body">{item.idea || "No brief provided."}</p>
+        <p className="text-muted-foreground text-sm line-clamp-2 h-10 font-body">{item.idea || "No brief provided."}</p>
+        <p className="text-muted-foreground text-xs line-clamp-2 h-8 font-body mt-1">{item.caption || ""}</p>
+
       </CardContent>
       <CardFooter className="pt-4 border-t border-border flex justify-between items-center">
         <div className="flex items-center text-xs text-muted-foreground">
@@ -68,9 +73,18 @@ export const ContentItemCard = ({ item, onEdit, onDelete }: ContentItemCardProps
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onEdit(item)} className="cursor-pointer">
-              <Edit3 size={16} className="mr-2" /> Edit
+            <DropdownMenuItem onClick={() => onViewDetails(item)} className="cursor-pointer">
+              <Eye size={16} className="mr-2" /> View Details & Comments
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onEdit(item)} className="cursor-pointer">
+              <Edit3 size={16} className="mr-2" /> Edit Content
+            </DropdownMenuItem>
+            {item.status !== 'Published' && (
+              <DropdownMenuItem onClick={() => onMarkAsPublished(item)} className="cursor-pointer">
+                <CheckCircle size={16} className="mr-2 text-green-500" /> Mark as Published
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onDelete(item.id)} className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer">
               <Trash2 size={16} className="mr-2" /> Delete
             </DropdownMenuItem>

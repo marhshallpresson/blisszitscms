@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, KeyRound, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, KeyRound, ShieldAlert, Bell } from 'lucide-react';
+import { ReminderSetupModal } from '@/components/modals/ReminderSetupModal'; // Import ReminderSetupModal
 
 interface ProfileDashboardProps {
   onBack: () => void;
@@ -21,6 +22,7 @@ export const ProfileDashboard = ({ onBack }: ProfileDashboardProps) => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [isReminderModalOpen, setIsReminderModalOpen] = useState(false); // State for reminder modal
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,10 +104,10 @@ export const ProfileDashboard = ({ onBack }: ProfileDashboardProps) => {
 
         <Card className="col-span-1 md:col-span-1 lg:col-span-2">
           <CardHeader>
-            <CardTitle className="font-headline text-xl">Security Settings</CardTitle>
-            <CardDescription>Manage your account security options.</CardDescription>
+            <CardTitle className="font-headline text-xl">Security &amp; Preferences</CardTitle>
+            <CardDescription>Manage your account security and notification preferences.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-8">
             <form onSubmit={handlePasswordChange} className="space-y-6">
               <h3 className="text-lg font-semibold text-foreground mb-2">Change Password</h3>
               <div className="space-y-4">
@@ -146,27 +148,22 @@ export const ProfileDashboard = ({ onBack }: ProfileDashboardProps) => {
               <Button type="submit" disabled={isLoading || !newPassword || !confirmPassword} className="font-semibold">
                 {isLoading ? 'Updating...' : 'Update Password'}
               </Button>
-            </form>
-            <CardDescription className="text-xs mt-4">
+               <p className="text-xs text-muted-foreground">
                 Firebase may require you to re-authenticate for sensitive operations like changing your password if you haven't signed in recently.
-            </CardDescription>
+            </p>
+            </form>
+
+            <div className="border-t pt-6">
+              <h3 className="text-lg font-semibold text-foreground mb-3">Notification Preferences</h3>
+               <Button onClick={() => setIsReminderModalOpen(true)} variant="outline">
+                <Bell className="mr-2 h-4 w-4" /> Manage Reminders
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
-       {/* Placeholder for future account management features like delete account */}
-       {/* 
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle className="text-red-600 font-headline">Danger Zone</CardTitle>
-          </CardHeader>
-          <CardContent>
-             <Button variant="destructive" onClick={() => alert("Delete account functionality to be implemented.")}>
-              Delete My Account
-            </Button>
-            <p className="text-xs text-muted-foreground mt-2">This action is irreversible.</p>
-          </CardContent>
-        </Card>
-       */}
+      
+      <ReminderSetupModal isOpen={isReminderModalOpen} onClose={() => setIsReminderModalOpen(false)} />
     </div>
   );
 };
