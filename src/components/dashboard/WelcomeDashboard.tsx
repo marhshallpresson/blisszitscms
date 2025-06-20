@@ -8,6 +8,7 @@ import { AiRecommendationCard } from '@/components/ai/AiRecommendationCard';
 import { Plus, Briefcase, ChevronRight } from 'lucide-react';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ClientFormattedDate } from '@/components/utils/ClientFormattedDate';
 
 interface WelcomeDashboardProps {
   onSelectWorkspace: (id: string) => void;
@@ -16,11 +17,6 @@ interface WelcomeDashboardProps {
 
 export const WelcomeDashboard = ({ onSelectWorkspace, onNewWorkspace }: WelcomeDashboardProps) => {
   const { workspaces, isLoadingWorkspaces } = useWorkspace();
-
-  const formatDate = (date: Date | undefined) => {
-    if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString();
-  }
 
   return (
     <div className="p-4 md:p-8">
@@ -72,7 +68,7 @@ export const WelcomeDashboard = ({ onSelectWorkspace, onNewWorkspace }: WelcomeD
                   <CardDescription className="line-clamp-2 h-12 text-muted-foreground">{ws.description || "No description provided."}</CardDescription>
                 </CardContent>
                 <CardFooter className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">Created: {formatDate(ws.createdAt as Date)}</span>
+                  <span className="text-xs text-muted-foreground">Created: <ClientFormattedDate date={ws.createdAt as Date} /></span>
                   <ChevronRight className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors"/>
                 </CardFooter>
               </Card>

@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
+import { useState, useEffect } from 'react';
 
 
 interface ContentItemCardProps {
@@ -33,7 +34,15 @@ const getStatusColor = (status?: string) => {
 }
 
 export const ContentItemCard = ({ item, onEdit, onDelete }: ContentItemCardProps) => {
-  const formattedDueDate = item.dueDate ? new Date(item.dueDate).toLocaleDateString() : 'Not set';
+  const [clientFormattedDueDate, setClientFormattedDueDate] = useState('Loading date...');
+
+  useEffect(() => {
+    if (item.dueDate) {
+      setClientFormattedDueDate(new Date(item.dueDate).toLocaleDateString());
+    } else {
+      setClientFormattedDueDate('Not set');
+    }
+  }, [item.dueDate]);
 
   return (
     <Card className="flex flex-col group shadow-lg hover:shadow-xl transition-shadow duration-300 bg-card">
@@ -49,7 +58,7 @@ export const ContentItemCard = ({ item, onEdit, onDelete }: ContentItemCardProps
       <CardFooter className="pt-4 border-t border-border flex justify-between items-center">
         <div className="flex items-center text-xs text-muted-foreground">
           <Calendar size={14} className="mr-1.5" />
-          Due: {formattedDueDate}
+          Due: {clientFormattedDueDate}
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
