@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, KeyRound, ShieldAlert, Loader2, UserCircle, User, Eye, EyeOff, Edit, Save, Phone, CalendarDays, MapPin, Globe, Link as LinkIconLucide } from 'lucide-react';
+import { Mail, KeyRound, ShieldAlert, Loader2, UserCircle, User, Eye, EyeOff, Edit, Save, Phone, CalendarDays, MapPin, Globe, Link as LinkIconLucide, AlertTriangle } from 'lucide-react';
 import type { UserProfile } from '@/types/user';
 
 const socialPlatforms = [
@@ -100,15 +100,17 @@ export const ProfileDashboard = () => {
       if (formData.socialMedia) {
         for (const key in formData.socialMedia) {
           const platformKey = key as keyof UserProfile['socialMedia'];
-          if (formData.socialMedia[platformKey]?.trim()) {
-            cleanedSocialMedia[platformKey] = formData.socialMedia[platformKey];
+          const value = formData.socialMedia[platformKey];
+          // Robust check before trimming to prevent errors on null/undefined
+          if (typeof value === 'string' && value.trim()) {
+            cleanedSocialMedia[platformKey] = value;
           } else {
             cleanedSocialMedia[platformKey] = undefined; // Explicitly set to undefined to remove
           }
         }
       }
       const profileToUpdate = { ...formData, socialMedia: cleanedSocialMedia };
-      // Do not include email in the update payload if it's not meant to be changed here
+      // Do not include email in the update payload as it's not meant to be changed here
       delete profileToUpdate.email; 
 
       await updateUserProfile(profileToUpdate);

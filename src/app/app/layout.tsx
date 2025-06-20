@@ -1,49 +1,42 @@
-
 // src/app/app/layout.tsx
 "use client";
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { Loader2 } from 'lucide-react';
 
 export default function AppLayout({ children }: { children: ReactNode }) {
-  const { user, isLoadingAuth, userProfile, isLoadingProfile } = useAuth();
+  const { user, userProfile, isLoadingAuth, isLoadingProfile } = useAuth();
   const router = useRouter();
-  const [authCheckComplete, setAuthCheckComplete] = useState(false);
+  const isDataLoading = isLoadingAuth || isLoadingProfile;
 
   useEffect(() => {
-    if (!isLoadingAuth && !isLoadingProfile) {
-      setAuthCheckComplete(true);
-      if (!user) {
-        router.replace('/auth?mode=signin');
-      } else if (userProfile && !userProfile.onboardingCompleted) {
-        router.replace('/onboarding');
-      } else if (!userProfile && user && !isLoadingProfile) {
-        router.replace('/onboarding');
-      }
+    // Don't do anything while data is loading to prevent premature redirects
+    if (isDataLoading) return;
+
+    // Once loading is complete, check conditions and redirect if necessary
+    if (!user) {
+      router.replace('/auth?mode=signin');
+    } else if (!userProfile?.onboardingCompleted) {
+      // This handles both new users and existing users who haven't completed onboarding
+      router.replace('/onboarding');
     }
-  }, [user, userProfile, isLoadingAuth, isLoadingProfile, router]);
+  }, [user, userProfile, isDataLoading, router]);
 
-  if (!authCheckComplete || isLoadingAuth || (isLoadingProfile && !userProfile && user)) {
+  // Show a loader screen while authentication and profile data are being fetched.
+  // This also acts as a loading screen during the redirection process.
+  if (isDataLoading || !user || !userProfile?.onboardingCompleted) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-4 text-lg text-muted-foreground">Loading your app...</p>
+        <p className="ml-4 text-lg text-muted-foreground">Verifying your session...</p>
       </div>
     );
   }
 
-  if (!user || (userProfile && !userProfile.onboardingCompleted) || (!userProfile && user)) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-4 text-lg text-muted-foreground">Verifying session and profile...</p>
-      </div>
-    );
-  }
-
+  // If loading is complete and all checks pass, render the app layout
   return (
     <div className="flex h-screen bg-background text-foreground">
       <AppSidebar />

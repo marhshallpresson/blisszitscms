@@ -1,11 +1,9 @@
-
 // src/app/app/workspace/[workspaceId]/page.tsx
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { useWorkspace, type Workspace as WorkspaceType, type ContentItem } from '@/contexts/WorkspaceContext';
+import { useParams } from 'next/navigation';
+import { useWorkspace, type ContentItem } from '@/contexts/WorkspaceContext';
 import { WorkspaceViewWrapper } from '@/components/workspace/WorkspaceViewWrapper';
 import { Loader2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,28 +14,14 @@ import { MarkAsPublishedModal } from '@/components/modals/MarkAsPublishedModal';
 
 
 export default function WorkspacePage() {
-  const { user, isLoadingAuth, userProfile, isLoadingProfile } = useAuth();
   const { setCurrentWorkspaceId, currentWorkspace, isLoadingWorkspaces } = useWorkspace();
-  const router = useRouter();
   const params = useParams();
   const workspaceId = params.workspaceId as string;
 
-  const [authCheckComplete, setAuthCheckComplete] = useState(false);
   const [isContentFormModalOpen, setIsContentFormModalOpen] = useState(false);
   const [editingContentItem, setEditingContentItem] = useState<ContentItem | null>(null);
   const [viewingContentItem, setViewingContentItem] = useState<ContentItem | null>(null);
   const [publishingContentItem, setPublishingContentItem] = useState<ContentItem | null>(null);
-
-  useEffect(() => {
-    if (!isLoadingAuth && !isLoadingProfile) {
-      setAuthCheckComplete(true);
-      if (!user) {
-        router.replace('/auth?mode=signin');
-      } else if (userProfile && !userProfile.onboardingCompleted) {
-        router.replace('/onboarding');
-      }
-    }
-  }, [user, userProfile, isLoadingAuth, isLoadingProfile, router]);
 
   useEffect(() => {
     if (workspaceId) {
@@ -71,7 +55,8 @@ export default function WorkspacePage() {
   };
 
 
-  if (!authCheckComplete || isLoadingAuth || (isLoadingProfile && !userProfile && user) || isLoadingWorkspaces) {
+  // AppLayout handles main auth. We just check for workspace data loading.
+  if (isLoadingWorkspaces) {
     return (
       <div className="flex flex-col items-center justify-center min-h-full p-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -79,26 +64,9 @@ export default function WorkspacePage() {
       </div>
     );
   }
-
-  if (!user) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-full p-4">
-        <p className="text-destructive mb-4">Access Denied. Please sign in.</p>
-        <Button asChild><Link href="/auth?mode=signin">Go to Sign In</Link></Button>
-      </div>
-    );
-  }
-
-  if (userProfile && !userProfile.onboardingCompleted) {
-     return (
-      <div className="flex flex-col items-center justify-center min-h-full p-4">
-        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-        <p className="text-muted-foreground">Redirecting to onboarding...</p>
-      </div>
-    );
-  }
-
-  if (!currentWorkspace && !isLoadingWorkspaces) {
+  
+  if (!currentWorkspace) {
+    // This now correctly handles both the "not found" case and the initial loading state for the workspace itself.
     return (
       <div className="flex flex-col items-center justify-center min-h-full p-6 text-center">
         <AlertTriangle className="h-16 w-16 text-destructive mb-4" />
@@ -107,15 +75,6 @@ export default function WorkspacePage() {
         <Button asChild>
           <Link href="/app/admin">Go to Workspaces</Link>
         </Button>
-      </div>
-    );
-  }
-  
-  if (!currentWorkspace) {
-     return (
-      <div className="flex flex-col items-center justify-center min-h-full p-4">
-        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-        <p className="text-muted-foreground">Accessing workspace data...</p>
       </div>
     );
   }
