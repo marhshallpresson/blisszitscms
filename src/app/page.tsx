@@ -8,15 +8,15 @@ import { AuthScreen } from '@/components/auth/AuthScreen';
 import { WelcomeDashboard } from '@/components/dashboard/WelcomeDashboard';
 import { ContentDashboard } from '@/components/content/ContentDashboard';
 import { ProfileDashboard } from '@/components/profile/ProfileDashboard';
-import { AdminDashboard } from '@/components/admin/AdminDashboard'; // New
-import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard'; // New
-import { InboxView } from '@/components/inbox/InboxView'; // New
+import { AdminDashboard } from '@/components/admin/AdminDashboard';
+import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
+import { InboxView } from '@/components/inbox/InboxView';
 import { WorkspaceCreatorModal } from '@/components/modals/WorkspaceCreatorModal';
-// ReminderSetupModal is now accessed from ProfileDashboard
 import { ContentFormModal } from '@/components/modals/ContentFormModal';
-import { ContentDetailsModal } from '@/components/modals/ContentDetailsModal'; // New
-import { MarkAsPublishedModal } from '@/components/modals/MarkAsPublishedModal'; // New
+import { ContentDetailsModal } from '@/components/modals/ContentDetailsModal';
+import { MarkAsPublishedModal } from '@/components/modals/MarkAsPublishedModal';
 import { SelectWorkspaceForImportModal } from '@/components/modals/SelectWorkspaceForImportModal';
+import { OnboardingModal } from '@/components/modals/OnboardingModal'; // New Import
 import { AppLogo } from '@/components/layout/AppLogo';
 import { useToast } from '@/hooks/use-toast';
 
@@ -33,8 +33,8 @@ import {
   SidebarMenuButton,
   SidebarMenuSkeleton,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, LogOut, Sparkles, UserCircle, Briefcase, BarChart2, MessageSquare, Shield } from 'lucide-react'; // Added new icons
-import { Button } from '@/components/ui/button'; // Button might be used in main content
+import { LayoutDashboard, LogOut, Sparkles, UserCircle, Briefcase, BarChart2, MessageSquare, Shield } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 type ActiveView = 'welcome' | 'content' | 'profile' | 'admin' | 'analytics' | 'inbox';
 
@@ -46,10 +46,9 @@ export default function AppPage() {
 
   const [activeView, setActiveView] = useState<ActiveView>('welcome');
   const [isCreatingWorkspace, setCreatingWorkspace] = useState(false);
-  // const [isSettingReminders, setSettingReminders] = useState(false); // Removed, handled in ProfileDashboard
   const [editingContentItem, setEditingContentItem] = useState<ContentItem | null>(null);
-  const [viewingContentItem, setViewingContentItem] = useState<ContentItem | null>(null); // For Details Modal
-  const [markingContentItem, setMarkingContentItem] = useState<ContentItem | null>(null); // For MarkAsPublished Modal
+  const [viewingContentItem, setViewingContentItem] = useState<ContentItem | null>(null);
+  const [markingContentItem, setMarkingContentItem] = useState<ContentItem | null>(null);
 
   const [isContentFormModalOpen, setIsContentFormModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -60,6 +59,11 @@ export default function AppPage() {
   const [isSelectWorkspaceModalOpen, setIsSelectWorkspaceModalOpen] = useState(false);
   const [pendingAiImportData, setPendingAiImportData] = useState<{ title: string, description: string, caption?: string } | null>(null);
 
+  // Onboarding State
+  const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
+  const [isOnboardingCompleted, setIsOnboardingCompleted] = useState(false); // Store this in user profile later
+  const [userInterests, setUserInterests] = useState<string[]>([]); // Store this in user profile later
+
 
   useEffect(() => {
     const handleResize = () => setResizeKey(prev => prev + 1);
@@ -69,7 +73,6 @@ export default function AppPage() {
     }
   }, []);
 
-  // Determine active view based on currentWorkspaceId and activeView state
   useEffect(() => {
     if (currentWorkspaceId && activeView !== 'profile' && activeView !== 'admin' && activeView !== 'analytics' && activeView !== 'inbox') {
       setActiveView('content');
@@ -81,7 +84,7 @@ export default function AppPage() {
   const handleSignOut = async () => {
     await signOut();
     setCurrentWorkspaceId(null);
-    setActiveView('welcome'); // Navigate to welcome on sign out
+    setActiveView('welcome'); 
   };
 
   const openNewContentModal = () => {
@@ -133,7 +136,7 @@ export default function AppPage() {
 
   const handleWorkspaceSelectedForImport = (workspaceId: string) => {
     setCurrentWorkspaceId(workspaceId); 
-    setActiveView('content'); // Switch to content view
+    setActiveView('content');
     setIsSelectWorkspaceModalOpen(false);
     if (pendingAiImportData) {
       setEditingContentItem({
@@ -156,10 +159,27 @@ export default function AppPage() {
   };
 
   const navigateTo = (view: ActiveView, workspaceId?: string | null) => {
-    if (workspaceId !== undefined) { // Allows explicitly setting workspace to null for welcome/profile etc.
+    if (workspaceId !== undefined) {
         setCurrentWorkspaceId(workspaceId);
     }
     setActiveView(view);
+  };
+
+  // Onboarding Modal Handlers
+  const handleOpenOnboardingModal = () => {
+    setIsOnboardingModalOpen(true);
+  };
+
+  const handleSaveUserInterests = (interests: string[]) => {
+    setUserInterests(interests);
+    setIsOnboardingCompleted(true); // Mark onboarding as complete
+    setIsOnboardingModalOpen(false);
+    toast({
+      title: "Interests Saved!",
+      description: "Your content preferences have been updated.",
+    });
+    // Future: Save interests to user profile in Firestore/RTDB
+    console.log("User interests saved:", interests);
   };
 
 
@@ -212,7 +232,6 @@ export default function AppPage() {
                 <span>Profile</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            {/* New Sidebar Items */}
             <SidebarMenuItem>
               <SidebarMenuButton 
                 onClick={() => navigateTo('inbox', null)} 
@@ -243,7 +262,6 @@ export default function AppPage() {
                 <span>Admin</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            {/* End New Sidebar Items */}
             
             {(isLoadingWorkspaces && activeView === 'welcome') && (
               <>
@@ -292,6 +310,8 @@ export default function AppPage() {
               onSelectWorkspace={(id) => navigateTo('content', id)}
               onNewWorkspace={() => setCreatingWorkspace(true)}
               onImportAiRecommendation={handleImportAiRecommendation}
+              onOpenOnboardingModal={handleOpenOnboardingModal}
+              isOnboardingCompleted={isOnboardingCompleted}
             />
           )}
         </main>
@@ -301,11 +321,10 @@ export default function AppPage() {
         isOpen={isCreatingWorkspace} 
         onClose={() => setCreatingWorkspace(false)} 
         onWorkspaceCreated={(newId) => {
-            setCurrentWorkspaceId(newId); // Set as current workspace
-            setActiveView('content'); // Navigate to content view of new workspace
+            setCurrentWorkspaceId(newId); 
+            setActiveView('content');
         }}
       />
-      {/* ReminderSetupModal is now launched from ProfileDashboard */}
       <ContentFormModal 
         isOpen={isContentFormModalOpen} 
         onClose={() => setIsContentFormModalOpen(false)} 
@@ -330,6 +349,11 @@ export default function AppPage() {
         workspaces={workspaces || []}
         onSelectWorkspace={handleWorkspaceSelectedForImport}
         onOpenCreateWorkspace={handleOpenCreateWorkspaceModalFromSelect}
+      />
+      <OnboardingModal
+        isOpen={isOnboardingModalOpen}
+        onClose={() => setIsOnboardingModalOpen(false)}
+        onSaveInterests={handleSaveUserInterests}
       />
     </SidebarProvider>
   );

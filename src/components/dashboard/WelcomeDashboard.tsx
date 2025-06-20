@@ -9,15 +9,22 @@ import { Plus, Briefcase, ChevronRight } from 'lucide-react';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ClientFormattedDate } from '@/components/utils/ClientFormattedDate';
-// import { RealtimeGreeting } from '@/components/rtdb/RealtimeGreeting'; // Removed
 
 interface WelcomeDashboardProps {
   onSelectWorkspace: (id: string) => void;
   onNewWorkspace: () => void;
-  onImportAiRecommendation: (title: string, description: string) => void; // Added prop
+  onImportAiRecommendation: (title: string, description: string, caption?:string) => void;
+  onOpenOnboardingModal: () => void; // New prop
+  isOnboardingCompleted: boolean; // New prop
 }
 
-export const WelcomeDashboard = ({ onSelectWorkspace, onNewWorkspace, onImportAiRecommendation }: WelcomeDashboardProps) => {
+export const WelcomeDashboard = ({ 
+  onSelectWorkspace, 
+  onNewWorkspace, 
+  onImportAiRecommendation,
+  onOpenOnboardingModal, // New
+  isOnboardingCompleted // New
+}: WelcomeDashboardProps) => {
   const { workspaces, isLoadingWorkspaces } = useWorkspace();
 
   return (
@@ -87,8 +94,11 @@ export const WelcomeDashboard = ({ onSelectWorkspace, onNewWorkspace, onImportAi
           </div>
         )}
       </div>
-      {/* <RealtimeGreeting /> Removed */}
-      <AiRecommendationCard onImportRecommendation={onImportAiRecommendation} />
+      <AiRecommendationCard 
+        onImportRecommendation={onImportAiRecommendation} 
+        onOpenOnboardingModal={onOpenOnboardingModal}
+        isOnboardingCompleted={isOnboardingCompleted}
+      />
     </div>
   );
 };
