@@ -1,3 +1,4 @@
+
 // src/ai/flows/generate-advanced-workspace-plan.ts
 'use server';
 /**
@@ -11,7 +12,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-export const GenerateAdvancedWorkspacePlanInputSchema = z.object({
+const GenerateAdvancedWorkspacePlanInputSchema = z.object({
   topic: z
     .string()
     .describe('The central topic or goal for the workspace content plan (e.g., "30-Day Fitness Challenge").'),
@@ -25,7 +26,7 @@ const PlannedContentItemSchema = z.object({
     idea: z.string().describe("The core idea or brief for this content piece, outlining what it's about."),
 });
 
-export const GenerateAdvancedWorkspacePlanOutputSchema = z.object({
+const GenerateAdvancedWorkspacePlanOutputSchema = z.object({
   workspaceName: z.string().describe("A suitable name for the workspace based on the topic."),
   workspaceDescription: z.string().describe("A brief, one-sentence description of the workspace's purpose."),
   contentPlan: z.array(PlannedContentItemSchema).describe("An array of 5-7 planned content items to seed the workspace."),
