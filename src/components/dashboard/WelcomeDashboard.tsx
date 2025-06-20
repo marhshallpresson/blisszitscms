@@ -7,11 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Sparkles, Settings, Briefcase, Plus, Eye } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { useWorkspace, type Workspace } from '@/contexts/WorkspaceContext';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { WorkspaceCreatorModal } from '@/components/modals/WorkspaceCreatorModal';
+import { OnboardingModal } from '@/components/modals/OnboardingModal';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useToast } from '@/hooks/use-toast';
 import { AiRecommendationCard } from '@/components/ai/AiRecommendationCard';
 
 interface WelcomeDashboardProps {
@@ -19,25 +19,30 @@ interface WelcomeDashboardProps {
 }
 
 export const WelcomeDashboard = ({ isOnboardingCompleted }: WelcomeDashboardProps) => {
-  const { userProfile } = useAuth();
+  const { userProfile, updateUserProfile } = useAuth();
   const { workspaces, setCurrentWorkspaceId, isLoadingWorkspaces } = useWorkspace();
   const [isWorkspaceCreatorOpen, setIsWorkspaceCreatorOpen] = useState(false);
+  const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
-
-  const handleNewWorkspace = () => setIsWorkspaceCreatorOpen(true);
 
   const handleNavigateToWorkspace = (workspaceId: string) => {
     setCurrentWorkspaceId(workspaceId);
     router.push(`/app/workspace/${workspaceId}`);
-    toast({ title: "Workspace Selected", description: "Navigating to workspace..." });
+  };
+
+  const handleSaveInterests = async (interests: string[]) => {
+    try {
+      await updateUserProfile({ interests: interests });
+    } catch(e) {
+      console.error("Failed to save interests", e);
+    }
   };
 
   const recentWorkspaces = workspaces.slice(0, 3); 
 
   return (
     <div className="container mx-auto px-0 py-0 space-y-8 md:space-y-10 h-full flex flex-col">
-      <Card className="bg-gradient-to-br from-primary via-primary/90 to-accent text-primary-foreground p-6 md:p-8 rounded-xl shadow-xl flex-shrink-0">
+      <Card className="bg-gradient-to-br from-primary via-primary/80 to-accent text-primary-foreground p-6 md:p-8 rounded-xl shadow-xl flex-shrink-0">
         <CardHeader className="pb-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -47,12 +52,12 @@ export const WelcomeDashboard = ({ isOnboardingCompleted }: WelcomeDashboardProp
                   Welcome, {userProfile?.displayName || "Creator"}!
                 </CardTitle>
                 <CardDescription className="text-primary-foreground/80 text-base md:text-lg mt-1">
-                  {isOnboardingCompleted ? "Your app dashboard is ready. What's next?" : "Complete your onboarding to get started."}
+                  {isOnboardingCompleted ? "Your dashboard is ready. Let's create something." : "Complete your onboarding to get started."}
                 </CardDescription>
               </div>
             </div>
             <Button 
-              onClick={handleNewWorkspace} 
+              onClick={() => setIsWorkspaceCreatorOpen(true)} 
               size="lg" 
               className="font-bold shadow-md hover:shadow-lg transition-shadow bg-background/20 hover:bg-background/30 text-primary-foreground mt-3 sm:mt-0 w-full sm:w-auto"
             >
@@ -69,7 +74,7 @@ export const WelcomeDashboard = ({ isOnboardingCompleted }: WelcomeDashboardProp
               <Settings size={22} className="text-primary"/> Account Settings
             </CardTitle>
             <CardDescription>
-              Update your profile, password, and preferences.
+              Update your profile and preferences.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -90,7 +95,7 @@ export const WelcomeDashboard = ({ isOnboardingCompleted }: WelcomeDashboardProp
                 </Button>
              </div>
             <CardDescription>
-              Quickly jump back into your projects or manage all workspaces.
+              Quickly jump back into your projects.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -111,16 +116,14 @@ export const WelcomeDashboard = ({ isOnboardingCompleted }: WelcomeDashboardProp
               <p className="text-muted-foreground">No workspaces yet. Create one to get started!</p>
             )}
           </CardContent>
-           <CardFooter>
-             <Button onClick={handleNewWorkspace} className="w-full md:w-auto" variant="outline">
-                <Plus size={16} className="mr-2"/> Create Workspace
-            </Button>
-          </CardFooter>
         </Card>
       </div>
       
       <div className="flex-grow min-h-0">
-          <AiRecommendationCard />
+          <AiRecommendationCard 
+            onOpenOnboardingModal={() => setIsOnboardingModalOpen(true)}
+            isOnboardingCompleted={isOnboardingCompleted}
+          />
       </div>
 
       <WorkspaceCreatorModal
@@ -132,6 +135,11 @@ export const WelcomeDashboard = ({ isOnboardingCompleted }: WelcomeDashboardProp
             handleNavigateToWorkspace(id);
           }
         }}
+      />
+       <OnboardingModal
+        isOpen={isOnboardingModalOpen}
+        onClose={() => setIsOnboardingModalOpen(false)}
+        onSaveInterests={handleSaveInterests}
       />
     </div>
   );

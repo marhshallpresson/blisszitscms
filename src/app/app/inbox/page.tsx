@@ -1,5 +1,5 @@
 
-// src/app/(app)/inbox/page.tsx -> src/app/app/inbox/page.tsx
+// src/app/app/inbox/page.tsx
 "use client";
 
 import { InboxView } from "@/components/inbox/InboxView";

@@ -1,3 +1,4 @@
+
 // src/app/app/layout.tsx
 "use client";
 
@@ -20,8 +21,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       } else if (userProfile && !userProfile.onboardingCompleted) {
         router.replace('/onboarding');
       } else if (!userProfile && user && !isLoadingProfile) {
-        // Edge case: user exists but profile doesn't (e.g., after failed onboarding step)
-        console.warn("AppLayout: User authenticated but profile missing or incomplete. Redirecting to onboarding.");
         router.replace('/onboarding');
       }
     }
@@ -37,8 +36,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   }
 
   if (!user || (userProfile && !userProfile.onboardingCompleted) || (!userProfile && user)) {
-    // This state should ideally be brief before redirection from useEffect takes place.
-    // If userProfile is null even after loading, it means onboarding is needed or something is wrong.
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />

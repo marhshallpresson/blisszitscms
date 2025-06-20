@@ -2,13 +2,13 @@
 // src/components/admin/AdminDashboard.tsx
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useWorkspace, type Workspace } from '@/contexts/WorkspaceContext';
+import { useState } from 'react';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Briefcase, ExternalLink, Loader2, Edit, Settings, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, Briefcase, ExternalLink, Loader2, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ClientFormattedDate } from '@/components/utils/ClientFormattedDate';
 import { useRouter } from 'next/navigation'; 
@@ -16,7 +16,7 @@ import { WorkspaceCreatorModal } from '@/components/modals/WorkspaceCreatorModal
 
 export const AdminDashboard = () => {
   const { user, isLoadingAuth } = useAuth();
-  const { workspaces, isLoadingWorkspaces, deleteWorkspace: contextDeleteWorkspace, setCurrentWorkspaceId } = useWorkspace();
+  const { workspaces, isLoadingWorkspaces, deleteWorkspace, setCurrentWorkspaceId } = useWorkspace();
   const { toast } = useToast();
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
@@ -27,9 +27,12 @@ export const AdminDashboard = () => {
       toast({ title: "Authentication Error", description: "You must be logged in to delete workspaces.", variant: "destructive" });
       return;
     }
+    const confirmed = confirm(`Are you sure you want to delete "${workspaceName}"? This will delete all associated content and cannot be undone.`);
+    if (!confirmed) return;
+
     setIsDeleting(workspaceId);
     try {
-      await contextDeleteWorkspace(workspaceId);
+      await deleteWorkspace(workspaceId);
       toast({
         title: "Workspace Deleted",
         description: `Workspace "${workspaceName}" has been successfully deleted.`,
@@ -48,7 +51,6 @@ export const AdminDashboard = () => {
   const handleNavigateToWorkspace = (workspaceId: string) => {
     setCurrentWorkspaceId(workspaceId);
     router.push(`/app/workspace/${workspaceId}`); 
-    toast({ title: "Workspace Selected", description: "Navigating to workspace view..."});
   };
   
   const handleNewWorkspace = () => setIsWorkspaceCreatorOpen(true);
@@ -75,8 +77,8 @@ export const AdminDashboard = () => {
 
 
   return (
-    <div className="container mx-auto px-4 py-8 md:py-12 space-y-8">
-      <Card className="bg-card shadow-xl border-border/80">
+    <div className="container mx-auto px-0 py-0 space-y-8">
+      <Card className="bg-card shadow-lg border-border/80">
         <CardHeader>
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="flex items-center gap-3">

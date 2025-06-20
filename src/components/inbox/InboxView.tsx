@@ -1,3 +1,4 @@
+
 // src/components/inbox/InboxView.tsx
 "use client";
 
@@ -7,9 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, Instagram, MessageCircle, Linkedin, Video, Inbox as InboxIconLucide, Search, AlertTriangle, Loader2 } from 'lucide-react';
+import { Send, Instagram, MessageCircle, Linkedin, Video, Inbox as InboxIconLucide, Search, Loader2 } from 'lucide-react';
 import { ClientFormattedDate } from '@/components/utils/ClientFormattedDate';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 type MessagePlatform = "Instagram" | "TikTok" | "LinkedIn" | "Other";
 
@@ -23,6 +25,13 @@ interface Message {
   read: boolean;
 }
 
+const mockMessages: Message[] = [
+    { id: '1', platform: 'Instagram', user: 'CreativeGal', message: "Loved your latest video! How do you get that color grading?", timestamp: new Date(Date.now() - 3600000), read: false },
+    { id: '2', platform: 'TikTok', user: 'DanceKing_22', message: "Collab?? 🔥", timestamp: new Date(Date.now() - 2 * 3600000), read: true },
+    { id: '3', platform: 'LinkedIn', user: 'Johnathan Smith', message: "Great insights on the creator economy. Let's connect.", timestamp: new Date(Date.now() - 24 * 3600000), read: true },
+    { id: '4', platform: 'Other', user: 'AnonymousFan', message: "Just wanted to say your content is inspiring!", timestamp: new Date(Date.now() - 2 * 24 * 3600000), read: true },
+];
+
 const platformIcons: Record<MessagePlatform, React.ReactNode> = {
     Instagram: <Instagram className="text-pink-600 h-5 w-5" />,
     TikTok: <Video className="h-5 w-5 text-foreground" />, 
@@ -35,50 +44,45 @@ export const InboxView = () => {
     const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
     const [replyText, setReplyText] = useState('');
     const { toast } = useToast();
-    const [isLoading, setIsLoading] = useState(true); // Start as true to show initial loading state
+    const { userProfile } = useAuth();
+    const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
-      // Simulate fetching messages. In a real app, this would be an API call.
-      // For this review, we ensure it shows "No messages" if the fetch is empty.
       setIsLoading(true);
       setTimeout(() => {
-        setMessages([]); // No demo data, so messages array remains empty
-        setSelectedMessage(null);
+        setMessages(mockMessages);
+        setSelectedMessage(mockMessages[0]);
         setIsLoading(false);
-      }, 1000); // Simulate network delay
+      }, 1000);
     }, []);
 
     const handleSelectMessage = (message: Message) => {
         setSelectedMessage(message);
-        // In a real app, mark as read in backend
-        // This will not do much here as messages array will be empty.
         setMessages(prevMessages => prevMessages.map(m => m.id === message.id ? {...m, read: true} : m));
     };
 
     const handleReply = () => {
         if (!replyText.trim() || !selectedMessage) return;
         console.log(`Replying to ${selectedMessage.user} on ${selectedMessage.platform}: ${replyText}`);
-        toast({ title: "Reply Sent (Demo)", description: `Your reply to ${selectedMessage.user} would be sent here in a real application.` });
-        // In a real app, you'd add the reply to the conversation thread.
+        toast({ title: "Reply Sent (Demo)", description: `Your reply to ${selectedMessage.user} has been logged.` });
         setReplyText('');
     };
-
+    
     const filteredMessages = messages.filter(msg => 
         msg.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
         msg.message.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    
 
     return (
-        <div className="container mx-auto px-4 py-8 md:py-12 space-y-8 h-full flex flex-col">
-            <Card className="bg-card shadow-xl border-border/80">
+        <div className="container mx-auto px-0 py-0 space-y-8 h-full flex flex-col">
+            <Card className="bg-card shadow-lg border-border/80">
                 <CardHeader>
                     <div className="flex items-center gap-3">
                         <MessageCircle className="w-10 h-10 text-primary" />
                         <div>
                             <CardTitle className="text-3xl font-bold text-foreground font-headline">Unified Inbox</CardTitle>
-                            <CardDescription className="text-base text-muted-foreground mt-1">Manage social DMs & comments. (Live integration pending)</CardDescription>
+                            <CardDescription className="text-base text-muted-foreground mt-1">Manage your social media DMs & comments in one place.</CardDescription>
                         </div>
                     </div>
                 </CardHeader>
@@ -95,26 +99,22 @@ export const InboxView = () => {
                                 aria-label="Search messages"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                disabled={isLoading || messages.length === 0} 
                             />
                         </div>
                     </div>
                     <ScrollArea className="flex-grow">
-                        {isLoading && (
+                        {isLoading ? (
                              <div className="flex flex-col items-center justify-center h-full p-8 text-center text-muted-foreground">
                                 <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
                                 <p className="text-lg">Loading messages...</p>
                             </div>
-                        )}
-                        {!isLoading && filteredMessages.length === 0 && (
+                        ) : filteredMessages.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-full p-8 text-center text-muted-foreground">
                                 <InboxIconLucide size={56} className="mb-4 opacity-70"/>
                                 <h3 className="text-xl font-semibold text-foreground">Inbox is Empty</h3>
-                                <p className="text-sm">No messages to display. Connect your accounts to see messages here.</p>
+                                <p className="text-sm">No messages to display.</p>
                             </div>
-                        )}
-                        {/* List rendering for actual messages would go here if messages were present */}
-                        {!isLoading && filteredMessages.length > 0 && (
+                        ) : (
                             filteredMessages.map(msg => (
                                 <button 
                                     key={msg.id}
@@ -124,7 +124,7 @@ export const InboxView = () => {
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                             <Avatar className="h-10 w-10">
-                                                <AvatarImage src={msg.avatar || `https://placehold.co/40x40.png?text=${msg.user.substring(0,1)}`} alt={msg.user} data-ai-hint="profile avatar"/>
+                                                <AvatarImage src={msg.avatar || `https://placehold.co/40x40.png?text=${msg.user.substring(0,1)}`} alt={msg.user} data-ai-hint="profile avatar" />
                                                 <AvatarFallback>{msg.user.substring(0,2).toUpperCase()}</AvatarFallback>
                                             </Avatar>
                                             <div>
@@ -148,7 +148,7 @@ export const InboxView = () => {
                         <>
                             <div className="p-4 border-b border-border/70 flex items-center gap-3 sticky top-0 bg-background z-10">
                                 <Avatar className="h-10 w-10">
-                                    <AvatarImage src={selectedMessage.avatar || `https://placehold.co/40x40.png?text=${selectedMessage.user?.substring(0,1)}`} alt={selectedMessage.user} data-ai-hint="profile avatar"/>
+                                    <AvatarImage src={selectedMessage.avatar || `https://placehold.co/40x40.png?text=${selectedMessage.user?.substring(0,1)}`} alt={selectedMessage.user} data-ai-hint="profile avatar" />
                                     <AvatarFallback>{selectedMessage.user?.substring(0,2).toUpperCase() || '??'}</AvatarFallback>
                                 </Avatar>
                                 <div>
@@ -157,18 +157,10 @@ export const InboxView = () => {
                                 </div>
                             </div>
                             <ScrollArea className="flex-grow p-6 space-y-4">
-                                {/* This is a simplified view of one message. A real chat would have multiple messages. */}
                                 <div className="flex">
                                     <div className={`p-3 rounded-lg bg-muted text-foreground max-w-[75%] shadow ${selectedMessage.user === userProfile?.displayName ? 'ml-auto bg-primary text-primary-foreground' : 'bg-muted'}`}>
                                         <p className="text-sm">{selectedMessage.message}</p>
                                         <p className="text-xs text-muted-foreground/80 mt-1.5 text-right"><ClientFormattedDate date={selectedMessage.timestamp} options={{timeStyle: 'short'}}/></p>
-                                    </div>
-                                </div>
-                                 {/* Example of a reply (placeholder) */}
-                                <div className="flex">
-                                    <div className="ml-auto p-3 rounded-lg bg-primary text-primary-foreground max-w-[75%] shadow">
-                                        <p className="text-sm">This is a simulated reply from you for context.</p>
-                                        <p className="text-xs text-primary-foreground/80 mt-1.5 text-right"><ClientFormattedDate date={new Date()} options={{timeStyle: 'short'}}/></p>
                                     </div>
                                 </div>
                             </ScrollArea>
@@ -195,19 +187,12 @@ export const InboxView = () => {
                             <h3 className="text-xl font-semibold text-foreground">No Message Selected</h3>
                             <p className="text-center mt-1">Select a message from the list to view its content and reply.</p>
                              <p className="text-sm text-muted-foreground mt-4">
-                                {isLoading ? "Loading messages..." : "Your inbox is currently empty."}
+                                {isLoading ? "Loading messages..." : "Your inbox is empty."}
                              </p>
                         </div>
                     )}
                 </div>
             </Card>
-             <div className="mt-6 p-4 bg-amber-50 border border-amber-300 rounded-lg text-amber-700 flex items-start gap-3">
-                <AlertTriangle size={24} className="flex-shrink-0"/>
-                <div>
-                    <h4 className="font-semibold">Illustrative Feature</h4>
-                    <p className="text-sm">The Unified Inbox is for demonstration purposes. Actual social media account integration and real-time message fetching are not implemented in this version.</p>
-                </div>
-            </div>
         </div>
     );
 };

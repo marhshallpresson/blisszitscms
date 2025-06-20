@@ -31,7 +31,7 @@ interface AuthContextType {
   updateUserPassword: (newPassword: string) => Promise<void>;
   fetchUserProfile: (uid: string) => Promise<UserProfile | null>;
   saveOnboardingProfile: (profileData: Partial<Pick<UserProfile, 'displayName' | 'phoneNumber' | 'dateOfBirth'>>) => Promise<void>;
-  updateUserProfile: (profileData: Partial<Omit<UserProfile, 'uid' | 'email' | 'createdAt' | 'onboardingCompleted'>>) => Promise<void>;
+  updateUserProfile: (profileData: Partial<UserProfile>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -72,34 +72,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    setIsLoadingAuth(true); 
-    setIsLoadingProfile(true); 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
-      if (currentUser) {
-        await fetchUserProfile(currentUser.uid); 
-      } else {
-        setUserProfile(null); 
-        setIsLoadingProfile(false); 
-      }
-      setIsAuthReady(true); 
-      setIsLoadingAuth(false); 
-    }, (error) => { 
-      console.error("Auth state change error:", error);
-      setUser(null);
-      setUserProfile(null);
-      setIsAuthReady(true); 
       setIsLoadingAuth(false);
-      setIsLoadingProfile(false);
+      if (currentUser) {
+        await fetchUserProfile(currentUser.uid);
+      } else {
+        setUserProfile(null);
+        setIsLoadingProfile(false);
+      }
+      setIsAuthReady(true);
     });
+
     return () => unsubscribe();
   }, [fetchUserProfile]);
 
 
   const signUpWithEmail = async ({ email, password }: EmailPasswordCredentials): Promise<FirebaseUser | null> => {
     if (!auth || !db) throw new Error("Firebase not initialized.");
-    setIsLoadingAuth(true);
-    setIsLoadingProfile(true); // Start loading profile as we'll create one
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const newUser = userCredential.user;
@@ -111,35 +101,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         createdAt: serverTimestamp() as Timestamp,
       };
       await setDoc(userDocRef, initialProfile);
-      setUserProfile(initialProfile); // Set profile immediately
-      setIsLoadingProfile(false); // Profile is now "loaded" (it's the initial one)
+      setUserProfile(initialProfile);
       return newUser;
     } catch (error: any) {
-      console.error("Sign up error:", error);
-      setIsLoadingProfile(false); // Stop loading profile on error
-      toast({ title: "Sign Up Failed", description: error.message, variant: "destructive" });
       throw error;
-    } finally {
-      setIsLoadingAuth(false);
     }
   };
 
   const signInWithEmail = async ({ email, password }: EmailPasswordCredentials): Promise<FirebaseUser | null> => {
     if (!auth) throw new Error("Firebase Auth not initialized.");
-    setIsLoadingAuth(true);
-    setIsLoadingProfile(true); 
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      // User profile will be fetched by onAuthStateChanged effect
       return userCredential.user;
     } catch (error: any) {
-      console.error("Sign in error:", error);
-      setIsLoadingProfile(false); 
-      toast({ title: "Sign In Failed", description: error.message, variant: "destructive" });
       throw error;
-    } finally {
-      setIsLoadingAuth(false);
-      // setIsLoadingProfile will be set to false by fetchUserProfile in onAuthStateChanged
     }
   };
   
@@ -148,68 +123,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoadingProfile(true);
     try {
       const userDocRef = doc(db, "users", user.uid);
-
-      const dataToSet: Partial<UserProfile> = {
-        uid: user.uid, // ensure uid is part of the object
-        email: user.email || '', // ensure email from auth is included
+      const dataToUpdate = {
         ...profileData, 
         onboardingCompleted: true,
         updatedAt: serverTimestamp() as Timestamp,
       };
-      
-      const docSnap = await getDoc(userDocRef);
-      if (!docSnap.exists() || !docSnap.data()?.createdAt) {
-        dataToSet.createdAt = serverTimestamp() as Timestamp;
-      }
-
-      await setDoc(userDocRef, dataToSet, { merge: true });
-      
-      const updatedProfile = await fetchUserProfile(user.uid); // Re-fetch to update context state
-      setUserProfile(updatedProfile); // Explicitly update state
+      await updateDoc(userDocRef, dataToUpdate);
+      await fetchUserProfile(user.uid);
     } catch (error: any) {
-      console.error("Error saving onboarding profile:", error);
-      toast({ title: "Profile Save Failed", description: error.message, variant: "destructive" });
       throw error;
     } finally {
       setIsLoadingProfile(false);
     }
   };
   
-  const updateUserProfile = async (profileData: Partial<Omit<UserProfile, 'uid' | 'email' | 'createdAt' | 'onboardingCompleted'>>): Promise<void> => {
+  const updateUserProfile = async (profileData: Partial<UserProfile>): Promise<void> => {
     if (!user || !db) throw new Error("User not authenticated or Firestore not initialized.");
     setIsLoadingProfile(true);
     try {
       const userDocRef = doc(db, "users", user.uid);
-      
-      const dataToUpdate: Record<string, any> = { 
+      await updateDoc(userDocRef, {
         ...profileData,
-        updatedAt: serverTimestamp() as Timestamp,
-      };
-
-      if (profileData.address) {
-        const currentAddress = userProfile?.address || {};
-        dataToUpdate.address = { ...currentAddress, ...profileData.address };
-      } else {
-        // If address is intended to be cleared, you might need specific handling
-        // For now, partial updates merge, so not providing `address` won't clear it.
-      }
-      if (profileData.socialMedia) {
-        const currentSocials = userProfile?.socialMedia || {};
-        dataToUpdate.socialMedia = { ...currentSocials, ...profileData.socialMedia };
-        // Remove empty social media links
-        for (const key in dataToUpdate.socialMedia) {
-          if (!dataToUpdate.socialMedia[key]) {
-            delete dataToUpdate.socialMedia[key]; 
-          }
-        }
-      }
-      
-      await updateDoc(userDocRef, dataToUpdate); 
-      const updatedProfile = await fetchUserProfile(user.uid);
-      setUserProfile(updatedProfile); // Explicitly update state
+        updatedAt: serverTimestamp()
+      });
+      await fetchUserProfile(user.uid);
     } catch (error: any) {
-      console.error("Error updating user profile:", error);
-      toast({ title: "Profile Update Failed", description: error.message, variant: "destructive" });
       throw error;
     } finally {
       setIsLoadingProfile(false);
@@ -218,44 +156,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     if (!auth) return;
-    setIsLoadingAuth(true);
-    try {
-      await firebaseSignOut(auth);
-      setUser(null); 
-      setUserProfile(null); 
-    } catch (error: any) {
-      console.error("Sign out failed:", error);
-      toast({ title: "Sign Out Failed", description: error.message, variant: "destructive" });
-    } finally {
-      setIsLoadingAuth(false);
-    }
+    await firebaseSignOut(auth);
+    setUser(null); 
+    setUserProfile(null); 
   };
 
   const sendPasswordReset = async (email: string) => {
     if (!auth) throw new Error("Firebase Auth not initialized.");
-    try {
-      await sendPasswordResetEmail(auth, email);
-      toast({ title: "Password Reset Email Sent", description: "Check your inbox for instructions." });
-    } catch (error: any) {
-      console.error("Password reset error:", error);
-      toast({ title: "Password Reset Failed", description: error.message, variant: "destructive" });
-      throw error;
-    }
+    await sendPasswordResetEmail(auth, email);
   };
   
   const updateUserPassword = async (newPassword: string) => {
-    if (!auth || !auth.currentUser) throw new Error("User not authenticated.");
-    setIsLoadingAuth(true);
-    try {
-      await firebaseUpdatePassword(auth.currentUser, newPassword);
-      toast({ title: "Password Updated", description: "Your password has been changed successfully." });
-    } catch (error: any) {
-      console.error("Password update error:", error);
-      toast({ title: "Password Update Error", description: error.message + " You might need to sign in again.", variant: "destructive" });
-      throw error; 
-    } finally {
-      setIsLoadingAuth(false);
-    }
+    if (!auth.currentUser) throw new Error("User not authenticated.");
+    await firebaseUpdatePassword(auth.currentUser, newPassword);
   };
 
   return (

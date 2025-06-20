@@ -1,3 +1,4 @@
+
 // src/app/app/dashboard/page.tsx
 "use client";
 
@@ -55,7 +56,7 @@ export default function AppDashboardPage() {
   }
 
   return (
-    <div className="h-full"> {/* Ensure WelcomeDashboard can fill height if needed */}
+    <div className="h-full">
       <WelcomeDashboard
         isOnboardingCompleted={userProfile?.onboardingCompleted || false}
       />

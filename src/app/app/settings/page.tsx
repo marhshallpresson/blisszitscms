@@ -1,3 +1,4 @@
+
 // src/app/app/settings/page.tsx
 "use client";
 
@@ -22,9 +23,6 @@ export default function AppSettingsPage() {
       } else if (userProfile && !userProfile.onboardingCompleted) {
          router.replace("/onboarding");
       } else if (!userProfile && user && !isLoadingProfile) { 
-        // This case handles if a user is authenticated but somehow profile creation failed
-        // or if there's a race condition. Send to onboarding to attempt profile creation.
-        console.warn("AppSettingsPage: User is authenticated but profile is missing. Redirecting to onboarding.");
         router.replace("/onboarding");
       }
     }
@@ -58,7 +56,6 @@ export default function AppSettingsPage() {
     );
   }
 
-  // Fallback loading state while useEffect determines the redirect.
   return (
     <div className="flex flex-col items-center justify-center min-h-full bg-background p-4">
       <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />

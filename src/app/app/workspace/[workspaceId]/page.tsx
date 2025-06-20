@@ -1,5 +1,5 @@
 
-// src/app/(app)/workspace/[workspaceId]/page.tsx -> src/app/app/workspace/[workspaceId]/page.tsx
+// src/app/app/workspace/[workspaceId]/page.tsx
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -43,15 +43,11 @@ export default function WorkspacePage() {
     if (workspaceId) {
       setCurrentWorkspaceId(workspaceId);
     }
-    // Cleanup current workspace when component unmounts or workspaceId changes
-    // This might be too aggressive if navigating between tabs within the same workspace.
-    // Consider if this cleanup is needed or if context should persist.
-    // return () => setCurrentWorkspaceId(null); 
   }, [workspaceId, setCurrentWorkspaceId]);
 
 
   const handleNewContent = () => {
-    setEditingContentItem(null); // Ensure it's a new item
+    setEditingContentItem(null);
     setIsContentFormModalOpen(true);
   };
 
@@ -72,7 +68,6 @@ export default function WorkspacePage() {
     setIsContentFormModalOpen(false);
     setEditingContentItem(null);
     setPublishingContentItem(null);
-    // Optionally, trigger a refresh of content items if needed, though context should handle it.
   };
 
 
@@ -85,7 +80,7 @@ export default function WorkspacePage() {
     );
   }
 
-  if (!user) { // Should be caught by useEffect, but as a fallback
+  if (!user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-full p-4">
         <p className="text-destructive mb-4">Access Denied. Please sign in.</p>
@@ -94,7 +89,7 @@ export default function WorkspacePage() {
     );
   }
 
-  if (userProfile && !userProfile.onboardingCompleted) { // Should be caught by useEffect
+  if (userProfile && !userProfile.onboardingCompleted) {
      return (
       <div className="flex flex-col items-center justify-center min-h-full p-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -116,7 +111,7 @@ export default function WorkspacePage() {
     );
   }
   
-  if (!currentWorkspace) { // Still loading or error after initial checks
+  if (!currentWorkspace) {
      return (
       <div className="flex flex-col items-center justify-center min-h-full p-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />

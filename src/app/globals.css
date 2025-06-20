@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -12,59 +13,58 @@ h1, h2, h3, h4, h5, h6 {
 
 @layer base {
   :root {
-    /* Corporate Minimalist Theme */
-    --background: 0 0% 100%; /* White */
-    --foreground: 220 15% 20%; /* Dark Slate Blue for text */
+    /* Blisszits App Theme */
+    --background: 240 5% 96%; /* Light Gray */
+    --foreground: 240 6% 10%; /* Nearly Black */
 
     --card: 0 0% 100%; /* White */
-    --card-foreground: 220 15% 20%;
+    --card-foreground: 240 6% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 15% 20%;
+    --popover-foreground: 240 6% 10%;
 
-    --primary: 205 70% 45%; /* Professional, Modern Blue */
-    --primary-foreground: 0 0% 100%; /* White for text on primary */
+    --primary: 239 84% 67%; /* Purple */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 10% 96%; /* Very Light Gray for subtle backgrounds */
-    --secondary-foreground: 220 15% 30%; /* Darker Gray for text on secondary */
+    --secondary: 240 5% 90%; /* Slightly darker gray */
+    --secondary-foreground: 240 6% 10%;
 
-    --muted: 220 10% 90%; /* Light Gray for borders, dividers */
-    --muted-foreground: 220 10% 55%; /* Mid Gray for muted text */
+    --muted: 240 5% 90%;
+    --muted-foreground: 240 4% 46%;
 
-    --accent: 30 90% 58%; /* Warm, energetic Orange for CTAs */
-    --accent-foreground: 0 0% 100%; /* White */
+    --accent: 221 83% 53%; /* Blue */
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 70% 50%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 220 10% 88%; /* Light gray border */
-    --input: 220 10% 94%; /* Slightly lighter gray for input fields */
-    --ring: 205 70% 55%; /* Primary blue for focus rings */
+    --border: 240 6% 90%;
+    --input: 0 0% 100%;
+    --ring: 239 84% 67%;
 
     --radius: 0.5rem;
   }
 
   .dark {
-    /* A basic dark theme, can be expanded */
-    --background: 220 15% 10%;
-    --foreground: 220 10% 90%;
-    --card: 220 15% 15%;
-    --card-foreground: 220 10% 90%;
-    --popover: 220 15% 12%;
-    --popover-foreground: 220 10% 90%;
-    --primary: 205 65% 55%;
-    --primary-foreground: 0 0% 10%;
-    --secondary: 220 15% 25%;
-    --secondary-foreground: 220 10% 80%;
-    --muted: 220 15% 25%;
-    --muted-foreground: 220 10% 65%;
-    --accent: 30 85% 60%;
-    --accent-foreground: 0 0% 10%;
-    --destructive: 0 60% 55%;
+    --background: 240 6% 10%;
+    --foreground: 0 0% 98%;
+    --card: 240 4% 14%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 6% 10%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 239 78% 70%;
+    --primary-foreground: 240 6% 10%;
+    --secondary: 240 4% 18%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 4% 18%;
+    --muted-foreground: 240 4% 60%;
+    --accent: 221 78% 63%;
+    --accent-foreground: 240 6% 10%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
-    --border: 220 15% 30%;
-    --input: 220 15% 28%;
-    --ring: 205 65% 60%;
+    --border: 240 4% 18%;
+    --input: 240 4% 14%;
+    --ring: 239 78% 70%;
   }
 }
 
@@ -76,20 +76,4 @@ h1, h2, h3, h4, h5, h6 {
     @apply bg-background text-foreground;
     @apply antialiased;
   }
-}
-
-/* Custom scrollbar (optional, from previous styles) */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: hsl(var(--muted) / 0.5);
-  border-radius: 10px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: hsl(var(--primary) / 0.6);
-  border-radius: 10px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--primary) / 0.8);
 }

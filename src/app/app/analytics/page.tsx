@@ -1,5 +1,5 @@
 
-// src/app/(app)/analytics/page.tsx -> src/app/app/analytics/page.tsx
+// src/app/app/analytics/page.tsx
 "use client";
 
 import { AnalyticsDashboard } from "@/components/analytics/AnalyticsDashboard";

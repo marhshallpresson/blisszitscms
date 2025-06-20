@@ -1,5 +1,5 @@
 
-// src/app/(app)/admin/page.tsx -> src/app/app/admin/page.tsx
+// src/app/app/admin/page.tsx
 "use client";
 
 import { AdminDashboard } from "@/components/admin/AdminDashboard";

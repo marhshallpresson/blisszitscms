@@ -1,7 +1,36 @@
+
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  async redirects() {
+    return [
+      {
+        source: '/dashboard',
+        destination: '/app/dashboard',
+        permanent: true,
+      },
+      {
+        source: '/settings',
+        destination: '/app/settings',
+        permanent: true,
+      },
+       {
+        source: '/admin',
+        destination: '/app/admin',
+        permanent: true,
+      },
+       {
+        source: '/analytics',
+        destination: '/app/analytics',
+        permanent: true,
+      },
+      {
+        source: '/inbox',
+        destination: '/app/inbox',
+        permanent: true,
+      },
+    ];
+  },
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -17,20 +46,6 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
-  },
-  async redirects() {
-    return [
-      {
-        source: '/dashboard',
-        destination: '/app/dashboard',
-        permanent: true,
-      },
-      {
-        source: '/settings',
-        destination: '/app/settings',
-        permanent: true,
-      },
-    ]
   },
 };
 

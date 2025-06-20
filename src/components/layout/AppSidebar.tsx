@@ -4,7 +4,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, LayoutDashboard, Briefcase, BarChart3, Inbox, Settings, LogOut, ArrowLeftToLine } from "lucide-react";
+import { LayoutDashboard, Briefcase, BarChart3, Inbox, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppLogo } from "./AppLogo";
 import { cn } from "@/lib/utils";
@@ -12,9 +12,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 const appNavItems = [
-  { href: "/app/dashboard", label: "Main Dashboard", icon: LayoutDashboard },
-  { href: "/app/admin", label: "Manage Workspaces", icon: Briefcase },
-  // Link to current workspace will be dynamic
+  { href: "/app/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/app/admin", label: "Workspaces", icon: Briefcase },
   { href: "/app/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/app/inbox", label: "Inbox", icon: Inbox },
   { href: "/app/settings", label: "Settings", icon: Settings },
@@ -24,11 +23,11 @@ export const AppSidebar = () => {
   const pathname = usePathname();
   const router = useRouter();
   const { signOut } = useAuth();
-  const { currentWorkspaceId, currentWorkspace } = useWorkspace();
+  const { currentWorkspace, currentWorkspaceId } = useWorkspace();
 
   const handleSignOut = async () => {
     await signOut();
-    router.push("/"); // Redirect to corporate homepage on sign out
+    router.push("/auth");
   };
 
   return (
@@ -41,7 +40,7 @@ export const AppSidebar = () => {
         </div>
         <nav className="space-y-2">
           {appNavItems.map((item) => {
-            const isActive = pathname === item.href || (item.href === "/app/dashboard" && pathname === "/app") || (item.href.includes('/app/workspace') && pathname.startsWith('/app/workspace'));
+            const isActive = pathname.startsWith(item.href);
             return (
               <Button
                 key={item.label}
@@ -56,31 +55,9 @@ export const AppSidebar = () => {
               </Button>
             );
           })}
-          {currentWorkspaceId && currentWorkspace && (
-             <Button
-                variant={pathname.startsWith(`/app/workspace/${currentWorkspaceId}`) ? "secondary" : "ghost"}
-                asChild
-                className="w-full justify-start text-base py-3 bg-primary/10 text-primary hover:bg-primary/20"
-              >
-                <Link href={`/app/workspace/${currentWorkspaceId}`}>
-                  <Home className="mr-3 h-5 w-5" />
-                  {currentWorkspace.name || "Current Workspace"}
-                </Link>
-              </Button>
-          )}
         </nav>
       </div>
-      <div className="space-y-2 mt-auto pt-4 border-t border-border/60">
-         <Button
-            variant="ghost"
-            asChild
-            className="w-full justify-start text-base py-3 text-muted-foreground hover:text-primary"
-          >
-            <Link href="/">
-              <ArrowLeftToLine className="mr-3 h-5 w-5" />
-              Back to Website
-            </Link>
-        </Button>
+      <div className="space-y-2">
         <Button
           variant="ghost"
           onClick={handleSignOut}
