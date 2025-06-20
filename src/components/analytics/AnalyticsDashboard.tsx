@@ -13,33 +13,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Download, BarChart3, LineChart as LineChartIcon, PieChart as PieChartIcon, TrendingUp, Loader2 } from 'lucide-react';
-import { LineChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Download, BarChart3, Loader2, Link as LinkIcon, AlertTriangle } from 'lucide-react';
+import { ResponsiveContainer, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Line } from 'recharts';
 import { useToast } from '@/hooks/use-toast';
-
-const mockKpis = (platform: string) => [
-    { title: "Follower Growth", value: `${(Math.random() * 2000).toFixed(0)}`, change: `+${(Math.random() * 5).toFixed(1)}%` },
-    { title: "Engagement Rate", value: `${(Math.random() * 3 + 1).toFixed(2)}%`, change: `-${(Math.random() * 0.5).toFixed(1)}%` },
-    { title: "Impressions", value: `${(Math.random() * 50000).toLocaleString('en-US', {maximumFractionDigits:0})}`, change: `+${(Math.random() * 10).toFixed(1)}%` },
-    { title: "Profile Visits", value: `${(Math.random() * 5000).toFixed(0)}`, change: `+${(Math.random() * 8).toFixed(1)}%` }
-];
-
-const mockFollowerData = Array.from({ length: 7 }, (_, i) => ({
-  name: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toLocaleDateString('en-us', { weekday: 'short'}),
-  followers: Math.floor(Math.random() * 500) + 1000
-}));
-
-const mockViewsData = Array.from({ length: 7 }, (_, i) => ({
-  name: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toLocaleDateString('en-us', { weekday: 'short'}),
-  views: Math.floor(Math.random() * 8000) + 2000
-}));
-
-const kpiIcons: Record<string, React.ReactNode> = {
-    "Follower Growth": <TrendingUp size={20} className="text-primary"/>,
-    "Engagement Rate": <BarChart3 size={20} className="text-primary"/>,
-    "Impressions": <LineChartIcon size={20} className="text-primary"/>,
-    "Profile Visits": <PieChartIcon size={20} className="text-primary"/>,
-};
 
 export const AnalyticsDashboard = () => {
     const [selectedPlatform, setSelectedPlatform] = useState<string>("Overall Performance");
@@ -49,7 +25,32 @@ export const AnalyticsDashboard = () => {
     const reportRef = useRef<HTMLDivElement>(null);
     const { toast } = useToast();
 
-    const currentPlatformKpis = mockKpis(selectedPlatform);
+    // NOTE: All mock data has been removed.
+    // The component will now display an empty state until real data integration.
+    const [kpis, setKpis] = useState([]);
+    const [chartData, setChartData] = useState([]);
+
+    useEffect(() => {
+        // TODO: This is where you would fetch real analytics data from your backend
+        // or a third-party API based on the `selectedPlatform`.
+        // Example:
+        //
+        // const fetchData = async () => {
+        //   try {
+        //     const response = await fetch(`/api/analytics?platform=${selectedPlatform}`);
+        //     const data = await response.json();
+        //     setKpis(data.kpis);
+        //     setChartData(data.chartData);
+        //   } catch (error) {
+        //     toast({ title: "Error", description: "Could not fetch analytics data.", variant: "destructive" });
+        //   }
+        // };
+        // fetchData();
+
+        // For now, we keep the data empty to reflect the lack of integration.
+        setKpis([]);
+        setChartData([]);
+    }, [selectedPlatform, toast]);
 
     useEffect(() => {
         if (window.jspdf && window.html2canvas) {
@@ -88,14 +89,27 @@ export const AnalyticsDashboard = () => {
             setIsExporting(false);
         }
     };
+    
+    const EmptyState = () => (
+      <div className="text-center py-20 border-2 border-dashed border-border/70 rounded-xl bg-card/50">
+        <BarChart3 size={56} className="mx-auto text-muted-foreground opacity-70" />
+        <h3 className="mt-6 text-2xl font-semibold font-headline text-card-foreground">No Analytics Data</h3>
+        <p className="mt-2 text-muted-foreground font-body max-w-md mx-auto">
+          To see your analytics, connect your social media accounts in your profile settings. This feature is coming soon!
+        </p>
+        <Button className="mt-6 bg-primary hover:bg-primary/90 text-primary-foreground" disabled>
+          <LinkIcon size={18} className="mr-2" /> Connect Accounts (Coming Soon)
+        </Button>
+      </div>
+    );
 
     return (
         <div className="container mx-auto px-0 py-0 space-y-8">
             <Card className="bg-card shadow-lg border-border/80">
                 <CardHeader>
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div className="flex items-center gap-3">
-                             <BarChart3 className="w-10 h-10 text-primary" />
+                        <div className="flex items-center gap-4">
+                             <BarChart3 className="w-10 h-10 text-primary flex-shrink-0" />
                              <div>
                                 <CardTitle className="text-3xl font-bold text-foreground font-headline">Brand Analytics</CardTitle>
                                 <CardDescription className="text-base text-muted-foreground mt-1">Track your content performance across all platforms.</CardDescription>
@@ -121,53 +135,47 @@ export const AnalyticsDashboard = () => {
 
             <div ref={reportRef} className="p-1 md:p-4 bg-card rounded-lg shadow-lg border border-border/70">
                 <h2 className="text-2xl font-bold text-foreground font-headline mb-6 pl-2 md:pl-0">{selectedPlatform} Metrics</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    {currentPlatformKpis.map((kpi) => (
-                        <Card key={kpi.title} className="shadow-md border-border/70">
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium text-muted-foreground">{kpi.title}</CardTitle>
-                                {kpiIcons[kpi.title]}
-                            </CardHeader>
+                 {chartData.length === 0 ? (
+                    <EmptyState />
+                 ) : (
+                   <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        {/* NOTE: This section will be populated by the `kpis` state variable when data is available. */}
+                        {kpis.map((kpi: any) => (
+                            <Card key={kpi.title} className="shadow-md border-border/70">
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium text-muted-foreground">{kpi.title}</CardTitle>
+                                    {/* Icon can be dynamic based on kpi.icon */}
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-3xl font-bold text-foreground">{kpi.value}</div>
+                                    <p className={`text-xs mt-1 ${kpi.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>{kpi.change} from last period</p>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <Card className="shadow-md border-border/70">
+                            <CardHeader><CardTitle className="font-headline text-xl">Follower Growth</CardTitle></CardHeader>
                             <CardContent>
-                                <div className="text-3xl font-bold text-foreground">{kpi.value}</div>
-                                <p className={`text-xs mt-1 ${kpi.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>{kpi.change} from last period</p>
+                                <ResponsiveContainer width="100%" height={300}>
+                                    {/* NOTE: This chart will be populated by the `chartData` state variable. */}
+                                    <LineChart data={chartData}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="name" />
+                                        <YAxis />
+                                        <Tooltip />
+                                        <Legend />
+                                        <Line type="monotone" dataKey="followers" stroke="hsl(var(--primary))" strokeWidth={2} />
+                                    </LineChart>
+                                </ResponsiveContainer>
                             </CardContent>
                         </Card>
-                    ))}
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <Card className="shadow-md border-border/70">
-                        <CardHeader><CardTitle className="font-headline text-xl">Follower Growth</CardTitle></CardHeader>
-                        <CardContent>
-                            <ResponsiveContainer width="100%" height={300}>
-                                <LineChart data={mockFollowerData}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="name" />
-                                    <YAxis />
-                                    <Tooltip />
-                                    <Legend />
-                                    <Line type="monotone" dataKey="followers" stroke="hsl(var(--primary))" strokeWidth={2} />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        </CardContent>
-                    </Card>
-                    <Card className="shadow-md border-border/70">
-                        <CardHeader><CardTitle className="font-headline text-xl">Views/Impressions</CardTitle></CardHeader>
-                        <CardContent>
-                            <ResponsiveContainer width="100%" height={300}>
-                                <LineChart data={mockViewsData}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="name" />
-                                    <YAxis />
-                                    <Tooltip />
-                                    <Legend />
-                                    <Line type="monotone" dataKey="views" stroke="hsl(var(--accent))" strokeWidth={2} />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        </CardContent>
-                    </Card>
-                </div>
+                         {/* Add other charts as needed */}
+                    </div>
+                  </>
+                )}
             </div>
         </div>
     );

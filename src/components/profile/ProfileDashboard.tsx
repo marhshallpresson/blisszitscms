@@ -1,3 +1,4 @@
+
 // src/components/profile/ProfileDashboard.tsx
 "use client";
 
@@ -9,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, KeyRound, ShieldAlert, Loader2, UserCircle, User, Eye, EyeOff, Edit, Save, Phone, CalendarDays, MapPin, Globe, Link as LinkIconLucide, AlertTriangle } from 'lucide-react';
+import { Mail, KeyRound, ShieldAlert, Loader2, UserCircle, User, Eye, EyeOff, Edit, Save, Phone, CalendarDays, MapPin, Globe, Link as LinkIconLucide, AlertTriangle, MessageSquare } from 'lucide-react';
 import type { UserProfile } from '@/types/user';
 
 const socialPlatforms = [
@@ -50,15 +51,10 @@ export const ProfileDashboard = () => {
     if (userProfile) {
       setFormData({
         displayName: userProfile.displayName || '',
-        email: userProfile.email || '', // Email is usually from auth user, but good to have if stored
+        email: userProfile.email || '',
         phoneNumber: userProfile.phoneNumber || '',
         dateOfBirth: userProfile.dateOfBirth || '', 
-        address: {
-          street: userProfile.address?.street || '',
-          city: userProfile.address?.city || '',
-          state: userProfile.address?.state || '',
-          country: userProfile.address?.country || '',
-        },
+        address: userProfile.address || { street: '', city: '', state: '', country: '' },
         socialMedia: userProfile.socialMedia || {},
       });
     }
@@ -101,16 +97,14 @@ export const ProfileDashboard = () => {
         for (const key in formData.socialMedia) {
           const platformKey = key as keyof UserProfile['socialMedia'];
           const value = formData.socialMedia[platformKey];
-          // Robust check before trimming to prevent errors on null/undefined
           if (typeof value === 'string' && value.trim()) {
             cleanedSocialMedia[platformKey] = value;
           } else {
-            cleanedSocialMedia[platformKey] = undefined; // Explicitly set to undefined to remove
+            cleanedSocialMedia[platformKey] = undefined;
           }
         }
       }
       const profileToUpdate = { ...formData, socialMedia: cleanedSocialMedia };
-      // Do not include email in the update payload as it's not meant to be changed here
       delete profileToUpdate.email; 
 
       await updateUserProfile(profileToUpdate);
@@ -156,7 +150,7 @@ export const ProfileDashboard = () => {
 
   const overallLoading = isLoadingAuth || isLoadingProfile;
 
-  if (overallLoading && !userProfile) { // Show loader if still loading initial profile
+  if (overallLoading && !userProfile) {
     return <div className="flex justify-center items-center h-64"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
   }
 
@@ -165,11 +159,11 @@ export const ProfileDashboard = () => {
   }
 
   return (
-    <div className="container mx-auto px-0 md:px-4 py-8 md:py-12 space-y-8">
+    <div className="container mx-auto px-0 py-0 space-y-8">
       <Card className="bg-card shadow-xl border-border/80">
         <CardHeader>
-            <div className="flex items-center gap-3">
-                <UserCircle className="w-10 h-10 text-primary" />
+            <div className="flex items-center gap-4">
+                <UserCircle className="w-10 h-10 text-primary flex-shrink-0" />
                 <div>
                     <CardTitle className="text-3xl font-bold text-foreground font-headline">Account Settings</CardTitle>
                     <CardDescription className="text-base text-muted-foreground mt-1">Manage your account details, preferences, and security.</CardDescription>
@@ -179,7 +173,6 @@ export const ProfileDashboard = () => {
       </Card>
       
       <div className="grid gap-8 md:grid-cols-1 lg:grid-cols-3">
-        {/* Profile Information Card */}
         <Card className="lg:col-span-2 shadow-lg border-border/70">
           <CardHeader>
             <CardTitle className="font-headline text-xl flex items-center gap-2"><Edit size={20} className="text-primary"/> Edit Profile Information</CardTitle>
@@ -253,42 +246,56 @@ export const ProfileDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Security Card */}
-        <Card className="shadow-lg border-border/70">
-          <CardHeader>
-            <CardTitle className="font-headline text-xl flex items-center gap-2"><ShieldAlert size={20} className="text-primary"/> Security</CardTitle>
-            <CardDescription>Manage your account security settings.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handlePasswordChange} className="space-y-4">
-              <h4 className="font-semibold text-card-foreground">Change Password</h4>
-              <div>
-                <Label htmlFor="newPassword">New Password</Label>
-                 <div className="relative mt-1">
-                    <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="newPassword" type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="••••••••" className="pl-9 pr-10 bg-input"/>
-                    <PasswordVisibilityToggle visible={showNewPassword} onClick={() => setShowNewPassword(!showNewPassword)} />
-                 </div>
+        <div className="space-y-8">
+          <Card className="shadow-lg border-border/70">
+            <CardHeader>
+              <CardTitle className="font-headline text-xl flex items-center gap-2"><ShieldAlert size={20} className="text-primary"/> Security</CardTitle>
+              <CardDescription>Manage your account security settings.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handlePasswordChange} className="space-y-4">
+                <h4 className="font-semibold text-card-foreground">Change Password</h4>
+                <div>
+                  <Label htmlFor="newPassword">New Password</Label>
+                  <div className="relative mt-1">
+                      <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input id="newPassword" type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="••••••••" className="pl-9 pr-10 bg-input"/>
+                      <PasswordVisibilityToggle visible={showNewPassword} onClick={() => setShowNewPassword(!showNewPassword)} />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                  <div className="relative mt-1">
+                      <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input id="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" className="pl-9 pr-10 bg-input"/>
+                      <PasswordVisibilityToggle visible={showConfirmPassword} onClick={() => setShowConfirmPassword(!showConfirmPassword)} />
+                  </div>
+                </div>
+                {passwordError && <p className="text-sm text-destructive flex items-center gap-1"><AlertTriangle size={14}/> {passwordError}</p>}
+                <Button type="submit" className="w-full sm:w-auto font-semibold" variant="outline" disabled={isSubmittingPassword || isLoadingAuth}>
+                  {isSubmittingPassword ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <KeyRound size={16} className="mr-2"/>}
+                  Update Password
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg border-border/70">
+            <CardHeader>
+              <CardTitle className="font-headline text-xl flex items-center gap-2"><MessageSquare size={20} className="text-primary"/> Connected Accounts</CardTitle>
+              <CardDescription>Manage social media integrations for analytics and inbox.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                 {/* NOTE: This section is a placeholder for future social media integration. */}
+                 <p className="text-sm text-muted-foreground">Connect your accounts to enable the unified inbox and brand analytics.</p>
+                 <Button disabled className="w-full sm:w-auto">
+                    <LinkIconLucide className="mr-2 h-4 w-4" /> Connect Facebook (Coming Soon)
+                 </Button>
               </div>
-              <div>
-                <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                 <div className="relative mt-1">
-                    <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" className="pl-9 pr-10 bg-input"/>
-                    <PasswordVisibilityToggle visible={showConfirmPassword} onClick={() => setShowConfirmPassword(!showConfirmPassword)} />
-                 </div>
-              </div>
-              {passwordError && <p className="text-sm text-destructive flex items-center gap-1"><AlertTriangle size={14}/> {passwordError}</p>}
-              <Button type="submit" className="w-full sm:w-auto font-semibold" variant="outline" disabled={isSubmittingPassword || isLoadingAuth}>
-                {isSubmittingPassword ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <KeyRound size={16} className="mr-2"/>}
-                Update Password
-              </Button>
-            </form>
-          </CardContent>
-          <CardFooter className="border-t pt-4">
-             <p className="text-xs text-muted-foreground">Ensure you use a strong, unique password. You may be asked to sign in again after changing your password.</p>
-          </CardFooter>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

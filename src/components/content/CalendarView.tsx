@@ -1,47 +1,40 @@
+
 // src/components/content/CalendarView.tsx
 "use client";
 
-// This component was part of the CMS dashboard.
-// For the corporate website, it's not directly used.
-// If a feature like an events calendar is added later, this could be adapted.
-
-// import type { ContentItem } from '@/contexts/WorkspaceContext';
+import type { ContentItem } from '@/contexts/WorkspaceContext';
 import { useState, useMemo } from 'react';
-import { Calendar as ShadCalendar } from '@/components/ui/calendar'; // Renamed to avoid conflict
-import { Badge } from '@/components/ui/badge';
+import { Calendar as ShadCalendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Loader2, CalendarDays as CalendarDaysIconLucide } from 'lucide-react';
-
-interface ContentItem { // Minimal placeholder type
-  id: string;
-  title: string;
-  dueDate?: string;
-  status?: string;
-}
+import { Loader2, CalendarDays, Eye } from 'lucide-react';
+import { format, isSameDay } from 'date-fns';
 
 interface CalendarViewProps {
-  // Props related to old CMS functionality
-  // contentItems: ContentItem[];
-  // onViewDetails: (item: ContentItem) => void;
-  // isLoading: boolean;
+  contentItems: ContentItem[];
+  onViewDetails: (item: ContentItem) => void;
+  isLoading: boolean;
 }
 
-export const CalendarView = ({ 
-  // contentItems, 
-  // onViewDetails, 
-  // isLoading 
-}: CalendarViewProps) => {
+export const CalendarView = ({ contentItems, onViewDetails, isLoading }: CalendarViewProps) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const contentItems: ContentItem[] = []; // No data for corporate site
-  const isLoading = false; // Not loading data
 
   const eventsByDate = useMemo(() => {
     const map = new Map<string, ContentItem[]>();
-    // Logic for mapping contentItems to dates removed as contentItems is empty
+    contentItems.forEach(item => {
+      if (item.dueDate) {
+        const date = new Date(item.dueDate);
+        // Adjust for timezone offset to prevent day-off errors
+        const utcDate = new Date(date.valueOf() + date.getTimezoneOffset() * 60 * 1000);
+        const dateKey = format(utcDate, 'yyyy-MM-dd');
+        if (!map.has(dateKey)) {
+          map.set(dateKey, []);
+        }
+        map.get(dateKey)!.push(item);
+      }
+    });
     return map;
-  }, [/* contentItems */]); // Dependency removed
+  }, [contentItems]);
 
   if (isLoading) {
     return (
@@ -51,24 +44,78 @@ export const CalendarView = ({
       </div>
     );
   }
+
+  const DayWithEvents = ({ date, displayMonth }: { date: Date, displayMonth: Date }) => {
+    const dateKey = format(date, 'yyyy-MM-dd');
+    const dayEvents = eventsByDate.get(dateKey) || [];
+
+    if (dayEvents.length === 0) {
+      return (
+        <div className="w-full h-full flex items-center justify-center">
+          {format(date, 'd')}
+        </div>
+      );
+    }
+    
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <button className="relative w-full h-full flex items-center justify-center rounded-md hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary">
+            {format(date, 'd')}
+            <span className="absolute bottom-1 right-1 h-2 w-2 rounded-full bg-primary" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-64 p-2">
+          <div className="space-y-2">
+            <h4 className="font-semibold text-center text-sm">{format(date, 'MMMM d, yyyy')}</h4>
+            <ul className="space-y-1">
+              {dayEvents.map(item => (
+                <li key={item.id} className="text-xs">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start h-auto p-1"
+                    onClick={() => onViewDetails(item)}
+                  >
+                    <Eye className="mr-2 h-3 w-3" />
+                    <span className="truncate">{item.title}</span>
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </PopoverContent>
+      </Popover>
+    );
+  };
   
   return (
-    <div className="container mx-auto px-4 py-8 text-center">
-      <h2 className="text-xl font-semibold text-foreground mb-4">Calendar View (Placeholder)</h2>
-      <p className="text-muted-foreground mb-6">
-        This component was for displaying a content calendar in the CMS dashboard.
-        It is not used in the current corporate website layout.
-      </p>
-      <div className="p-1 bg-card rounded-lg shadow max-w-2xl mx-auto opacity-50 pointer-events-none">
-        <ShadCalendar
-          mode="single"
-          selected={undefined}
-          month={currentMonth}
-          onMonthChange={setCurrentMonth}
-          className="w-full"
-          // DayContent logic removed as it depends on events
-        />
-      </div>
-    </div>
+    <Card className="shadow-lg border-border/80">
+      <CardContent className="p-2 md:p-4">
+        {contentItems.length === 0 && !isLoading ? (
+          <div className="text-center py-20 border-2 border-dashed border-border/70 rounded-xl bg-card/50">
+            <CalendarDays size={56} className="mx-auto text-muted-foreground opacity-70" />
+            <h3 className="mt-6 text-2xl font-semibold font-headline text-card-foreground">Calendar is Empty</h3>
+            <p className="mt-2 text-muted-foreground font-body">Add content with due dates to see them here.</p>
+          </div>
+        ) : (
+          <ShadCalendar
+            mode="single"
+            month={currentMonth}
+            onMonthChange={setCurrentMonth}
+            className="w-full"
+            components={{
+              Day: DayWithEvents
+            }}
+            modifiers={{
+              hasEvent: (date) => eventsByDate.has(format(date, 'yyyy-MM-dd'))
+            }}
+            modifiersClassNames={{
+              hasEvent: 'font-bold text-primary',
+            }}
+          />
+        )}
+      </CardContent>
+    </Card>
   );
 };

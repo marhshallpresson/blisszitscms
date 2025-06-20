@@ -8,10 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, Instagram, MessageCircle, Linkedin, Video, Inbox as InboxIconLucide, Search, Loader2 } from 'lucide-react';
+import { Send, Instagram, MessageCircle, Linkedin, Video, Inbox as InboxIconLucide, Search, Loader2, Link as LinkIcon } from 'lucide-react';
 import { ClientFormattedDate } from '@/components/utils/ClientFormattedDate';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 
 type MessagePlatform = "Instagram" | "TikTok" | "LinkedIn" | "Other";
 
@@ -25,13 +26,6 @@ interface Message {
   read: boolean;
 }
 
-const mockMessages: Message[] = [
-    { id: '1', platform: 'Instagram', user: 'CreativeGal', message: "Loved your latest video! How do you get that color grading?", timestamp: new Date(Date.now() - 3600000), read: false },
-    { id: '2', platform: 'TikTok', user: 'DanceKing_22', message: "Collab?? 🔥", timestamp: new Date(Date.now() - 2 * 3600000), read: true },
-    { id: '3', platform: 'LinkedIn', user: 'Johnathan Smith', message: "Great insights on the creator economy. Let's connect.", timestamp: new Date(Date.now() - 24 * 3600000), read: true },
-    { id: '4', platform: 'Other', user: 'AnonymousFan', message: "Just wanted to say your content is inspiring!", timestamp: new Date(Date.now() - 2 * 24 * 3600000), read: true },
-];
-
 const platformIcons: Record<MessagePlatform, React.ReactNode> = {
     Instagram: <Instagram className="text-pink-600 h-5 w-5" />,
     TikTok: <Video className="h-5 w-5 text-foreground" />, 
@@ -40,19 +34,25 @@ const platformIcons: Record<MessagePlatform, React.ReactNode> = {
 };
 
 export const InboxView = () => {
+    // NOTE: All mock data has been removed.
+    // The component will now display an empty state until real data integration.
     const [messages, setMessages] = useState<Message[]>([]); 
     const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
     const [replyText, setReplyText] = useState('');
     const { toast } = useToast();
     const { userProfile } = useAuth();
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(true); // Simulates loading state
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
+      // NOTE: This timeout simulates fetching data.
+      // In a real app, you would replace this with an API call to your backend
+      // which would, in turn, fetch data from social media APIs.
       setIsLoading(true);
       setTimeout(() => {
-        setMessages(mockMessages);
-        setSelectedMessage(mockMessages[0]);
+        // e.g., fetch('/api/inbox').then(res => res.json()).then(data => setMessages(data));
+        setMessages([]); // Start with no messages
+        setSelectedMessage(null);
         setIsLoading(false);
       }, 1000);
     }, []);
@@ -64,6 +64,7 @@ export const InboxView = () => {
 
     const handleReply = () => {
         if (!replyText.trim() || !selectedMessage) return;
+        // NOTE: This is a placeholder for sending a real reply.
         console.log(`Replying to ${selectedMessage.user} on ${selectedMessage.platform}: ${replyText}`);
         toast({ title: "Reply Sent (Demo)", description: `Your reply to ${selectedMessage.user} has been logged.` });
         setReplyText('');
@@ -76,10 +77,10 @@ export const InboxView = () => {
 
     return (
         <div className="container mx-auto px-0 py-0 space-y-8 h-full flex flex-col">
-            <Card className="bg-card shadow-lg border-border/80">
+            <Card className="bg-card shadow-lg border-border/80 flex-shrink-0">
                 <CardHeader>
-                    <div className="flex items-center gap-3">
-                        <MessageCircle className="w-10 h-10 text-primary" />
+                    <div className="flex items-center gap-4">
+                        <MessageCircle className="w-10 h-10 text-primary flex-shrink-0" />
                         <div>
                             <CardTitle className="text-3xl font-bold text-foreground font-headline">Unified Inbox</CardTitle>
                             <CardDescription className="text-base text-muted-foreground mt-1">Manage your social media DMs & comments in one place.</CardDescription>
@@ -112,7 +113,10 @@ export const InboxView = () => {
                             <div className="flex flex-col items-center justify-center h-full p-8 text-center text-muted-foreground">
                                 <InboxIconLucide size={56} className="mb-4 opacity-70"/>
                                 <h3 className="text-xl font-semibold text-foreground">Inbox is Empty</h3>
-                                <p className="text-sm">No messages to display.</p>
+                                <p className="mt-2 text-sm">Connect your social accounts to see messages.</p>
+                                <Button asChild variant="link" className="mt-2">
+                                  <Link href="/app/settings">Connect Accounts</Link>
+                                </Button>
                             </div>
                         ) : (
                             filteredMessages.map(msg => (
@@ -122,17 +126,17 @@ export const InboxView = () => {
                                     className={`w-full text-left p-4 border-b border-border/50 hover:bg-muted/50 focus:bg-muted focus:outline-none ${selectedMessage?.id === msg.id ? 'bg-muted' : ''} ${!msg.read ? 'font-semibold' : ''}`}
                                 >
                                     <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-3 overflow-hidden">
                                             <Avatar className="h-10 w-10">
                                                 <AvatarImage src={msg.avatar || `https://placehold.co/40x40.png?text=${msg.user.substring(0,1)}`} alt={msg.user} data-ai-hint="profile avatar" />
                                                 <AvatarFallback>{msg.user.substring(0,2).toUpperCase()}</AvatarFallback>
                                             </Avatar>
-                                            <div>
-                                                <h4 className="text-sm text-foreground truncate max-w-[150px]">{msg.user}</h4>
-                                                <p className={`text-xs truncate max-w-[150px] ${!msg.read ? 'text-primary' : 'text-muted-foreground'}`}>{msg.message}</p>
+                                            <div className="overflow-hidden">
+                                                <h4 className="text-sm text-foreground truncate">{msg.user}</h4>
+                                                <p className={`text-xs truncate ${!msg.read ? 'text-primary' : 'text-muted-foreground'}`}>{msg.message}</p>
                                             </div>
                                         </div>
-                                        <div className="flex flex-col items-end text-xs text-muted-foreground">
+                                        <div className="flex flex-col items-end text-xs text-muted-foreground flex-shrink-0 ml-2">
                                             {platformIcons[msg.platform]}
                                             <ClientFormattedDate date={msg.timestamp} options={{ month: 'short', day: 'numeric' }}/>
                                         </div>
@@ -158,9 +162,9 @@ export const InboxView = () => {
                             </div>
                             <ScrollArea className="flex-grow p-6 space-y-4">
                                 <div className="flex">
-                                    <div className={`p-3 rounded-lg bg-muted text-foreground max-w-[75%] shadow ${selectedMessage.user === userProfile?.displayName ? 'ml-auto bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                                    <div className={`p-3 rounded-lg text-foreground max-w-[75%] shadow ${selectedMessage.user === userProfile?.displayName ? 'ml-auto bg-primary text-primary-foreground' : 'bg-muted'}`}>
                                         <p className="text-sm">{selectedMessage.message}</p>
-                                        <p className="text-xs text-muted-foreground/80 mt-1.5 text-right"><ClientFormattedDate date={selectedMessage.timestamp} options={{timeStyle: 'short'}}/></p>
+                                        <p className="text-xs opacity-80 mt-1.5 text-right"><ClientFormattedDate date={selectedMessage.timestamp} options={{timeStyle: 'short'}}/></p>
                                     </div>
                                 </div>
                             </ScrollArea>
@@ -187,7 +191,7 @@ export const InboxView = () => {
                             <h3 className="text-xl font-semibold text-foreground">No Message Selected</h3>
                             <p className="text-center mt-1">Select a message from the list to view its content and reply.</p>
                              <p className="text-sm text-muted-foreground mt-4">
-                                {isLoading ? "Loading messages..." : "Your inbox is empty."}
+                                {isLoading ? "Loading messages..." : "Your inbox is waiting for messages!"}
                              </p>
                         </div>
                     )}

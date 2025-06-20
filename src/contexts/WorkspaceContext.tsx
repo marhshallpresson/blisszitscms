@@ -1,13 +1,13 @@
+
 // src/contexts/WorkspaceContext.tsx
 "use client";
 
 import type { Timestamp } from 'firebase/firestore';
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { collection, query, orderBy, onSnapshot, getDocs, doc, addDoc, deleteDoc, updateDoc, serverTimestamp, writeBatch, where } from 'firebase/firestore';
-import { db, APP_ID, rtdb } from '@/lib/firebaseConfig';
-import { ref as rtdbRef, set as rtdbSet, onValue as rtdbOnValue, off as rtdbOff } from 'firebase/database';
+import { db, rtdb } from '@/lib/firebaseConfig';
+import { ref as rtdbRef, set as rtdbSet, onValue as rtdbOnValue } from 'firebase/database';
 import { useAuth } from './AuthContext';
-import { type ThirtyDayChallengeTemplateItem, thirtyDayChallengeTemplate } from '@/lib/templates';
 
 export interface Workspace {
   id: string;
@@ -57,7 +57,7 @@ interface WorkspaceContextType {
   currentWorkspaceId: string | null;
   isLoadingWorkspaces: boolean;
   setCurrentWorkspaceId: (id: string | null) => void;
-  createWorkspace: (name: string, description?: string, seedWithTemplate?: boolean) => Promise<string | undefined>;
+  createWorkspace: (name: string, description?: string) => Promise<string | undefined>;
   deleteWorkspace: (workspaceId: string) => Promise<void>;
   
   contentItems: ContentItem[];
@@ -71,7 +71,6 @@ interface WorkspaceContextType {
 
   ideas: Idea[];
   isLoadingIdeas: boolean;
-  getIdeas: (callback: (ideas: Idea[]) => void) => () => void;
   addIdea: (text: string) => Promise<void>;
   updateIdeaStatus: (ideaId: string, status: IdeaBoardStatus) => Promise<void>;
   deleteIdea: (ideaId: string) => Promise<void>;
@@ -91,6 +90,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [isLoadingIdeas, setIsLoadingIdeas] = useState(true);
 
+  // Fetch workspaces for the current user
   useEffect(() => {
     if (!user) {
       setWorkspaces([]);
@@ -102,24 +102,12 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
     }
 
     setIsLoadingWorkspaces(true);
-    // Removed `orderBy` from the query to avoid needing a composite index.
-    const q = query(collection(db, "workspaces"), where("ownerId", "==", user.uid));
+    const q = query(collection(db, "workspaces"), where("ownerId", "==", user.uid), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const wsData: Workspace[] = [];
       snapshot.forEach(doc => {
         wsData.push({ id: doc.id, ...doc.data() } as Workspace);
       });
-
-      // Sort workspaces on the client-side to maintain the desired order.
-      wsData.sort((a, b) => {
-        const toMillis = (d: Date | Timestamp | undefined): number => {
-          if (!d) return 0;
-          // Firestore Timestamps have toMillis(), JS Dates have getTime() which both return epoch milliseconds
-          return d instanceof Date ? d.getTime() : (d as Timestamp).toMillis();
-        };
-        return toMillis(b.createdAt) - toMillis(a.createdAt);
-      });
-
       setWorkspaces(wsData);
       setIsLoadingWorkspaces(false);
     }, (error) => {
@@ -129,10 +117,12 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
 
     return () => unsubscribe();
   }, [user]);
-
+  
+  // Fetch content items when the current workspace changes
   useEffect(() => {
     if (!user || !currentWorkspaceId) {
       setContentItems([]);
+      setIsLoadingContent(false);
       return;
     }
     
@@ -151,6 +141,27 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribeContent();
   }, [user, currentWorkspaceId]);
 
+  // Fetch ideas for the idea board when workspace changes
+  useEffect(() => {
+    if (!user || !currentWorkspaceId) {
+      setIdeas([]);
+      setIsLoadingIdeas(false);
+      return;
+    }
+     setIsLoadingIdeas(true);
+     const ideasQuery = query(collection(db, `workspaces/${currentWorkspaceId}/ideas`), orderBy("createdAt", "desc"));
+     const unsubscribe = onSnapshot(ideasQuery, (snapshot) => {
+        const ideasData: Idea[] = [];
+        snapshot.forEach(doc => ideasData.push({ id: doc.id, ...doc.data() } as Idea));
+        setIdeas(ideasData);
+        setIsLoadingIdeas(false);
+     }, (error) => {
+        console.error("Error fetching ideas:", error);
+        setIsLoadingIdeas(false);
+     });
+     return unsubscribe;
+  }, [user, currentWorkspaceId]);
+
   const setCurrentWorkspaceId = useCallback((id: string | null) => {
     if (user && id) {
       const prefRef = rtdbRef(rtdb, `userPrefs/${user.uid}/lastWorkspace`);
@@ -159,6 +170,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
     setCurrentWorkspaceIdState(id);
   }, [user]);
 
+  // Set initial workspace based on last preference or first in list
   useEffect(() => {
     if (user && workspaces.length > 0 && !currentWorkspaceId) {
         const prefRef = rtdbRef(rtdb, `userPrefs/${user.uid}/lastWorkspace`);
@@ -173,7 +185,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user, workspaces, currentWorkspaceId]);
 
-  const createWorkspace = async (name: string, description: string = '', seedWithTemplate: boolean = false): Promise<string | undefined> => {
+  const createWorkspace = async (name: string, description: string = ''): Promise<string | undefined> => {
     if (!user || !db) throw new Error("User not logged in or DB not initialized");
     const newWorkspaceRef = await addDoc(collection(db, "workspaces"), {
       name,
@@ -181,35 +193,24 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
       ownerId: user.uid,
       createdAt: serverTimestamp(),
     });
-    
-    if (seedWithTemplate) {
-        const batch = writeBatch(db);
-        thirtyDayChallengeTemplate.forEach((itemTemplate) => {
-            const contentRef = doc(collection(db, `workspaces/${newWorkspaceRef.id}/content`));
-            batch.set(contentRef, {
-                ...itemTemplate,
-                status: 'Draft',
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-            });
-        });
-        await batch.commit();
-    }
-    
     return newWorkspaceRef.id;
   };
 
   const deleteWorkspace = async (workspaceId: string) => {
     if (!user || !db) throw new Error("User not logged in or DB not initialized");
     
+    // Batch delete all content items and ideas within the workspace
     const contentRef = collection(db, `workspaces/${workspaceId}/content`);
+    const ideasRef = collection(db, `workspaces/${workspaceId}/ideas`);
     const contentSnapshot = await getDocs(contentRef);
+    const ideasSnapshot = await getDocs(ideasRef);
+    
     const batch = writeBatch(db);
-    contentSnapshot.forEach(doc => {
-      batch.delete(doc.ref);
-    });
+    contentSnapshot.forEach(doc => batch.delete(doc.ref));
+    ideasSnapshot.forEach(doc => batch.delete(doc.ref));
     await batch.commit();
     
+    // Delete the workspace itself
     await deleteDoc(doc(db, "workspaces", workspaceId));
     
     if (currentWorkspaceId === workspaceId) {
@@ -219,7 +220,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
 
   const createContentItem = async (item: Omit<ContentItem, 'id' | 'createdAt' | 'updatedAt'>, workspaceId?: string) => {
     const targetWorkspaceId = workspaceId || currentWorkspaceId;
-    if (!user || !db || !targetWorkspaceId) throw new Error("Cannot create content item");
+    if (!user || !db || !targetWorkspaceId) throw new Error("Cannot create content item: no workspace selected.");
     await addDoc(collection(db, `workspaces/${targetWorkspaceId}/content`), {
       ...item,
       createdAt: serverTimestamp(),
@@ -228,13 +229,13 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateContentItem = async (item: ContentItem) => {
-    if (!user || !db || !currentWorkspaceId) throw new Error("Cannot update content item");
+    if (!user || !db || !currentWorkspaceId) throw new Error("Cannot update content item: no workspace selected.");
     const itemRef = doc(db, `workspaces/${currentWorkspaceId}/content`, item.id);
     await updateDoc(itemRef, { ...item, updatedAt: serverTimestamp() });
   };
 
   const deleteContentItem = async (itemId: string) => {
-    if (!user || !db || !currentWorkspaceId) throw new Error("Cannot delete content item");
+    if (!user || !db || !currentWorkspaceId) throw new Error("Cannot delete content item: no workspace selected.");
     await deleteDoc(doc(db, `workspaces/${currentWorkspaceId}/content`, itemId));
   };
   
@@ -250,7 +251,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
   }, [currentWorkspaceId]);
 
   const addComment = async (contentItemId: string, text: string) => {
-    if (!user || !db || !currentWorkspaceId) throw new Error("Cannot add comment");
+    if (!user || !db || !currentWorkspaceId) throw new Error("Cannot add comment: no workspace selected.");
     await addDoc(collection(db, `workspaces/${currentWorkspaceId}/content/${contentItemId}/comments`), {
         text,
         authorId: user.uid,
@@ -259,25 +260,8 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const getIdeas = useCallback((callback: (ideas: Idea[]) => void) => {
-     if (!user || !currentWorkspaceId) return () => {};
-     setIsLoadingIdeas(true);
-     const ideasQuery = query(collection(db, `workspaces/${currentWorkspaceId}/ideas`), orderBy("createdAt", "desc"));
-     const unsubscribe = onSnapshot(ideasQuery, (snapshot) => {
-        const ideasData: Idea[] = [];
-        snapshot.forEach(doc => ideasData.push({ id: doc.id, ...doc.data() } as Idea));
-        setIdeas(ideasData); // Also update context state
-        callback(ideasData);
-        setIsLoadingIdeas(false);
-     }, (error) => {
-        console.error("Error fetching ideas:", error);
-        setIsLoadingIdeas(false);
-     });
-     return unsubscribe;
-  }, [user, currentWorkspaceId]);
-
   const addIdea = async (text: string) => {
-    if (!user || !db || !currentWorkspaceId) throw new Error("Cannot add idea");
+    if (!user || !db || !currentWorkspaceId) throw new Error("Cannot add idea: no workspace selected.");
     await addDoc(collection(db, `workspaces/${currentWorkspaceId}/ideas`), {
         text,
         status: 'Ideas',
@@ -286,16 +270,15 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateIdeaStatus = async (ideaId: string, status: IdeaBoardStatus) => {
-     if (!user || !db || !currentWorkspaceId) throw new Error("Cannot update idea");
+     if (!user || !db || !currentWorkspaceId) throw new Error("Cannot update idea: no workspace selected.");
      const ideaRef = doc(db, `workspaces/${currentWorkspaceId}/ideas`, ideaId);
      await updateDoc(ideaRef, { status });
   };
   
   const deleteIdea = async (ideaId: string) => {
-     if (!user || !db || !currentWorkspaceId) throw new Error("Cannot delete idea");
+     if (!user || !db || !currentWorkspaceId) throw new Error("Cannot delete idea: no workspace selected.");
      await deleteDoc(doc(db, `workspaces/${currentWorkspaceId}/ideas`, ideaId));
   };
-
 
   const currentWorkspace = workspaces.find(ws => ws.id === currentWorkspaceId) || null;
 
@@ -317,7 +300,6 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
         addComment,
         ideas,
         isLoadingIdeas,
-        getIdeas,
         addIdea,
         updateIdeaStatus,
         deleteIdea,

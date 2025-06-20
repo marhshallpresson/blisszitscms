@@ -3,7 +3,7 @@
 'use server';
 
 /**
- * @fileOverview An AI agent that generates content ideas based on a given topic.
+ * @fileOverview An AI agent that generates content ideas based on a given topic and user interests.
  *
  * - generateContentIdeas - A function that generates content ideas.
  * - GenerateContentIdeasInput - The input type for the generateContentIdeas function.
@@ -18,6 +18,7 @@ const GenerateContentIdeasInputSchema = z.object({
     .string()
     .describe('The topic to generate content ideas for.'),
   numIdeas: z.number().describe('The number of content ideas to generate.'),
+  interests: z.array(z.string()).optional().describe('A list of user interests for personalization.'),
 });
 export type GenerateContentIdeasInput = z.infer<typeof GenerateContentIdeasInputSchema>;
 
@@ -40,6 +41,10 @@ const prompt = ai.definePrompt({
   prompt: `You are a content creation expert, skilled at generating engaging content ideas.
 
   Generate {{numIdeas}} diverse and trending content ideas for the topic: {{{topic}}}. For each idea, provide a catchy title and a brief, one-sentence description.
+  
+  {{#if interests}}
+  The user has expressed interest in the following areas, so please tailor the ideas to be relevant to them: {{#each interests}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}.
+  {{/if}}
 
   Format the output as a JSON array of objects, each with "title" and "description" keys.
   `,config: {
