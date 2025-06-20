@@ -1,5 +1,9 @@
-
+// src/components/modals/WorkspaceCreatorModal.tsx
 "use client";
+
+// This modal was for creating workspaces in the CMS.
+// It's not directly used in the basic corporate website.
+// Kept for reference.
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -8,70 +12,37 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox'; 
-import { useWorkspace } from '@/contexts/WorkspaceContext';
-import { useAuth } from '@/contexts/AuthContext';
+// import { useWorkspace } from '@/contexts/WorkspaceContext'; // WorkspaceContext is simplified
+// import { useAuth } from '@/contexts/AuthContext'; // AuthContext is simplified
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 interface WorkspaceCreatorModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onWorkspaceCreated?: (workspaceId: string) => void; 
+  // onWorkspaceCreated?: (workspaceId: string) => void; 
 }
 
-export const WorkspaceCreatorModal = ({ isOpen, onClose, onWorkspaceCreated }: WorkspaceCreatorModalProps) => {
+export const WorkspaceCreatorModal = ({ isOpen, onClose /*, onWorkspaceCreated*/ }: WorkspaceCreatorModalProps) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [seedWithTemplate, setSeedWithTemplate] = useState(false); 
-  const { createWorkspace, setCurrentWorkspaceId } = useWorkspace();
-  const { user, isAuthReady } = useAuth();
+  // const { createWorkspace, setCurrentWorkspaceId } = useWorkspace();
+  // const { user, isAuthReady } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleCreate = async () => {
     if (!name.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Workspace name is required.",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (!user || !isAuthReady) {
-      toast({
-        title: "Authentication Error",
-        description: "User not authenticated or authentication not ready. Please wait or try signing in again.",
-        variant: "destructive",
-      });
+      toast({ title: "Validation Error", description: "Name is required.", variant: "destructive" });
       return;
     }
     setIsSubmitting(true);
-    try {
-      const newWorkspaceId = await createWorkspace(name, description, seedWithTemplate); 
-      toast({
-        title: "Workspace Created",
-        description: `Workspace "${name}" has been successfully created. ${seedWithTemplate ? '30-Day Challenge template applied.' : ''}`,
-      });
-      if (newWorkspaceId) {
-         setCurrentWorkspaceId(newWorkspaceId); 
-         if (onWorkspaceCreated) {
-            onWorkspaceCreated(newWorkspaceId);
-         }
-      }
-      setName('');
-      setDescription('');
-      setSeedWithTemplate(false);
-      onClose();
-    } catch (error: any) {
-      console.error("Failed to create workspace:", error);
-      toast({
-        title: "Workspace Creation Failed",
-        description: error.message || "An unexpected error occurred. Please ensure you are connected and try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    console.log("Creating workspace (placeholder):", { name, description, seedWithTemplate });
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    toast({ title: "Action (Demo)", description: "Workspace creation is a CMS feature."});
+    setIsSubmitting(false);
+    onClose();
   };
 
   useEffect(() => {
@@ -83,11 +54,13 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose, onWorkspaceCreated }: W
     }
   }, [isOpen]);
 
+  if (!isOpen) return null; // Ensure modal doesn't render if not open
+
   return (
     <Dialog open={isOpen} onOpenChange={(openStatus) => !openStatus && onClose()}>
       <DialogContent className="sm:max-w-[425px] bg-card">
         <DialogHeader>
-          <DialogTitle className="font-headline text-card-foreground">Create New Workspace</DialogTitle>
+          <DialogTitle className="font-headline text-card-foreground">Create New Project (Demo)</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
@@ -99,7 +72,7 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose, onWorkspaceCreated }: W
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Q3 Marketing Campaign"
-              className="col-span-3"
+              className="col-span-3 bg-input"
               aria-required="true"
             />
           </div>
@@ -111,8 +84,8 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose, onWorkspaceCreated }: W
               id="ws-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="A brief description of this workspace's goals (Optional)."
-              className="col-span-3"
+              placeholder="A brief description of this project (Optional)."
+              className="col-span-3 bg-input"
               rows={3}
             />
           </div>
@@ -124,7 +97,7 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose, onWorkspaceCreated }: W
               aria-labelledby="ws-seed-label"
             />
             <Label htmlFor="ws-seed" id="ws-seed-label" className="text-sm font-normal text-card-foreground">
-              Seed with 30-Day Challenge template?
+              Use project template? (Demo)
             </Label>
           </div>
         </div>
@@ -132,9 +105,9 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose, onWorkspaceCreated }: W
           <DialogClose asChild>
             <Button variant="outline" onClick={onClose}>Cancel</Button>
           </DialogClose>
-          <Button type="button" onClick={handleCreate} disabled={!user || !isAuthReady || isSubmitting}>
+          <Button type="button" onClick={handleCreate} disabled={isSubmitting} className="bg-primary hover:bg-primary/90 text-primary-foreground">
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isSubmitting ? 'Creating...' : 'Create Workspace'}
+            {isSubmitting ? 'Creating...' : 'Create Project'}
           </Button>
         </DialogFooter>
       </DialogContent>

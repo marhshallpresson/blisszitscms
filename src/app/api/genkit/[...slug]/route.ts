@@ -1,8 +1,13 @@
+// src/app/api/genkit/[...slug]/route.ts
+// This file is being kept for potential future use if Genkit AI features
+// are integrated (e.g., for an AI-powered contact form analysis, etc.).
+// For the current basic corporate site, it is not actively used by the frontend.
 
 import {NextResponse} from 'next/server';
-import {defineFlow, runFlow} from 'genkit';
-import * as z from 'zod';
+import {runFlow} from 'genkit'; // defineFlow removed as flows are defined elsewhere
 
+// Import specific flows - these will be unused if no client-side calls are made.
+// The flows themselves will still be defined in their respective files.
 import {generateContentIdeas} from '@/ai/flows/generate-content-ideas';
 import {generateScriptOutline} from '@/ai/flows/generate-script-outline';
 import {draftCaption} from '@/ai/flows/draft-caption';
@@ -14,6 +19,7 @@ const flows: Record<string, any> = {
   generateScriptOutline,
   draftCaption,
   suggestHashtags,
+  // Add other flows here if they are intended to be called via this API route
 };
 
 export async function POST(req: Request, {params}: {params: {slug: string[]}}) {
@@ -22,8 +28,7 @@ export async function POST(req: Request, {params}: {params: {slug: string[]}}) {
   if (flows[flowName]) {
     try {
       const input = await req.json();
-      // Note: Direct use of runFlow like this is generally for client-side invocation or specific scenarios.
-      // For server-to-server or more complex patterns, you might invoke flows differently.
+      // Note: Direct use of runFlow like this is generally for client-side invocation.
       const result = await runFlow(flows[flowName], input);
       return NextResponse.json(result);
     } catch (error: any) {

@@ -1,5 +1,8 @@
-
+// src/components/modals/OnboardingModal.tsx
 "use client";
+
+// This modal was for user onboarding (selecting interests) in the CMS.
+// Not used in the basic corporate website. Kept for reference.
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -11,79 +14,57 @@ import { Check } from 'lucide-react';
 interface OnboardingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSaveInterests: (interests: string[]) => void;
+  // onSaveInterests: (interests: string[]) => void;
 }
 
 const PREDEFINED_INTERESTS = [
   'Technology', 'Photography', 'Cooking', 'Fitness', 'Travel', 
-  'Gaming', 'Art & Design', 'Music', 'Writing', 'Fashion & Beauty', 
-  'Education', 'Business & Finance', 'DIY & Crafts', 'Books & Literature', 
-  'Movies & TV', 'Science & Nature', 'Health & Wellness', 'Parenting',
-  'Social Media Strategy', 'Videography', 'Blogging', 'Podcasting',
-  'Marketing', 'Entrepreneurship', 'Personal Development'
+  // ... other interests
 ];
 
-export const OnboardingModal = ({ isOpen, onClose, onSaveInterests }: OnboardingModalProps) => {
+export const OnboardingModal = ({ isOpen, onClose /*, onSaveInterests*/ }: OnboardingModalProps) => {
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
 
-  useEffect(() => {
-    // Reset selected interests when modal is opened/closed if needed,
-    // or load existing user interests if available (future enhancement)
-    if (!isOpen) {
-      // setSelectedInterests([]); // Optional: clear selection on close
-    }
-  }, [isOpen]);
+  // useEffect logic simplified as modal is not actively used
 
   const toggleInterest = (interest: string) => {
+    // Logic kept for structure, but won't be triggered
     setSelectedInterests(prev =>
       prev.includes(interest) ? prev.filter(i => i !== interest) : [...prev, interest]
     );
   };
 
   const handleSave = () => {
-    onSaveInterests(selectedInterests);
-    // onClose(); // Parent will close it via onSaveInterests -> setIsOnboardingModalOpen(false)
+    // onSaveInterests(selectedInterests);
+    console.log("Saving interests (placeholder):", selectedInterests);
+    onClose();
   };
+  
+  if (!isOpen) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="sm:max-w-lg bg-card">
+      <DialogContent className="sm:max-w-lg bg-card opacity-70 pointer-events-none">
         <DialogHeader>
-          <DialogTitle className="font-headline text-card-foreground text-2xl">Personalize Your Experience</DialogTitle>
+          <DialogTitle className="font-headline text-card-foreground text-2xl">Personalize Experience (Demo)</DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            Select a few interests so we can tailor content ideas for you. You can change these later.
+            Select interests. (CMS Feature)
           </DialogDescription>
         </DialogHeader>
         
         <ScrollArea className="my-4 max-h-80 pr-3">
           <div className="flex flex-wrap gap-2">
-            {PREDEFINED_INTERESTS.map(interest => {
-              const isSelected = selectedInterests.includes(interest);
-              return (
-                <Badge
-                  key={interest}
-                  variant={isSelected ? "default" : "secondary"}
-                  onClick={() => toggleInterest(interest)}
-                  className={`cursor-pointer py-2 px-3 text-sm transition-all hover:opacity-80 active:scale-95
-                              ${isSelected ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
-                >
-                  {isSelected && <Check className="mr-1.5 h-4 w-4" />}
-                  {interest}
-                </Badge>
-              );
-            })}
+            {/* Mapping logic removed as it's a demo */}
+            <Badge variant="secondary" className="py-2 px-3 text-sm">Interest 1</Badge>
+            <Badge variant="secondary" className="py-2 px-3 text-sm">Interest 2</Badge>
           </div>
         </ScrollArea>
 
         <DialogFooter className="mt-2">
           <DialogClose asChild>
-            <Button variant="outline" onClick={onClose}>Skip for Now</Button>
+            <Button variant="outline" onClick={onClose}>Skip</Button>
           </DialogClose>
-          <Button 
-            onClick={handleSave} 
-            disabled={selectedInterests.length === 0}
-            className="font-semibold"
-          >
+          <Button onClick={handleSave} disabled className="font-semibold">
             Save Interests
           </Button>
         </DialogFooter>

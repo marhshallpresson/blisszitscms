@@ -1,7 +1,11 @@
-
+// src/components/content/ContentItemCard.tsx
 "use client";
 
-import type { ContentItem } from '@/contexts/WorkspaceContext';
+// This component was part of the CMS dashboard.
+// For the corporate website, it's not directly used to display CMS content.
+// It might be repurposed for blog post cards or portfolio items if those features are added.
+
+// import type { ContentItem } from '@/contexts/WorkspaceContext'; // ContentItem type is simplified
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,16 +19,28 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ClientFormattedDate } from '@/components/utils/ClientFormattedDate'; 
 
+// Simplified placeholder type
+interface ContentItem {
+  id: string;
+  title: string;
+  idea?: string;
+  caption?: string;
+  status?: string;
+  dueDate?: string | Date;
+}
+
 
 interface ContentItemCardProps {
-  item: ContentItem;
-  onEdit: (item: ContentItem) => void;
-  onDelete: (itemId: string) => void;
-  onViewDetails: (item: ContentItem) => void;
-  onMarkAsPublished: (item: ContentItem) => void;
+  item: ContentItem; // Using simplified placeholder
+  // CMS-specific actions removed
+  // onEdit: (item: ContentItem) => void;
+  // onDelete: (itemId: string) => void;
+  // onViewDetails: (item: ContentItem) => void;
+  // onMarkAsPublished: (item: ContentItem) => void;
 }
 
 const getStatusClass = (status?: string): string => {
+    // Status colors are kept for potential reuse (e.g., blog post status)
     switch (status) {
         case 'Draft': return 'bg-amber-500 hover:bg-amber-600 text-white';
         case 'In Progress': return 'bg-sky-500 hover:bg-sky-600 text-white';
@@ -36,7 +52,7 @@ const getStatusClass = (status?: string): string => {
 };
 
 
-export const ContentItemCard = ({ item, onEdit, onDelete, onViewDetails, onMarkAsPublished }: ContentItemCardProps) => {
+export const ContentItemCard = ({ item /*, onEdit, onDelete, onViewDetails, onMarkAsPublished */ }: ContentItemCardProps) => {
 
   return (
     <Card 
@@ -47,43 +63,23 @@ export const ContentItemCard = ({ item, onEdit, onDelete, onViewDetails, onMarkA
          <Badge 
             className={`absolute top-4 right-4 px-2.5 py-1 text-xs font-semibold rounded-md border-0 shadow-sm ${getStatusClass(item.status)}`}
          >
-          {item.status || 'Draft'}
+          {item.status || 'Info'}
         </Badge>
         <CardTitle id={`item-title-${item.id}`} className="font-headline text-lg text-card-foreground pr-10 line-clamp-2 tracking-tight">{item.title}</CardTitle>
       </CardHeader>
       <CardContent className="flex-grow pt-0 px-5 pb-4">
-        <p className="text-muted-foreground text-sm line-clamp-2 h-10 font-body mb-1">{item.idea || "No brief provided."}</p>
+        <p className="text-muted-foreground text-sm line-clamp-2 h-10 font-body mb-1">{item.idea || "Description placeholder."}</p>
         {item.caption && <p className="text-muted-foreground/80 text-xs line-clamp-1 h-5 font-body italic">"{item.caption}"</p>}
       </CardContent>
       <CardFooter className="pt-3 border-t border-border/60 flex justify-between items-center px-5 pb-4">
         <div className="flex items-center text-xs text-muted-foreground">
           <Calendar size={14} className="mr-1.5 text-primary" />
-          Due: <ClientFormattedDate date={item.dueDate} options={{ month: 'short', day: 'numeric' }} placeholder="Not set" />
+          Date: <ClientFormattedDate date={item.dueDate || new Date()} options={{ month: 'short', day: 'numeric' }} placeholder="N/A" />
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-muted/50" aria-label={`More options for ${item.title}`}>
-              <MoreVertical size={18} />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-popover border-border shadow-xl w-56">
-            <DropdownMenuItem onClick={() => onViewDetails(item)} className="cursor-pointer group py-2">
-              <Eye size={16} className="mr-2 text-primary group-hover:text-primary/90" /> View Details & Comments
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onEdit(item)} className="cursor-pointer group py-2">
-              <Edit3 size={16} className="mr-2 text-primary group-hover:text-primary/90" /> Edit Content
-            </DropdownMenuItem>
-            {item.status !== 'Published' && (
-              <DropdownMenuItem onClick={() => onMarkAsPublished(item)} className="cursor-pointer group py-2">
-                <CheckCircle size={16} className="mr-2 text-teal-500 group-hover:text-teal-600" /> Mark as Published
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator className="bg-border/70 my-1" />
-            <DropdownMenuItem onClick={() => onDelete(item.id)} className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer group py-2">
-              <Trash2 size={16} className="mr-2 group-hover:text-destructive/90" /> Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Dropdown menu simplified as actions are CMS-specific */}
+        <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10">
+            Read More
+        </Button>
       </CardFooter>
     </Card>
   );

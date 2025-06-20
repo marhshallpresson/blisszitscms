@@ -1,5 +1,8 @@
-
+// src/components/modals/ReminderSetupModal.tsx
 "use client";
+
+// This modal was for setting up reminders in the CMS profile settings.
+// Not used in the basic corporate website. Kept for reference.
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -22,80 +25,48 @@ export const ReminderSetupModal = ({ isOpen, onClose }: ReminderSetupModalProps)
   const { toast } = useToast();
 
   const handleSavePreferences = () => {
-    // Placeholder for saving logic
-    console.log("Reminder Preferences:", { enablePush, enableEmail, email });
+    console.log("Reminder Preferences (placeholder):", { enablePush, enableEmail, email });
     toast({
       title: "Preferences Saved (Demo)",
-      description: "Your reminder preferences have been noted. Full functionality requires backend setup.",
+      description: "Reminder functionality is part of the CMS.",
     });
     onClose();
   };
 
+  if (!isOpen) return null;
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[525px] bg-card">
+      <DialogContent className="sm:max-w-[525px] bg-card opacity-70 pointer-events-none">
         <DialogHeader>
-          <DialogTitle className="font-headline text-card-foreground text-2xl">Setup Content Reminders</DialogTitle>
+          <DialogTitle className="font-headline text-card-foreground text-2xl">Setup Reminders (Demo)</DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            Stay on top of your content schedule. Blisszits can send you reminders for deadlines and important tasks.
+            Stay on top of your schedule. (CMS Feature)
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-6 py-4">
           <div className="space-y-4 p-5 border border-border rounded-lg shadow-sm bg-background/30">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="pushToggle" className="flex items-center gap-2 font-semibold text-card-foreground text-base">
+             <Label htmlFor="pushToggle" className="flex items-center gap-2 font-semibold text-card-foreground text-base">
                 <BellRing className="text-primary" /> Enable Push Notifications
               </Label>
-              <Switch
-                id="pushToggle"
-                checked={enablePush}
-                onCheckedChange={setEnablePush}
-                aria-label="Enable push notifications"
-              />
-            </div>
-            <p className="text-sm text-muted-foreground ml-7">
-              Get instant alerts directly on your devices. Requires browser permission.
-            </p>
+            <Switch id="pushToggle" checked={enablePush} onCheckedChange={setEnablePush} disabled />
           </div>
-          
           <div className="space-y-4 p-5 border border-border rounded-lg shadow-sm bg-background/30">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="emailToggle" className="flex items-center gap-2 font-semibold text-card-foreground text-base">
+            <Label htmlFor="emailToggle" className="flex items-center gap-2 font-semibold text-card-foreground text-base">
                 <Mail className="text-primary" /> Enable Email Notifications
-              </Label>
-              <Switch
-                id="emailToggle"
-                checked={enableEmail}
-                onCheckedChange={setEnableEmail}
-                aria-label="Enable email notifications"
-              />
-            </div>
-            <p className="text-sm text-muted-foreground ml-7">
-              Receive summaries and important alerts in your inbox.
-            </p>
-            {enableEmail && (
+            </Label>
+            <Switch id="emailToggle" checked={enableEmail} onCheckedChange={setEnableEmail} disabled/>
+             {enableEmail && (
               <div className="ml-7 mt-3">
                 <Label htmlFor="reminderEmail" className="text-sm font-medium text-card-foreground">Notification Email</Label>
-                <Input
-                  id="reminderEmail"
-                  type="email"
-                  placeholder="your-email@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full mt-1 bg-input text-foreground"
-                />
+                <Input id="reminderEmail" type="email" placeholder="your-email@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full mt-1 bg-input" disabled />
               </div>
             )}
           </div>
-           <p className="text-xs text-muted-foreground text-center pt-2">
-              Note: Full reminder functionality (sending actual push notifications and emails) requires backend server setup and is currently for demonstration purposes in this UI.
-            </p>
         </div>
         <DialogFooter className="mt-2">
-          <DialogClose asChild>
-            <Button variant="outline" onClick={onClose}>Cancel</Button>
-          </DialogClose>
-          <Button onClick={handleSavePreferences} className="font-semibold">Save Preferences</Button>
+          <DialogClose asChild><Button variant="outline" onClick={onClose}>Cancel</Button></DialogClose>
+          <Button onClick={handleSavePreferences} className="font-semibold" disabled>Save Preferences</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
