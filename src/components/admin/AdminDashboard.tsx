@@ -65,36 +65,32 @@ export const AdminDashboard = () => {
   
   return (
     <div className="container mx-auto px-0 py-0 space-y-8">
-      <Card className="bg-card shadow-lg border-border/80">
-        <CardHeader>
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div className="flex items-center gap-3">
-                <Briefcase className="w-10 h-10 text-primary" />
-                <div>
-                    <CardTitle className="text-3xl font-bold text-foreground font-headline">Manage Workspaces</CardTitle>
-                    <CardDescription className="text-base text-muted-foreground mt-1">Create, view, or delete your content workspaces.</CardDescription>
-                </div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex items-center gap-3">
+            <Briefcase className="w-10 h-10 text-primary" />
+            <div>
+                <h1 className="text-3xl font-bold text-foreground font-headline">Manage Workspaces</h1>
+                <p className="text-base text-muted-foreground mt-1">Create, view, or delete your content workspaces.</p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              <Button 
-                onClick={() => setIsCreatorModalOpen(true)}
-                size="lg" 
-                variant="outline"
-                className="font-bold shadow-md hover:shadow-lg transition-shadow"
-              >
-                <Plus size={20} className="mr-2" /> Create Manually
-              </Button>
-              <Button 
-                onClick={() => setIsAiGeneratorOpen(true)} 
-                size="lg" 
-                className="font-bold shadow-md hover:shadow-lg transition-shadow bg-primary hover:bg-primary/90 text-primary-foreground"
-              >
-                <Sparkles size={20} className="mr-2" /> Create with AI
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Button 
+            onClick={() => setIsCreatorModalOpen(true)}
+            size="lg" 
+            variant="outline"
+            className="font-bold shadow-md hover:shadow-lg transition-shadow"
+          >
+            <Plus size={20} className="mr-2" /> Create Manually
+          </Button>
+          <Button 
+            onClick={() => setIsAiGeneratorOpen(true)} 
+            size="lg" 
+            className="font-bold shadow-md hover:shadow-lg transition-shadow bg-primary hover:bg-primary/90 text-primary-foreground"
+          >
+            <Sparkles size={20} className="mr-2" /> Create with AI
+          </Button>
+        </div>
+      </div>
 
       <Card className="shadow-lg border-border/80">
         <CardHeader>

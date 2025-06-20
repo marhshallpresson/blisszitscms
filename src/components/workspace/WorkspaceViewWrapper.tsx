@@ -32,25 +32,23 @@ export const WorkspaceViewWrapper = ({
 
   return (
     <div className="space-y-6 h-full flex flex-col">
-      <Card className="shadow-lg border-border/70 flex-shrink-0">
-        <CardHeader className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-          <div>
-            <CardTitle className="font-headline text-3xl text-foreground">{workspace.name}</CardTitle>
-            <CardDescription className="text-muted-foreground mt-1">
-              {workspace.description || "Manage your content, ideas, and track performance for this workspace."}
-            </CardDescription>
-          </div>
-          <div className="flex gap-2 items-center">
-            <Button onClick={onNewContent} className="font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-md">
-              <Plus size={18} className="mr-2" /> Add New Content
-            </Button>
-             {/* Optional: Link back to all workspaces */}
-            <Button variant="outline" asChild>
-                <Link href="/app/admin">All Workspaces</Link>
-            </Button>
-          </div>
-        </CardHeader>
-      </Card>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+        <div>
+          <h1 className="font-headline text-3xl font-bold text-foreground">{workspace.name}</h1>
+          <p className="text-muted-foreground mt-1">
+            {workspace.description || "Manage your content, ideas, and track performance for this workspace."}
+          </p>
+        </div>
+        <div className="flex gap-2 items-center w-full md:w-auto">
+          <Button onClick={onNewContent} className="font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-md flex-grow md:flex-grow-0">
+            <Plus size={18} className="mr-2" /> Add New Content
+          </Button>
+            {/* Optional: Link back to all workspaces */}
+          <Button variant="outline" asChild className="flex-grow md:flex-grow-0">
+              <Link href="/app/admin">All Workspaces</Link>
+          </Button>
+        </div>
+      </div>
 
       <Tabs defaultValue="grid" className="flex-grow flex flex-col">
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6 bg-card border py-2 h-auto">
