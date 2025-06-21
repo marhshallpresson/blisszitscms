@@ -2,12 +2,19 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import type { Timestamp } from 'firebase/firestore';
 
 interface ClientFormattedDateProps {
-  date: Date | string | number | undefined; // Added number for Timestamp seconds
+  date: Date | string | number | Timestamp | undefined;
   placeholder?: string;
   options?: Intl.DateTimeFormatOptions;
 }
+
+// Helper to check if an object is a Firebase Timestamp
+function isFirebaseTimestamp(obj: any): obj is Timestamp {
+  return obj && typeof obj.toDate === 'function';
+}
+
 
 export const ClientFormattedDate = ({ date, placeholder = "...", options }: ClientFormattedDateProps) => {
   const [formattedDate, setFormattedDate] = useState<string>(placeholder);
@@ -16,9 +23,14 @@ export const ClientFormattedDate = ({ date, placeholder = "...", options }: Clie
     if (date) {
       try {
         let d: Date;
-        if (typeof date === 'number') { // Handle Firebase Timestamp seconds
+
+        if (isFirebaseTimestamp(date)) {
+          d = date.toDate();
+        } else if (typeof date === 'number') {
+          // Handle unix timestamp in seconds
           d = new Date(date * 1000);
         } else {
+          // Handle ISO string or Date object
           d = new Date(date);
         }
 
@@ -42,7 +54,7 @@ export const ClientFormattedDate = ({ date, placeholder = "...", options }: Clie
     } else {
       setFormattedDate('N/A');
     }
-  }, [date, options]); // Re-run if options object identity changes
+  }, [date, options]); 
 
   return <>{formattedDate}</>;
 };

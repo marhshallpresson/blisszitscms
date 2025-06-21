@@ -40,9 +40,8 @@ const getStatusClass = (status?: string): string => {
 
 const getContentTypeIcon = (type?: string) => {
     // This is a placeholder. In a real app, item.type would exist.
-    const itemType = type || (Math.random() > 0.5 ? 'image' : 'video'); // Random for demo
-    if (itemType === 'image') return <ImageIcon className="h-4 w-4 text-muted-foreground" />;
-    if (itemType === 'video') return <Video className="h-4 w-4 text-muted-foreground" />;
+    if (type === 'image') return <ImageIcon className="h-4 w-4 text-muted-foreground" />;
+    if (type === 'video') return <Video className="h-4 w-4 text-muted-foreground" />;
     return <FileText className="h-4 w-4 text-muted-foreground" />;
 }
 
@@ -131,7 +130,7 @@ export const ContentItemCard = ({ item, onEdit, onDelete, onViewDetails, onMarkA
       <CardFooter className="pt-2 border-t border-border/60 flex justify-between items-center px-4 pb-3">
         <div className="flex items-center text-xs text-muted-foreground">
           <Calendar size={13} className="mr-1.5 text-primary/80" />
-          Due: <ClientFormattedDate date={item.dueDate} options={{ month: 'short', day: 'numeric' }} placeholder="N/A" />
+          <ClientFormattedDate date={item.dueDate} options={{ month: 'short', day: 'numeric' }} placeholder="N/A" />
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
