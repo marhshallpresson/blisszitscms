@@ -1,16 +1,25 @@
 // src/app/app/dashboard/page.tsx
 "use client";
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { WelcomeDashboard } from "@/components/dashboard/WelcomeDashboard";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 
 export default function AppDashboardPage() {
-  const { userProfile, isLoadingProfile } = useAuth();
+  const { user, userProfile, isLoadingAuth, isLoadingProfile } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoadingAuth && !user) {
+      router.replace('/auth?mode=signin');
+    } else if (!isLoadingProfile && user && !userProfile?.onboardingCompleted) {
+      router.replace('/onboarding');
+    }
+  }, [user, userProfile, isLoadingAuth, isLoadingProfile, router]);
   
-  // The main AppLayout handles the core auth/onboarding redirects.
-  // We just need to handle the loading of the profile specific to this page's content.
-  if (isLoadingProfile || !userProfile) {
+  if (isLoadingAuth || isLoadingProfile || !user || !userProfile) {
     return (
       <div className="flex flex-col items-center justify-center min-h-full bg-background p-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />

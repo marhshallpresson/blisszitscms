@@ -28,9 +28,7 @@ export const AdminDashboard = () => {
       toast({ title: "Authentication Error", description: "You must be logged in to delete workspaces.", variant: "destructive" });
       return;
     }
-    const confirmed = confirm(`Are you sure you want to delete "${workspaceName}"? This will delete all associated content and cannot be undone.`);
-    if (!confirmed) return;
-
+    
     setIsDeleting(workspaceId);
     try {
       await deleteWorkspace(workspaceId);

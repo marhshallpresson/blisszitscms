@@ -1,38 +1,11 @@
 // src/app/app/layout.tsx
 "use client";
 
-import { ReactNode, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { Loader2 } from 'lucide-react';
+import { ReactNode } from 'react';
 import { DesktopSidebar } from '@/components/layout/DesktopSidebar';
 import { MobileSidebar } from '@/components/layout/MobileSidebar';
-import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet';
 
 export default function AppLayout({ children }: { children: ReactNode }) {
-  const { user, userProfile, isLoadingAuth, isLoadingProfile } = useAuth();
-  const router = useRouter();
-  const isDataLoading = isLoadingAuth || isLoadingProfile;
-
-  useEffect(() => {
-    if (isDataLoading) return;
-
-    if (!user) {
-      router.replace('/auth?mode=signin');
-    } else if (user && !userProfile?.onboardingCompleted) {
-      router.replace('/onboarding');
-    }
-  }, [user, userProfile, isDataLoading, router]);
-
-  if (isDataLoading || !user || !userProfile?.onboardingCompleted) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-4 text-lg text-muted-foreground">Verifying your session...</p>
-      </div>
-    );
-  }
-
   return (
     <div className="flex h-screen bg-background text-foreground">
       <DesktopSidebar />
@@ -42,14 +15,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           {children}
         </main>
       </div>
-      <Sheet>
-        <SheetContent>
-            <SheetTitle className="sr-only">Menu</SheetTitle>
-            <SheetDescription className="sr-only">
-                Main navigation menu for the application.
-            </SheetDescription>
-        </SheetContent>
-      </Sheet>
     </div>
   );
 }

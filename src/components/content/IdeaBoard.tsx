@@ -60,16 +60,6 @@ export const IdeaBoard = () => {
       setIsAddingIdea(false);
     }
   };
-  
-  const handleDeleteIdea = async (ideaId: string) => {
-    if (!confirm("Are you sure you want to delete this idea? This action cannot be undone.")) return;
-    try {
-        await deleteIdea(ideaId);
-        toast({ title: "Idea Deleted" });
-    } catch (error: any) {
-        toast({ title: "Error", description: error.message || "Could not delete idea.", variant: "destructive" });
-    }
-  };
 
   const columns = useMemo(() => {
     const cols: Record<IdeaBoardStatus, Idea[]> = {
@@ -125,7 +115,7 @@ export const IdeaBoard = () => {
                     <h3 className="font-semibold text-center text-card-foreground p-2 mb-3">{status} ({columns[status].length})</h3>
                     <div className="space-y-3 min-h-[100px]">
                         {columns[status].map(idea => (
-                            <IdeaCard key={idea.id} idea={idea} onStatusChange={updateIdeaStatus} onDelete={handleDeleteIdea} />
+                            <IdeaCard key={idea.id} idea={idea} onStatusChange={updateIdeaStatus} onDelete={deleteIdea} />
                         ))}
                     </div>
                 </div>
