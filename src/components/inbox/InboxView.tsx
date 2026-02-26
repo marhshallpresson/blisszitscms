@@ -33,24 +33,18 @@ const platformIcons: Record<MessagePlatform, React.ReactNode> = {
 };
 
 export const InboxView = () => {
-    // NOTE: All mock data has been removed.
-    // The component will now display an empty state until real data integration.
     const [messages, setMessages] = useState<Message[]>([]); 
     const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
     const [replyText, setReplyText] = useState('');
     const { toast } = useToast();
     const { userProfile } = useAuth();
-    const [isLoading, setIsLoading] = useState(true); // Simulates loading state
+    const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
-      // NOTE TO DEV: This timeout simulates fetching data.
-      // In a real app, you would replace this with an API call to your backend
-      // which would, in turn, fetch data from social media APIs if they are connected.
       setIsLoading(true);
       setTimeout(() => {
-        // e.g., fetch('/api/inbox').then(res => res.json()).then(data => setMessages(data));
-        setMessages([]); // Start with no messages
+        setMessages([]);
         setSelectedMessage(null);
         setIsLoading(false);
       }, 1000);
@@ -63,8 +57,6 @@ export const InboxView = () => {
 
     const handleReply = () => {
         if (!replyText.trim() || !selectedMessage) return;
-        // NOTE TO DEV: This is a placeholder for sending a real reply via API.
-        console.log(`Replying to ${selectedMessage.user} on ${selectedMessage.platform}: ${replyText}`);
         toast({ title: "Reply Sent (Demo)", description: `This is a demo. No real message was sent.` });
         setReplyText('');
     };
@@ -75,7 +67,7 @@ export const InboxView = () => {
     );
 
     return (
-        <div className="container mx-auto px-0 py-0 space-y-8 h-full flex flex-col">
+        <div className="space-y-8 h-full flex flex-col">
             <Card className="bg-card shadow-lg border-border/80 flex-shrink-0">
                 <CardHeader>
                     <div className="flex items-center gap-4">
@@ -189,9 +181,6 @@ export const InboxView = () => {
                             <InboxIconLucide size={64} className="mb-6 opacity-50" />
                             <h3 className="text-xl font-semibold text-foreground">No Message Selected</h3>
                             <p className="text-center mt-1">Select a message from the list to view its content and reply.</p>
-                             <p className="text-sm text-muted-foreground mt-4">
-                                {isLoading ? "Loading messages..." : "Your inbox is waiting for messages!"}
-                             </p>
                         </div>
                     )}
                 </div>

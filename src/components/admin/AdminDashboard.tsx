@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Briefcase, ExternalLink, Loader2, AlertTriangle, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Briefcase, ExternalLink, Loader2, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ClientFormattedDate } from '@/components/utils/ClientFormattedDate';
 import { useRouter } from 'next/navigation'; 
@@ -24,11 +24,7 @@ export const AdminDashboard = () => {
   const [isAiGeneratorOpen, setIsAiGeneratorOpen] = useState(false);
 
   const handleDeleteWorkspace = async (workspaceId: string, workspaceName: string) => {
-    if (!user) {
-      toast({ title: "Authentication Error", description: "You must be logged in to delete workspaces.", variant: "destructive" });
-      return;
-    }
-    
+    if (!user) return;
     setIsDeleting(workspaceId);
     try {
       await deleteWorkspace(workspaceId);
@@ -54,7 +50,7 @@ export const AdminDashboard = () => {
   
   if (isLoadingAuth || isLoadingWorkspaces) {
     return (
-      <div className="container mx-auto px-4 py-12 text-center">
+      <div className="py-12 text-center">
         <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary mb-4" />
         <p className="text-lg text-muted-foreground">Loading workspaces...</p>
       </div>
@@ -62,33 +58,37 @@ export const AdminDashboard = () => {
   }
   
   return (
-    <div className="container mx-auto px-0 py-0 space-y-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-3">
-            <Briefcase className="w-10 h-10 text-primary" />
-            <div>
-                <h1 className="text-3xl font-bold text-foreground font-headline">Manage Workspaces</h1>
-                <p className="text-base text-muted-foreground mt-1">Create, view, or delete your content workspaces.</p>
+    <div className="space-y-8">
+      <Card className="bg-card shadow-lg border-border/80">
+        <CardHeader>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="flex items-center gap-3">
+                <Briefcase className="w-10 h-10 text-primary" />
+                <div>
+                    <CardTitle className="text-3xl font-bold text-foreground font-headline">Manage Workspaces</CardTitle>
+                    <CardDescription className="text-base text-muted-foreground mt-1">Create, view, or delete your content workspaces.</CardDescription>
+                </div>
             </div>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <Button 
-            onClick={() => setIsCreatorModalOpen(true)}
-            size="lg" 
-            variant="outline"
-            className="font-bold shadow-md hover:shadow-lg transition-shadow"
-          >
-            <Plus size={20} className="mr-2" /> Create Manually
-          </Button>
-          <Button 
-            onClick={() => setIsAiGeneratorOpen(true)} 
-            size="lg" 
-            className="font-bold shadow-md hover:shadow-lg transition-shadow bg-primary hover:bg-primary/90 text-primary-foreground"
-          >
-            <Sparkles size={20} className="mr-2" /> Create with AI
-          </Button>
-        </div>
-      </div>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <Button 
+                onClick={() => setIsCreatorModalOpen(true)}
+                size="lg" 
+                variant="outline"
+                className="font-bold shadow-md hover:shadow-lg transition-shadow"
+              >
+                <Plus size={20} className="mr-2" /> Create Manually
+              </Button>
+              <Button 
+                onClick={() => setIsAiGeneratorOpen(true)} 
+                size="lg" 
+                className="font-bold shadow-md hover:shadow-lg transition-shadow bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                <Sparkles size={20} className="mr-2" /> Create with AI
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
 
       <Card className="shadow-lg border-border/80">
         <CardHeader>

@@ -49,27 +49,31 @@ export const WelcomeDashboard = ({ isOnboardingCompleted }: WelcomeDashboardProp
   const recentWorkspaces = workspaces.slice(0, 3); 
 
   return (
-    <div className="container mx-auto px-0 py-0 space-y-8 h-full flex flex-col">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Sparkles className="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 text-primary" />
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground font-headline">
-              Welcome, {userProfile?.displayName || "Creator"}!
-            </h1>
-            <p className="text-muted-foreground text-base md:text-lg mt-1">
-              {isOnboardingCompleted ? "Your dashboard is ready. Let's create something." : "Complete your onboarding to get started."}
-            </p>
+    <div className="space-y-8 h-full flex flex-col">
+      <Card className="bg-gradient-to-br from-primary via-primary/80 to-accent text-primary-foreground p-6 md:p-8 rounded-xl shadow-xl flex-shrink-0">
+        <CardHeader className="p-0">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Sparkles className="w-10 h-10 md:w-12 md:h-12 flex-shrink-0" />
+              <div>
+                <CardTitle className="text-3xl md:text-4xl font-bold font-headline">
+                  Welcome, {userProfile?.displayName || "Creator"}!
+                </CardTitle>
+                <CardDescription className="text-primary-foreground/80 text-base md:text-lg mt-1">
+                  {isOnboardingCompleted ? "Your dashboard is ready. Let's create something." : "Complete your onboarding to get started."}
+                </CardDescription>
+              </div>
+            </div>
+             <Button 
+                onClick={() => setIsAiGeneratorOpen(true)} 
+                size="lg" 
+                className="font-bold shadow-md hover:shadow-lg transition-shadow bg-background/20 hover:bg-background/30 text-primary-foreground mt-3 sm:mt-0 w-full sm:w-auto"
+              >
+                <Plus size={22} className="mr-2" /> Create New Workspace
+              </Button>
           </div>
-        </div>
-          <Button 
-            onClick={() => setIsAiGeneratorOpen(true)} 
-            size="lg" 
-            className="font-bold shadow-md hover:shadow-lg transition-shadow bg-primary hover:bg-primary/90 text-primary-foreground mt-3 sm:mt-0 w-full sm:w-auto"
-          >
-            <Plus size={22} className="mr-2" /> Create New Workspace
-          </Button>
-      </div>
+        </CardHeader>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 flex-shrink-0">
         <Card className="lg:col-span-1 hover:shadow-lg transition-shadow border-border/70">

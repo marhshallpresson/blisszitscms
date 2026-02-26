@@ -11,8 +11,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <DesktopSidebar />
       <div className="flex flex-col flex-1 overflow-hidden">
         <MobileSidebar />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-secondary/50">
-          {children}
+        <main className="flex-1 overflow-y-auto bg-secondary/50">
+          <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 w-full">
+            {children}
+          </div>
         </main>
       </div>
     </div>

@@ -12,7 +12,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Download, BarChart3, Loader2, Link as LinkIcon, AlertTriangle } from 'lucide-react';
+import { Download, BarChart3, Loader2, Link as LinkIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
@@ -24,30 +24,9 @@ export const AnalyticsDashboard = () => {
     const reportRef = useRef<HTMLDivElement>(null);
     const { toast } = useToast();
 
-    // NOTE: All mock data has been removed.
-    // The component will now display an empty state until real data integration.
-    const [kpis, setKpis] = useState([]);
     const [chartData, setChartData] = useState([]);
 
     useEffect(() => {
-        // NOTE TO DEV: This is where you would fetch real analytics data from your backend
-        // or a third-party API based on the `selectedPlatform`.
-        // This should only run if social media accounts are connected.
-        //
-        // const fetchData = async () => {
-        //   try {
-        //     const response = await fetch(`/api/analytics?platform=${selectedPlatform}`);
-        //     const data = await response.json();
-        //     setKpis(data.kpis);
-        //     setChartData(data.chartData);
-        //   } catch (error) {
-        //     toast({ title: "Error", description: "Could not fetch analytics data.", variant: "destructive" });
-        //   }
-        // };
-        // if(accountsConnected) fetchData();
-
-        // For now, we keep the data empty to reflect the lack of integration.
-        setKpis([]);
         setChartData([]);
     }, [selectedPlatform, toast]);
 
@@ -105,7 +84,7 @@ export const AnalyticsDashboard = () => {
     );
 
     return (
-        <div className="container mx-auto px-0 py-0 space-y-8">
+        <div className="space-y-8">
             <Card className="bg-card shadow-lg border-border/80">
                 <CardHeader>
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -139,16 +118,7 @@ export const AnalyticsDashboard = () => {
                  {chartData.length === 0 ? (
                     <EmptyState />
                  ) : (
-                   <>
-                    {/* NOTE TO DEV: The content below will be rendered when `chartData` and `kpis` state variables are populated with real data. */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        {/* KPI cards will be mapped here */}
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                       {/* Chart components will be mapped here */}
-                    </div>
-                  </>
+                   <div className="text-center py-10 text-muted-foreground">Detailed metrics view loading...</div>
                 )}
             </div>
         </div>
