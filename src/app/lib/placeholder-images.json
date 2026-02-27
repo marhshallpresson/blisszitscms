@@ -1,0 +1,26 @@
+{
+  "contentThumbnails": [
+    {
+      "id": "1",
+      "url": "https://picsum.photos/seed/1/600/400",
+      "hint": "social media"
+    },
+    {
+      "id": "2",
+      "url": "https://picsum.photos/seed/2/600/400",
+      "hint": "content creation"
+    },
+    {
+      "id": "3",
+      "url": "https://picsum.photos/seed/3/600/400",
+      "hint": "marketing team"
+    }
+  ],
+  "avatars": [
+    {
+      "id": "user1",
+      "url": "https://picsum.photos/seed/u1/100/100",
+      "hint": "profile avatar"
+    }
+  ]
+}

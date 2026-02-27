@@ -1,0 +1,7 @@
+{
+  "event": {
+    "token": "PASTE_GRECAPTCHA_ENTERPRISE_TOKEN_HERE",
+    "expectedAction": "LOGIN",
+    "siteKey": "6Lf6M3ksAAAAAI_gG9uaWfkf9XAP4Ll6URzwdsau"
+  }
+}

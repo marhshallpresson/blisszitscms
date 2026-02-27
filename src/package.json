@@ -1,0 +1,4 @@
+{
+  "private": true,
+  "description": "Interference prevention: Actual dependencies are managed in the root package.json"
+}
