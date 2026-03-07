@@ -1,14 +1,27 @@
-﻿# Blisszits BRD and PRD
+﻿﻿﻿﻿# Blisszits BRD and PRD
 
 ## Executive Summary
-Blisszits is a workflow-first social media operations platform for creators, small teams, and early-stage agencies. The product centralizes planning, approvals, publishing readiness, inbox triage, and performance views in a workspace model. The current release is a Firebase-based MVP with honest labeling for simulated inbox and analytics data sources.
+Blisszits is a mobile-first social media management platform for creators, startups, and small businesses. It centralizes planning, approvals, publishing readiness, inbox triage, and performance views in a workspace model. The current release is a Firebase-based MVP with clear labeling for simulated inbox and analytics data sources.
 
 ## Business Requirements Document (BRD)
 ### Business Objectives
-- Reduce operational overhead for content teams by unifying planning and approvals.
-- Improve content production speed using AI-assisted drafting.
-- Provide visibility into readiness and workflow status across workspaces.
-- Maintain trust through clear capability boundaries.
+- Reduce operational overhead by unifying planning, approvals, and scheduling.
+- Improve content production speed with AI-assisted drafting.
+- Provide visibility into workflow readiness across workspaces.
+- Deliver affordability compared to enterprise pricing models.
+- Maintain trust through explicit capability boundaries.
+
+### Market Opportunity
+The market is growing, but enterprise platforms are priced for large teams and built with complex features that small businesses do not need. Blisszits targets the underserved segment that values simplicity, speed, and mobile-first workflows.
+
+### Competitive Landscape and Pricing
+| Platform | Starting Price |
+| --- | --- |
+| Sprout Social | $199 / user / month |
+| Hootsuite | $99 / user / month |
+| SocialPilot | $25–$200 / month |
+| Buffer | $5 / channel / month |
+| Blisszits | $29 / month |
 
 ### Scope
 #### In Scope
@@ -17,6 +30,7 @@ Blisszits is a workflow-first social media operations platform for creators, sma
 - Approval workflows and scheduling readiness states.
 - Inbox and analytics views with seeded data and sync endpoints.
 - Social account organization and capability mapping.
+- Mobile-first experience expectations for creators on the go.
 
 #### Out of Scope
 - Full live integration coverage for all social networks.
@@ -54,6 +68,17 @@ Blisszits is a workflow-first social media operations platform for creators, sma
 - Regular data hygiene for workspace cleanup.
 - Ongoing review of audit logs and access controls.
 
+### Monetization Strategy
+- Subscription revenue with tiered plans.
+- AI usage credits for advanced generation and reporting.
+- Agency plans for multi-client workflows.
+- Future integrations marketplace for add-ons.
+
+### Go-to-Market Strategy
+- Focus on creators, freelancers, small businesses, startups, and agencies.
+- Build acquisition through creator communities, startup ecosystems, and content marketing.
+- Encourage viral sharing of analytics and campaign dashboards.
+
 ## Product Requirements Document (PRD)
 ### Product Vision
 Enable small teams to run reliable, repeatable social media operations without enterprise complexity.
@@ -63,6 +88,7 @@ Enable small teams to run reliable, repeatable social media operations without e
 - Support multi-workspace operations with simple collaboration.
 - Deliver AI-assisted drafting that reduces creation time.
 - Offer transparent capability coverage and integration readiness.
+- Prioritize mobile-first usability for modern creators.
 
 ### Functional Requirements
 1. Authentication and Onboarding
@@ -111,6 +137,26 @@ Enable small teams to run reliable, repeatable social media operations without e
 7. As a stakeholder, I want to understand feature readiness.
    - Acceptance: Simulated features are clearly labeled in the UI and messaging.
 
+### Pricing and Packaging (Proposed)
+#### Starter — $29 / month
+- 5 social accounts
+- Scheduling
+- Analytics
+- AI captions
+- Content calendar
+
+#### Growth — $59 / month
+- 15 social accounts
+- Team collaboration
+- Advanced analytics
+- AI content generation
+
+#### Business — $99 / month
+- Unlimited accounts
+- Team workspaces
+- API integrations
+- Priority support
+
 ### Integration Requirements
 - Support OAuth token exchange and refresh for selected networks.
 - Provide network capability matrix to show publish, schedule, inbox, and analytics coverage.
@@ -134,24 +180,26 @@ Enable small teams to run reliable, repeatable social media operations without e
 - Reliability: scheduling and retry workflows must be idempotent.
 - Performance: dashboard and workflow views must load within expected UI timeframes.
 - Transparency: all simulated modules must be labeled and documented.
+- Usability: mobile-first flows should be fast and predictable.
 
 ### Implementation Roadmap (High-Level)
-Phase 1: MVP Foundation
+Phase 1: MVP Foundation (0–6 months)
 - Stable authentication and onboarding.
 - Workspace management and content lifecycle.
 - AI drafting tools.
 - Server-managed scheduling operations.
 - Simulated inbox and analytics with seeded data.
 
-Phase 2: Live Integrations
-- Production inbox ingestion connectors.
-- Live analytics pipelines.
-- Expanded OAuth coverage and network publishing.
+Phase 2: AI Expansion (6–12 months)
+- AI caption generator.
+- Content idea engine.
+- Automated scheduling suggestions.
 
-Phase 3: Scale and Automation
-- Enhanced reporting and exports.
-- Advanced agency workflows and white-label options.
-- Expanded automation and compliance tooling.
+Phase 3: Platform Scaling (12–24 months)
+- Agency dashboards.
+- White-label reporting.
+- API integrations.
+- Advanced analytics.
 
 ### Success Metrics
 - Activation rate after onboarding.

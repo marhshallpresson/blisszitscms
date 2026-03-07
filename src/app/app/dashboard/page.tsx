@@ -14,7 +14,7 @@ export default function AppDashboardPage() {
   useEffect(() => {
     if (!isLoadingAuth && !user) {
       router.replace('/auth?mode=signin');
-    } else if (!isLoadingProfile && user && !userProfile?.onboardingCompleted) {
+    } else if (!isLoadingProfile && user && userProfile?.onboardingCompleted === false) {
       router.replace('/onboarding');
     }
   }, [user, userProfile, isLoadingAuth, isLoadingProfile, router]);

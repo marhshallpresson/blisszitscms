@@ -32,28 +32,44 @@ const app = isConfigured
 
 // Handle App Check & Browser-only logic
 if (app && typeof window !== 'undefined') {
+  const isAppCheckEnabledByEnv = process.env.NEXT_PUBLIC_ENABLE_APP_CHECK === 'true';
+  const shouldEnableAppCheck = process.env.NODE_ENV === 'production' || isAppCheckEnabledByEnv;
   const appCheckDebugToken =
     process.env.NEXT_PUBLIC_APP_CHECK_DEBUG_TOKEN ??
     process.env.NEXT_PUBLIC_APP_CHECK_DEBUG_TOKEN_FROM_RUNTIME;
+  let appCheckInitialized = false;
 
-  // Use globalThis to ensure the debug token flag is picked up by the SDK immediately
-  if (process.env.NODE_ENV === 'development' || appCheckDebugToken) {
-    (globalThis as any).FIREBASE_APPCHECK_DEBUG_TOKEN = appCheckDebugToken || true;
-  }
+  const initializeAppCheckWhenReady = () => {
+    if (!shouldEnableAppCheck || appCheckInitialized) return;
 
-  const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+    const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+    if (!siteKey) {
+      console.warn('Firebase App Check skipped: NEXT_PUBLIC_RECAPTCHA_SITE_KEY is not set.');
+      return;
+    }
 
-  try {
-    if (siteKey) {
+    try {
+      // Use globalThis so the Firebase SDK picks up the debug token before init.
+      if (process.env.NODE_ENV === 'development' || appCheckDebugToken) {
+        (globalThis as any).FIREBASE_APPCHECK_DEBUG_TOKEN = appCheckDebugToken || true;
+      }
+
       initializeAppCheck(app, {
         provider: new ReCaptchaEnterpriseProvider(siteKey),
-        isTokenAutoRefreshEnabled: true
+        isTokenAutoRefreshEnabled: true,
       });
-    } else {
-      console.warn('Firebase App Check skipped: NEXT_PUBLIC_RECAPTCHA_SITE_KEY is not set.');
+      appCheckInitialized = true;
+    } catch (e) {
+      console.error('Firebase App Check failed to initialize:', e);
     }
-  } catch (e) {
-    console.error("Firebase App Check failed to initialize:", e);
+  };
+
+  if (shouldEnableAppCheck) {
+    if (typeof navigator !== 'undefined' && navigator.onLine) {
+      initializeAppCheckWhenReady();
+    } else {
+      window.addEventListener('online', initializeAppCheckWhenReady, { once: true });
+    }
   }
 }
 

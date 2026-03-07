@@ -54,6 +54,10 @@ export function formatAiError(error: unknown): string {
     return 'AI is not configured correctly right now. Check the Gemini API key and permissions.';
   }
 
+  if (normalized.includes('unknown action type returned from plugin googleai')) {
+    return 'AI model configuration is invalid. Check GEMINI_MODEL and GEMINI_FALLBACK_MODELS.';
+  }
+
   if (!rawMessage) {
     return GENERIC_AI_ERROR;
   }

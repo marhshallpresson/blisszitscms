@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿# Blisszits Design Structure
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿# Blisszits Design Structure
 
 ## Purpose
 This document captures the current design structure of Blisszits as implemented in the codebase. It maps the UI layers, layout system, component taxonomy, and visual foundations that define the product experience.

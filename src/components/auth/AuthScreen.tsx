@@ -55,10 +55,10 @@ export const AuthScreen = () => {
 
   useEffect(() => {
     if (!isLoadingAuth && !isLoadingProfile && user) {
-      if (userProfile?.onboardingCompleted) {
+      if (userProfile?.onboardingCompleted === true) {
         router.push('/app/dashboard'); 
-      } else {
-        if (!isLoadingProfile) router.push('/onboarding');
+      } else if (userProfile?.onboardingCompleted === false) {
+        router.push('/onboarding');
       }
     }
   }, [user, userProfile, isLoadingAuth, isLoadingProfile, router]);

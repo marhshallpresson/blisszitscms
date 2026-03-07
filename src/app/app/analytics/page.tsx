@@ -14,12 +14,12 @@ export default function AppAnalyticsPage() {
   useEffect(() => {
     if (!isLoadingAuth && !user) {
       router.replace('/auth?mode=signin');
-    } else if (!isLoadingProfile && user && !userProfile?.onboardingCompleted) {
+    } else if (!isLoadingProfile && user && userProfile?.onboardingCompleted === false) {
       router.replace('/onboarding');
     }
   }, [user, userProfile, isLoadingAuth, isLoadingProfile, router]);
   
-  if (isLoadingAuth || isLoadingProfile || !user || !userProfile?.onboardingCompleted) {
+  if (isLoadingAuth || isLoadingProfile || !user || !userProfile || userProfile.onboardingCompleted === false) {
     return (
       <div className="flex flex-col items-center justify-center min-h-full bg-background p-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />

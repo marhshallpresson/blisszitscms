@@ -98,12 +98,12 @@ export default function WorkspaceModuleCatchAllPage() {
   useEffect(() => {
     if (!isLoadingAuth && !user) {
       router.replace('/auth?mode=signin');
-    } else if (!isLoadingProfile && user && !userProfile?.onboardingCompleted) {
+    } else if (!isLoadingProfile && user && userProfile?.onboardingCompleted === false) {
       router.replace('/onboarding');
     }
   }, [user, userProfile, isLoadingAuth, isLoadingProfile, router]);
 
-  if (isLoadingAuth || isLoadingProfile || !user || !userProfile?.onboardingCompleted) {
+  if (isLoadingAuth || isLoadingProfile || !user || !userProfile || userProfile.onboardingCompleted === false) {
     return (
       <div className="flex min-h-full flex-col items-center justify-center p-4">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />

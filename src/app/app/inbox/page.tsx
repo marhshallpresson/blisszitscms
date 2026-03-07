@@ -25,12 +25,12 @@ function InboxPageContent() {
   useEffect(() => {
     if (!isLoadingAuth && !user) {
       router.replace('/auth?mode=signin');
-    } else if (!isLoadingProfile && user && !userProfile?.onboardingCompleted) {
+    } else if (!isLoadingProfile && user && userProfile?.onboardingCompleted === false) {
       router.replace('/onboarding');
     }
   }, [user, userProfile, isLoadingAuth, isLoadingProfile, router]);
   
-  if (isLoadingAuth || isLoadingProfile || !user || !userProfile?.onboardingCompleted) {
+  if (isLoadingAuth || isLoadingProfile || !user || !userProfile || userProfile.onboardingCompleted === false) {
     return <InboxLoadingState />;
   }
   

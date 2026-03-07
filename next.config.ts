@@ -3,6 +3,13 @@ const nextConfig: NextConfig = {
   typescript: {
     tsconfigPath: './tsconfig.typecheck.json',
   },
+  serverExternalPackages: ['firebase-admin', '@genkit-ai/google-genai'],
+  webpack(config, { dev, isServer }) {
+    if (dev && !isServer && config.output) {
+      config.output.chunkLoadTimeout = 300000;
+    }
+    return config;
+  },
   async redirects() {
     return [
       {

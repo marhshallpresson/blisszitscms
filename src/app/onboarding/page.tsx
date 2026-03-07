@@ -12,9 +12,13 @@ export default function OnboardingPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoadingAuth && user && userProfile?.onboardingCompleted) {
+    if (isLoadingAuth || isLoadingProfile) return;
+    if (user && userProfile?.onboardingCompleted) {
       // If user is already onboarded, send them to the dashboard.
       router.replace('/app/dashboard');
+    }
+    if (!user) {
+      router.replace('/auth?mode=signin');
     }
   }, [user, userProfile, isLoadingAuth, isLoadingProfile, router]);
   
@@ -29,10 +33,17 @@ export default function OnboardingPage() {
   // If there's no user, the form itself doesn't make sense.
   // A redirect to login should happen, but we can show a message briefly.
   if (!user) {
-    router.replace('/auth?mode=signin');
     return (
        <div className="flex h-screen w-screen items-center justify-center bg-background">
          <p className="text-muted-foreground">Redirecting to login...</p>
+      </div>
+    );
+  }
+
+  if (!userProfile) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }

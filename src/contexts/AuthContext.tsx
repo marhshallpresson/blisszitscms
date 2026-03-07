@@ -88,7 +88,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error) {
       console.error("Error fetching user profile:", error);
-      setUserProfile(null);
+      setUserProfile((prev) => (prev?.uid === uid ? prev : null));
       return null;
     } finally {
       setIsLoadingProfile(false);
@@ -221,7 +221,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (currentUser) {
         void ensureUserProfileDoc(currentUser).catch((error) => {
           console.error('Error ensuring user profile:', error);
-          setUserProfile(null);
+          setUserProfile((prev) => (prev?.uid === currentUser.uid ? prev : null));
           setIsLoadingProfile(false);
         });
       } else {
@@ -237,6 +237,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       unsubscribe();
     };
   }, [clearPendingGoogleLink, ensureUserProfileDoc]);
+
+  useEffect(() => {
+    if (!user || userProfile || isLoadingProfile) return;
+
+    const retryProfileBootstrap = () => {
+      void ensureUserProfileDoc(user).catch((error) => {
+        console.warn('Profile bootstrap retry failed:', error);
+      });
+    };
+
+    if (typeof navigator !== 'undefined' && navigator.onLine) {
+      retryProfileBootstrap();
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', retryProfileBootstrap);
+      return () => {
+        window.removeEventListener('online', retryProfileBootstrap);
+      };
+    }
+  }, [ensureUserProfileDoc, isLoadingProfile, user, userProfile]);
 
 
   const signUpWithEmail = async ({ email, password }: EmailPasswordCredentials): Promise<FirebaseUser | null> => {

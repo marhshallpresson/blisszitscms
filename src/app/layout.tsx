@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import { defaultDescription, defaultTitle, siteName, siteUrl } from "@/lib/seo";
 
 const organizationSchema = {
@@ -58,18 +56,13 @@ export default function RootLayout({
       <head />
       <body className="font-body antialiased flex flex-col min-h-screen bg-background" suppressHydrationWarning>
         <AuthProvider>
-          <WorkspaceProvider>
-            {children}
-            <Toaster />
-          </WorkspaceProvider>
+          {children}
+          <Toaster />
         </AuthProvider>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify([organizationSchema, softwareSchema]) }}
         />
-        <Script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" strategy="afterInteractive" />
-        <Script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" strategy="afterInteractive" />
-        <Script src="https://www.google.com/recaptcha/enterprise.js" strategy="afterInteractive" />
       </body>
     </html>
   );
