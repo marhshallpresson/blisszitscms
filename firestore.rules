@@ -1,44 +1,81 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can read and write their own profile
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    function isSignedIn() {
+      return request.auth != null;
     }
-    
-    // Workspaces belong to an owner
+
+    function isWorkspaceOwner(workspaceId) {
+      return isSignedIn()
+        && get(/databases/$(database)/documents/workspaces/$(workspaceId)).data.ownerId == request.auth.uid;
+    }
+
+    match /users/{userId} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // OAuth state and credential exchange metadata are server-managed only.
+    match /oauth_states/{stateId} {
+      allow read, write: if false;
+    }
+
+    match /oauth_credentials/{credentialId} {
+      allow read, write: if false;
+    }
+
     match /workspaces/{workspaceId} {
-      allow read, update, delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
-      allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
-      
-      // Content within a workspace
+      allow read, update, delete: if isWorkspaceOwner(workspaceId);
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+
       match /content/{contentId} {
-        allow read, write: if request.auth != null && 
-          get(/databases/$(database)/documents/workspaces/$(workspaceId)).data.ownerId == request.auth.uid;
-          
-        // Comments within content
+        allow read: if isWorkspaceOwner(workspaceId);
+        allow create: if isWorkspaceOwner(workspaceId)
+          && request.resource.data.workspaceId == workspaceId;
+        allow update: if isWorkspaceOwner(workspaceId)
+          && resource.data.workspaceId == workspaceId
+          && request.resource.data.workspaceId == workspaceId;
+        allow delete: if isWorkspaceOwner(workspaceId);
+
         match /comments/{commentId} {
-          allow read, write: if request.auth != null && 
-            get(/databases/$(database)/documents/workspaces/$(workspaceId)).data.ownerId == request.auth.uid;
+          allow read, write: if isWorkspaceOwner(workspaceId);
         }
       }
-      
-      // Ideas within a workspace
+
       match /ideas/{ideaId} {
-        allow read, write: if request.auth != null && 
-          get(/databases/$(database)/documents/workspaces/$(workspaceId)).data.ownerId == request.auth.uid;
+        allow read, write: if isWorkspaceOwner(workspaceId);
       }
 
-      // Social accounts metadata within a workspace
       match /social_accounts/{accountId} {
-        allow read, write: if request.auth != null &&
-          get(/databases/$(database)/documents/workspaces/$(workspaceId)).data.ownerId == request.auth.uid;
+        allow read: if isWorkspaceOwner(workspaceId);
+        allow create, update, delete: if false;
       }
 
-      // Publishing jobs within a workspace
       match /publish_jobs/{jobId} {
-        allow read, write: if request.auth != null &&
-          get(/databases/$(database)/documents/workspaces/$(workspaceId)).data.ownerId == request.auth.uid;
+        allow read: if isWorkspaceOwner(workspaceId);
+        allow create, update, delete: if false;
+      }
+
+      match /inbox_threads/{threadId} {
+        allow read: if isWorkspaceOwner(workspaceId);
+        allow create: if isWorkspaceOwner(workspaceId);
+        allow update: if isWorkspaceOwner(workspaceId);
+        allow delete: if isWorkspaceOwner(workspaceId);
+
+        match /messages/{messageId} {
+          allow read: if isWorkspaceOwner(workspaceId);
+          allow create: if isWorkspaceOwner(workspaceId);
+          allow update, delete: if false;
+        }
+      }
+
+      match /analytics_snapshots/{snapshotId} {
+        allow read: if isWorkspaceOwner(workspaceId);
+        allow create, update, delete: if isWorkspaceOwner(workspaceId);
+      }
+
+      match /audit_logs/{logId} {
+        allow read: if isWorkspaceOwner(workspaceId);
+        allow write: if false;
       }
     }
   }

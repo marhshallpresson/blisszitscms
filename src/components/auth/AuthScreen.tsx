@@ -14,12 +14,16 @@ import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { EmailPasswordCredentials } from '@/types/auth';
+import { getReadableFirebaseAuthMessage } from '@/lib/auth/firebase-auth-errors';
 
 export const AuthScreen = () => {
   const {
     user,
     signUpWithEmail,
     signInWithEmail,
+    signInWithGoogle,
+    pendingGoogleLinkEmail,
+    clearPendingGoogleLink,
     isLoadingAuth,
     userProfile,
     isLoadingProfile
@@ -38,11 +42,12 @@ export const AuthScreen = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formLoading, setFormLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
 
   useEffect(() => {
     setIsClient(true);
-    const queryMode = searchParams.get('mode');
+    const queryMode = searchParams?.get('mode');
     if (queryMode === 'signup' || queryMode === 'signin') {
       setMode(queryMode);
     }
@@ -58,6 +63,14 @@ export const AuthScreen = () => {
     }
   }, [user, userProfile, isLoadingAuth, isLoadingProfile, router]);
 
+  useEffect(() => {
+    if (!pendingGoogleLinkEmail) return;
+    setEmail((current) => (current.trim() ? current : pendingGoogleLinkEmail));
+    if (mode !== 'signin') {
+      setMode('signin');
+      router.replace('/auth?mode=signin', { scroll: false });
+    }
+  }, [mode, pendingGoogleLinkEmail, router]);
 
   const handleAuth = async (e: FormEvent) => {
     e.preventDefault();
@@ -94,10 +107,45 @@ export const AuthScreen = () => {
         }
       }
     } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
-      toast({ title: "Authentication Failed", description: err.message || "Please try again.", variant: "destructive" });
+      const friendly = getReadableFirebaseAuthMessage(err);
+      setError(friendly);
+      toast({ title: "Authentication Failed", description: friendly, variant: "destructive" });
     } finally {
       setFormLoading(false);
+    }
+  };
+
+  const handleGoogleAuth = async () => {
+    setError(null);
+    setGoogleLoading(true);
+    try {
+      const result = await signInWithGoogle();
+      if (result.redirectStarted) {
+        toast({
+          title: 'Redirecting to Google',
+          description: 'Complete sign-in in the Google tab to continue.',
+        });
+        return;
+      }
+      toast({ title: 'Signed in with Google', description: 'Welcome back!' });
+    } catch (err: any) {
+      const code = String(err?.code || '').trim();
+      const message =
+        typeof err?.message === 'string' && err.message.trim()
+          ? err.message
+          : getReadableFirebaseAuthMessage(err);
+      setError(message);
+      toast({
+        title: code === 'ACCOUNT_LINK_REQUIRED' ? 'Link account required' : 'Google sign-in failed',
+        description: message,
+        variant: 'destructive',
+      });
+      if (code === 'ACCOUNT_LINK_REQUIRED') {
+        setMode('signin');
+        router.replace('/auth?mode=signin', { scroll: false });
+      }
+    } finally {
+      setGoogleLoading(false);
     }
   };
   
@@ -105,8 +153,13 @@ export const AuthScreen = () => {
     const newMode = mode === 'signin' ? 'signup' : 'signin';
     setMode(newMode);
     setError(null);
+    if (newMode === 'signup') {
+      clearPendingGoogleLink();
+    }
     router.replace(`/auth?mode=${newMode}`, { scroll: false }); 
   };
+
+  const authBusy = formLoading || isLoadingAuth || googleLoading;
 
   if (!isClient || isLoadingAuth) {
     return (
@@ -153,19 +206,52 @@ export const AuthScreen = () => {
               {error}
             </div>
           )}
+          {pendingGoogleLinkEmail && mode === 'signin' && (
+            <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-amber-800 text-sm">
+              <p className="font-medium">Link your Google account</p>
+              <p className="mt-1">
+                Sign in with password for <span className="font-semibold">{pendingGoogleLinkEmail}</span> to complete linking.
+              </p>
+              <button
+                type="button"
+                className="mt-2 text-xs font-semibold underline hover:text-amber-900"
+                onClick={() => clearPendingGoogleLink()}
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
           <form onSubmit={handleAuth} className="space-y-4">
             <div>
               <Label htmlFor="email">Email Address</Label>
               <div className="relative mt-1">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 pr-3 py-2.5 bg-input border-border focus:border-primary" required/>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-10 pr-3 py-2.5 bg-input border-border focus:border-primary"
+                  autoComplete="email"
+                  required
+                />
               </div>
             </div>
             <div>
               <Label htmlFor="password">Password</Label>
               <div className="relative mt-1">
                 <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input id="password" type={showPassword ? "text" : "password"} placeholder="********" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 pr-10 py-2.5 bg-input border-border focus:border-primary" required/>
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="********"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-10 pr-10 py-2.5 bg-input border-border focus:border-primary"
+                  autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+                  required
+                />
                 <PasswordVisibilityToggle visible={showPassword} onClick={() => setShowPassword(!showPassword)} />
               </div>
             </div>
@@ -174,7 +260,16 @@ export const AuthScreen = () => {
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
                  <div className="relative mt-1">
                   <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input id="confirmPassword" type={showConfirmPassword ? "text" : "password"} placeholder="********" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="pl-10 pr-10 py-2.5 bg-input border-border focus:border-primary" required/>
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="********"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="pl-10 pr-10 py-2.5 bg-input border-border focus:border-primary"
+                    autoComplete="new-password"
+                    required
+                  />
                   <PasswordVisibilityToggle visible={showConfirmPassword} onClick={() => setShowConfirmPassword(!showConfirmPassword)} />
                 </div>
               </div>
@@ -190,13 +285,29 @@ export const AuthScreen = () => {
               </div>
             )}
 
-            <Button type="submit" className="w-full font-semibold py-3 text-base shadow-md bg-primary hover:bg-primary/90 text-primary-foreground" disabled={formLoading || isLoadingAuth}>
+            <Button type="submit" className="w-full font-semibold py-3 text-base shadow-md bg-primary hover:bg-primary/90 text-primary-foreground" disabled={authBusy}>
               {formLoading || isLoadingAuth ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (mode === 'signup' ? <UserPlus size={20} className="mr-2"/> : <LogIn size={20} className="mr-2"/>)}
               {formLoading || isLoadingAuth ? 'Processing...' : (mode === 'signup' ? 'Get Started' : 'Sign In')}
             </Button>
           </form>
 
-          <Separator />
+          <div className="relative">
+            <Separator />
+            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
+              or
+            </span>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full font-semibold py-3 text-base"
+            onClick={handleGoogleAuth}
+            disabled={authBusy}
+          >
+            {googleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            {googleLoading ? 'Connecting to Google...' : 'Continue with Google'}
+          </Button>
            
           <p className="text-center text-sm text-muted-foreground">
             {mode === 'signin' ? "Don't have an account?" : "Already have an account?"}{' '}

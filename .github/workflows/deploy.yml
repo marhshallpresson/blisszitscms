@@ -1,0 +1,63 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Authenticate to Google Cloud via OIDC
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Deploy via deployment CLI (hosting + rules + health check)
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          DEPLOY_HEALTH_URL: ${{ secrets.DEPLOY_HEALTH_URL }}
+        run: npm run deploy:full -- --project "${{ secrets.GCP_PROJECT_ID }}" --health-url "${{ secrets.DEPLOY_HEALTH_URL }}"
+
+      - name: Pack build artifact
+        run: tar -czf next-build.tgz .next
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: next-build.tgz

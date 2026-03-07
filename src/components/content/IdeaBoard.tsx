@@ -4,11 +4,14 @@
 import { useState, useMemo, FormEvent } from 'react';
 import { useWorkspace, type Idea, IDEA_BOARD_STATUSES, type IdeaBoardStatus } from '@/contexts/WorkspaceContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Trash2, Loader2, Lightbulb, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ClientFormattedDate } from '../utils/ClientFormattedDate';
+import { AiFieldActions } from '@/components/ai/AiFieldActions';
+import { AiAssistantPreviewPanel } from '@/components/ai/AiAssistantPreviewPanel';
+import { useAiTextAssistant } from '@/hooks/useAiTextAssistant';
 
 const IdeaCard = ({ idea, onStatusChange, onDelete }: { idea: Idea; onStatusChange: (ideaId: string, newStatus: IdeaBoardStatus) => void; onDelete: (ideaId: string) => void; }) => {
     const currentIndex = IDEA_BOARD_STATUSES.indexOf(idea.status);
@@ -45,6 +48,13 @@ export const IdeaBoard = () => {
   const [newIdeaText, setNewIdeaText] = useState('');
   const [isAddingIdea, setIsAddingIdea] = useState(false);
   const { toast } = useToast();
+  const aiAssistant = useAiTextAssistant({
+    getFieldValue: () => newIdeaText,
+    setFieldValue: (_fieldId, value) => setNewIdeaText(value),
+    onError: (message) => {
+      toast({ title: 'AI Error', description: message, variant: 'destructive' });
+    },
+  });
 
   const handleAddIdea = async (e: FormEvent) => {
     e.preventDefault();
@@ -83,15 +93,50 @@ export const IdeaBoard = () => {
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleAddIdea} className="flex flex-col sm:flex-row items-start gap-3">
-                    <Textarea
-                        value={newIdeaText}
-                        onChange={(e) => setNewIdeaText(e.target.value)}
-                        placeholder="Jot down your next big content idea..."
-                        className="flex-grow bg-input"
-                        aria-label="New idea text"
-                        disabled={isAddingIdea}
-                        rows={2}
-                    />
+                    <div className="w-full space-y-3">
+                        <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+                            <Textarea
+                                value={newIdeaText}
+                                onChange={(e) => setNewIdeaText(e.target.value)}
+                                placeholder="Jot down your next big content idea..."
+                                className="flex-grow bg-input"
+                                aria-label="New idea text"
+                                disabled={isAddingIdea}
+                                rows={2}
+                            />
+                            <AiFieldActions
+                                onAction={(operation) => {
+                                    void aiAssistant.runOperation({
+                                        fieldId: 'new-idea',
+                                        context: 'idea',
+                                        operation,
+                                        text: newIdeaText,
+                                        seed: newIdeaText || 'Generate a practical, high-engagement content idea for a creator brand.',
+                                    });
+                                }}
+                                isLoading={{
+                                    generate: aiAssistant.isLoading('new-idea', 'generate'),
+                                    improve: aiAssistant.isLoading('new-idea', 'improve'),
+                                    shorten: aiAssistant.isLoading('new-idea', 'shorten'),
+                                }}
+                                disabled={{
+                                    generate: false,
+                                    improve: !newIdeaText.trim(),
+                                    shorten: !newIdeaText.trim(),
+                                }}
+                            />
+                        </div>
+                        <AiAssistantPreviewPanel
+                            preview={aiAssistant.preview}
+                            tone={aiAssistant.tone}
+                            onToneChange={aiAssistant.setTone}
+                            onApplyReplace={() => aiAssistant.applyPreview('replace')}
+                            onApplyAppend={() => aiAssistant.applyPreview('append')}
+                            onDismiss={aiAssistant.clearPreview}
+                            onUndo={aiAssistant.undoLastApply}
+                            canUndo={aiAssistant.hasUndo}
+                        />
+                    </div>
                     <Button type="submit" disabled={!newIdeaText.trim() || isAddingIdea} className="font-semibold bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto">
                         {isAddingIdea ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus size={18} />}
                         <span className="ml-2">{isAddingIdea ? 'Adding...' : 'Add Idea'}</span>

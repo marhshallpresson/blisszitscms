@@ -10,6 +10,8 @@
 
 import {ai, gemini15Flash} from '@/ai/genkit';
 import {z} from 'genkit';
+import { executePromptWithModelFallback } from '@/lib/ai/execute-prompt-with-model-fallback';
+import { formatAiError } from '@/lib/ai/format-ai-error';
 
 const GenerateWorkspacePlanInputSchema = z.object({
   topic: z
@@ -32,7 +34,11 @@ export type GenerateWorkspacePlanOutput = z.infer<typeof GenerateWorkspacePlanOu
 
 
 export async function generateWorkspacePlan(input: GenerateWorkspacePlanInput): Promise<GenerateWorkspacePlanOutput> {
-  return generateWorkspacePlanFlow(input);
+  try {
+    return await generateWorkspacePlanFlow(input);
+  } catch (error) {
+    throw new Error(formatAiError(error));
+  }
 }
 
 const prompt = ai.definePrompt({
@@ -70,7 +76,7 @@ const generateWorkspacePlanFlow = ai.defineFlow(
     outputSchema: GenerateWorkspacePlanOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const {output} = await executePromptWithModelFallback(prompt, input);
     return output!;
   }
 );

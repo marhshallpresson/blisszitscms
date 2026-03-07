@@ -1,5 +1,57 @@
 ﻿# Blisszits Spec Changelog
 
+## 2026-03-02 - Server Automation and Security Baseline
+
+## 0. New Canonical Runtime Decisions
+1. Publishing queue mutations now flow through authenticated API routes, not direct client writes.
+2. Internal automation routes are enabled for publishing execution, inbox sync, and analytics sync.
+3. Publish job status model expanded to:
+- `queued | claimed | processing | published | retrying | failed | dead_letter`
+4. `SocialAccount` model expanded with:
+- `credentialRef, scope, expiresAt, updatedAt`
+5. OAuth route contracts added:
+- `POST /api/integrations/:network/start`
+- `GET /api/integrations/:network/callback`
+- `POST /api/integrations/:network/refresh`
+
+## 0.1 Security and Compliance Baseline Decisions
+1. Firebase Admin-backed API utilities introduced for token verification and workspace ownership checks.
+2. Internal route authentication standardized via `x-internal-api-key` and `INTERNAL_API_SECRET`.
+3. Audit log writer introduced at `workspaces/{workspaceId}/audit_logs/*`.
+4. Firestore rules updated with:
+- server-only `oauth_states`
+- read-only `audit_logs`
+- stronger workspaceId consistency checks on `content`, `social_accounts`, and `publish_jobs`.
+5. GitHub Actions CI/CD scaffolding added:
+- CI checks: secret scan, lint, typecheck, build.
+- Deploy workflow: OIDC auth to GCP, Firebase deploy, provenance attestation.
+6. Deployment CLI added:
+- `scripts/deploy-cli.mjs` now drives hosting/rules deploy and optional `/api/health` post-check.
+7. Inbox and analytics runtime contracts added:
+- `GET/PATCH /api/inbox/threads`
+- `POST /api/inbox/reply`
+- `POST /api/inbox/sync`
+- `GET /api/analytics/overview`
+- `POST /api/analytics/sync`
+8. Inbox and analytics UI moved from in-memory demo state to workspace-backed sync collections:
+- `workspaces/{workspaceId}/inbox_threads/*`
+- `workspaces/{workspaceId}/analytics_snapshots/*`
+9. OAuth runtime moved from placeholder to active adapter flow for Meta/LinkedIn:
+- callback now performs token exchange through network adapters
+- refresh route now rotates OAuth tokens via adapter refresh paths
+- encrypted token persistence introduced in `oauth_credentials` using `TOKEN_ENCRYPTION_KEY`
+10. Publishing runtime now uses connector adapters and OAuth credentials for configured networks before falling back to failure/retry handling.
+11. Social account mutations migrated to authenticated server API:
+- `POST /api/social-accounts`
+- `DELETE /api/social-accounts`
+12. Workspace deletion migrated to authenticated server API:
+- `POST /api/workspaces/delete`
+13. Webhook ingestion route added with signature verification and normalized inbox ingestion:
+- `GET /api/webhooks/:network` (Meta handshake)
+- `POST /api/webhooks/:network` (Meta/LinkedIn signature checks)
+14. Firestore rule hardening applied:
+- client writes disabled for `social_accounts` and `publish_jobs`
+
 ## 2026-02-27 - Product Rewrite and Reconciliation
 
 ## 1. Source-of-Truth Decisions
@@ -86,3 +138,4 @@ Migration policy:
 1. Add automated tests for transition validator.
 2. Add CI execution of deterministic `typecheck` and clean `build`.
 3. Add product telemetry to distinguish simulated vs live feature usage.
+

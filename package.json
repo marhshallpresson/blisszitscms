@@ -13,8 +13,11 @@
     "build": "next build",
     "build:clean": "npm run clean && next build",
     "start": "next start",
-    "lint": "next lint",
-    "typecheck": "tsc --noEmit --incremental false -p tsconfig.typecheck.json"
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit --incremental false -p tsconfig.typecheck.json",
+    "deploy:hosting": "node scripts/deploy-cli.mjs --only hosting,firestore:rules",
+    "deploy:full": "node scripts/deploy-cli.mjs --only hosting,firestore:rules",
+    "deploy:dry-run": "node scripts/deploy-cli.mjs --dry-run --only hosting,firestore:rules"
   },
   "dependencies": {
     "@genkit-ai/google-genai": "^1.29.0",
@@ -45,6 +48,7 @@
     "date-fns": "^3.6.0",
     "dotenv": "^16.5.0",
     "firebase": "^11.9.1",
+    "firebase-admin": "^13.5.0",
     "genkit": "^1.29.0",
     "lucide-react": "^0.475.0",
     "next": "^15.3.8",

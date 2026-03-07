@@ -10,6 +10,9 @@ import { Label } from '@/components/ui/label';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { AiFieldActions } from '@/components/ai/AiFieldActions';
+import { AiAssistantPreviewPanel } from '@/components/ai/AiAssistantPreviewPanel';
+import { useAiTextAssistant } from '@/hooks/useAiTextAssistant';
 
 interface WorkspaceCreatorModalProps {
   isOpen: boolean;
@@ -23,6 +26,13 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose, onWorkspaceCreated }: W
   const { createWorkspace } = useWorkspace();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const aiAssistant = useAiTextAssistant({
+    getFieldValue: () => description,
+    setFieldValue: (_fieldId, value) => setDescription(value),
+    onError: (message) => {
+      toast({ title: 'AI Error', description: message, variant: 'destructive' });
+    },
+  });
 
   const handleCreate = async () => {
     if (!name.trim()) {
@@ -88,14 +98,47 @@ export const WorkspaceCreatorModal = ({ isOpen, onClose, onWorkspaceCreated }: W
               <Label htmlFor="ws-description" className="text-card-foreground">
                 Description (Optional)
               </Label>
-              <Textarea
-                id="ws-description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="A brief description of this project."
-                className="bg-input"
-                rows={3}
-                disabled={isSubmitting}
+              <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+                <Textarea
+                  id="ws-description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="A brief description of this project."
+                  className="bg-input"
+                  rows={3}
+                  disabled={isSubmitting}
+                />
+                <AiFieldActions
+                  onAction={(operation) => {
+                    void aiAssistant.runOperation({
+                      fieldId: 'workspace-description',
+                      context: 'workspace_description',
+                      operation,
+                      text: description,
+                      seed: description || name || 'Create a concise workspace description for a social media content project.',
+                    });
+                  }}
+                  isLoading={{
+                    generate: aiAssistant.isLoading('workspace-description', 'generate'),
+                    improve: aiAssistant.isLoading('workspace-description', 'improve'),
+                    shorten: aiAssistant.isLoading('workspace-description', 'shorten'),
+                  }}
+                  disabled={{
+                    generate: !(description.trim() || name.trim()),
+                    improve: !description.trim(),
+                    shorten: !description.trim(),
+                  }}
+                />
+              </div>
+              <AiAssistantPreviewPanel
+                preview={aiAssistant.preview}
+                tone={aiAssistant.tone}
+                onToneChange={aiAssistant.setTone}
+                onApplyReplace={() => aiAssistant.applyPreview('replace')}
+                onApplyAppend={() => aiAssistant.applyPreview('append')}
+                onDismiss={aiAssistant.clearPreview}
+                onUndo={aiAssistant.undoLastApply}
+                canUndo={aiAssistant.hasUndo}
               />
             </div>
           </div>

@@ -10,6 +10,8 @@
 
 import {ai, gemini15Flash} from '@/ai/genkit';
 import {z} from 'genkit';
+import { executePromptWithModelFallback } from '@/lib/ai/execute-prompt-with-model-fallback';
+import { formatAiError } from '@/lib/ai/format-ai-error';
 
 const DraftCaptionInputSchema = z.object({
   coreIdea: z.string().describe('The core idea of the content.'),
@@ -23,7 +25,11 @@ const DraftCaptionOutputSchema = z.object({
 export type DraftCaptionOutput = z.infer<typeof DraftCaptionOutputSchema>;
 
 export async function draftCaption(input: DraftCaptionInput): Promise<DraftCaptionOutput> {
-  return draftCaptionFlow(input);
+  try {
+    return await draftCaptionFlow(input);
+  } catch (error) {
+    throw new Error(formatAiError(error));
+  }
 }
 
 const prompt = ai.definePrompt({
@@ -57,7 +63,7 @@ const draftCaptionFlow = ai.defineFlow(
     outputSchema: DraftCaptionOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const {output} = await executePromptWithModelFallback(prompt, input);
     return output!;
   }
 );

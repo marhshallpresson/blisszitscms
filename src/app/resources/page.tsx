@@ -13,10 +13,10 @@ export const metadata: Metadata = getPageMetadata({
 });
 
 const RESOURCES = [
-  { title: 'Blog', description: 'Tactical social growth playbooks for teams and agencies.', href: '/resources' },
-  { title: 'Templates', description: 'Campaign templates for calendar, scripts, and approvals.', href: '/resources' },
-  { title: 'Help center', description: 'Setup guides for onboarding, scheduling, and troubleshooting.', href: '/resources' },
-  { title: 'Changelog', description: 'Track feature releases and capability updates by network.', href: '/resources' },
+  { title: 'Blog', description: 'Tactical social growth playbooks for teams and agencies.', href: '/resources/blog' },
+  { title: 'Templates', description: 'Campaign templates for calendar, scripts, and approvals.', href: '/resources/templates' },
+  { title: 'Help center', description: 'Setup guides for onboarding, scheduling, and troubleshooting.', href: '/resources/help' },
+  { title: 'Changelog', description: 'Track feature releases and capability updates by network.', href: '/resources/changelog' },
 ];
 
 export default function ResourcesPage() {

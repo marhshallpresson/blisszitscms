@@ -10,6 +10,8 @@
 
 import {ai, gemini15Flash} from '@/ai/genkit';
 import {z} from 'genkit';
+import { executePromptWithModelFallback } from '@/lib/ai/execute-prompt-with-model-fallback';
+import { formatAiError } from '@/lib/ai/format-ai-error';
 
 const GenerateScriptOutlineInputSchema = z.object({
   coreIdea: z
@@ -24,7 +26,11 @@ const GenerateScriptOutlineOutputSchema = z.object({
 export type GenerateScriptOutlineOutput = z.infer<typeof GenerateScriptOutlineOutputSchema>;
 
 export async function generateScriptOutline(input: GenerateScriptOutlineInput): Promise<GenerateScriptOutlineOutput> {
-  return generateScriptOutlineFlow(input);
+  try {
+    return await generateScriptOutlineFlow(input);
+  } catch (error) {
+    throw new Error(formatAiError(error));
+  }
 }
 
 const prompt = ai.definePrompt({
@@ -61,7 +67,7 @@ const generateScriptOutlineFlow = ai.defineFlow(
     outputSchema: GenerateScriptOutlineOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const {output} = await executePromptWithModelFallback(prompt, input);
     return output!;
   }
 );

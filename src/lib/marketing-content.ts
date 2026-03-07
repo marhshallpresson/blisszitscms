@@ -68,6 +68,18 @@ export const MARKETING_MODULES: MarketingModule[] = [
     ctaLabel: 'See Agency',
     ctaHref: '/agency',
   },
+  {
+    slug: 'white-label',
+    title: 'White-label',
+    description: 'Present a branded portal and reporting workflow for client-facing teams.',
+    highlights: [
+      'Branded portal and report delivery',
+      'Custom domain and presentation controls',
+      'High-margin add-on for agency plans',
+    ],
+    ctaLabel: 'Explore White-label',
+    ctaHref: '/white-label',
+  },
 ];
 
 export interface NetworkCapabilityRow {

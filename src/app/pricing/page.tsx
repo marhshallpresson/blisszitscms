@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { BillingPlanCards } from '@/components/marketing/BillingPlanCards';
+import { AddOnSelector } from '@/components/marketing/AddOnSelector';
 import { MarketingShell } from '@/components/marketing/MarketingShell';
+import { PRICING_ADDONS, PRICING_PLANS } from '@/lib/pricing-content';
 import { getPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = getPageMetadata({
@@ -13,30 +16,20 @@ export const metadata: Metadata = getPageMetadata({
   keywords: ["social media management pricing", "agency social platform pricing", "social media SaaS plans"],
 });
 
-const PLANS = [
+const FAQS = [
   {
-    name: 'Free',
-    price: '$0',
-    points: ['1 workspace', '2 social accounts', 'Limited scheduling', 'Starter AI credits'],
+    q: 'What is a social account?',
+    a: 'A social account is one profile or page connected to Blisszits for publishing, inbox, and analytics workflows.',
   },
   {
-    name: 'Starter',
-    price: '$15-$29/mo',
-    points: ['1 workspace', '5 social accounts', 'Scheduling + publishing', 'Basic analytics'],
+    q: 'How does billing scale?',
+    a: 'Billing scales by workspaces, social accounts, seats, and AI usage rather than oversized enterprise bundles.',
   },
   {
-    name: 'Pro Team',
-    price: '$49-$99/mo',
-    points: ['Approvals + inbox', '3-10 seats', 'Expanded AI credits', 'Priority support'],
-  },
-  {
-    name: 'Agency',
-    price: '$149-$299/mo',
-    points: ['Multi-workspace', 'Client approvals', 'White-label reports', 'Advanced exports'],
+    q: 'Can I add white-label later?',
+    a: 'Yes. White-label and advanced reporting remain optional add-ons so you can start lean and expand when needed.',
   },
 ];
-
-const ADDONS = ['Extra social accounts ($3-$5/account/month)', 'AI credit packs', 'White-label portal', 'Advanced analytics templates'];
 
 export default function PricingPage() {
   return (
@@ -47,37 +40,24 @@ export default function PricingPage() {
           <p className="mx-auto max-w-3xl text-muted-foreground">Scale by workspaces, social accounts, seats, and AI credits without enterprise bloat.</p>
         </div>
 
-        <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {PLANS.map((plan) => (
-            <Card key={plan.name} className="border-border/70">
+        <div className="mt-10">
+          <BillingPlanCards plans={PRICING_PLANS} />
+        </div>
+
+        <div className="mt-8">
+          <AddOnSelector addons={PRICING_ADDONS} />
+        </div>
+
+        <div className="mt-8 grid gap-4 md:grid-cols-3">
+          {FAQS.map((faq) => (
+            <Card key={faq.q} className="border-border/70">
               <CardHeader>
-                <CardTitle>{plan.name}</CardTitle>
-                <CardDescription className="text-lg font-semibold text-foreground">{plan.price}</CardDescription>
+                <CardTitle className="text-lg">{faq.q}</CardTitle>
+                <CardDescription>{faq.a}</CardDescription>
               </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  {plan.points.map((point) => (
-                    <li key={point}>- {point}</li>
-                  ))}
-                </ul>
-              </CardContent>
             </Card>
           ))}
         </div>
-
-        <Card className="mt-8 border-border/70">
-          <CardHeader>
-            <CardTitle>Add-ons</CardTitle>
-            <CardDescription>High-margin upgrades that map directly to account growth.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              {ADDONS.map((addon) => (
-                <li key={addon}>- {addon}</li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
 
         <div className="mt-8 flex justify-center">
           <Button asChild className="bg-primary text-primary-foreground">

@@ -14,6 +14,9 @@ import { CalendarView } from '@/components/content/CalendarView';
 import { IdeaBoard } from '@/components/content/IdeaBoard';
 import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
 import { InboxView } from '@/components/inbox/InboxView';
+import { QueueMonitor } from '@/components/publishing/QueueMonitor';
+import { PublishingLogsTable } from '@/components/publishing/PublishingLogsTable';
+import { PublishingErrorDetail } from '@/components/publishing/PublishingErrorDetail';
 
 const STATUS_LABEL: Record<'live' | 'mvp' | 'planned', string> = {
   live: 'Live',
@@ -23,14 +26,64 @@ const STATUS_LABEL: Record<'live' | 'mvp' | 'planned', string> = {
 
 export default function WorkspaceModuleCatchAllPage() {
   const { user, userProfile, isLoadingAuth, isLoadingProfile } = useAuth();
-  const { setCurrentWorkspaceId, currentWorkspaceId, contentItems, isLoadingContent } = useWorkspace();
+  const {
+    setCurrentWorkspaceId,
+    currentWorkspaceId,
+    contentItems,
+    isLoadingContent,
+    publishJobs,
+    isLoadingPublishJobs,
+    scheduleContentItemForPublishing,
+    runDuePublishJobs,
+    retryPublishJob,
+  } = useWorkspace();
   const router = useRouter();
   const params = useParams();
 
-  const workspaceId = params.workspaceId as string;
-  const moduleSegments = (params.modulePath as string[] | undefined) ?? [];
+  const workspaceId = (params?.workspaceId as string | undefined) ?? '';
+  const moduleSegments = (params?.modulePath as string[] | undefined) ?? [];
   const moduleKey = moduleSegments.join('/');
-  const module = WORKSPACE_MODULE_MAP[moduleKey] ?? {
+
+  const dynamicModule = (() => {
+    if (moduleSegments[0] === 'content' && moduleSegments.length === 2) {
+      return {
+        title: 'Content Item Details',
+        description: 'Inspect post variants, approval notes, and publishing history for a single content item.',
+        status: 'mvp' as const,
+      };
+    }
+    if (moduleSegments[0] === 'publishing' && moduleSegments[1] === 'errors' && moduleSegments[2]) {
+      return {
+        title: 'Publishing Error Detail',
+        description: 'Investigate failure reasons and trigger corrective retry actions for a single job.',
+        status: 'mvp' as const,
+      };
+    }
+    if (moduleSegments[0] === 'inbox' && moduleSegments[1]) {
+      return {
+        title: 'Inbox Thread Detail',
+        description: 'Review thread history, reply state, and internal routing notes for this conversation.',
+        status: 'mvp' as const,
+      };
+    }
+    if (moduleSegments[0] === 'approvals' && moduleSegments[1]) {
+      return {
+        title: 'Approval Detail',
+        description: 'Review one content item and apply approve/reject workflow actions.',
+        status: 'live' as const,
+      };
+    }
+    if (moduleSegments[0] === 'assets' && moduleSegments[1]) {
+      return {
+        title: 'Asset Detail',
+        description: 'Inspect media metadata, linked posts, and usage history.',
+        status: 'planned' as const,
+      };
+    }
+    return null;
+  })();
+
+  const moduleDef = WORKSPACE_MODULE_MAP[moduleKey] ?? dynamicModule ?? {
     title: moduleSegments.length ? moduleSegments.join(' / ') : 'Workspace module',
     description: 'This module route is reserved for upcoming implementation work.',
     status: 'planned' as const,
@@ -67,12 +120,56 @@ export default function WorkspaceModuleCatchAllPage() {
     return <IdeaBoard />;
   }
 
-  if (moduleKey === 'analytics/overview') {
+  if (moduleKey === 'publishing/queue') {
+    const queueItems = contentItems.filter((item) => item.status === 'scheduled' || item.status === 'approved');
+    return (
+      <QueueMonitor
+        queueItems={queueItems}
+        publishJobs={publishJobs}
+        isLoadingPublishJobs={isLoadingPublishJobs}
+        onRunDueJobs={runDuePublishJobs}
+        onRetryJob={retryPublishJob}
+        onSchedulePublish={(item) => scheduleContentItemForPublishing(item.id, item.dueDate)}
+      />
+    );
+  }
+
+  if (
+    moduleKey === 'analytics/overview' ||
+    moduleKey === 'analytics/posts' ||
+    moduleKey === 'analytics/channels' ||
+    moduleKey === 'analytics/reports'
+  ) {
     return <AnalyticsDashboard />;
   }
 
-  if (moduleKey === 'inbox') {
-    return <InboxView />;
+  if (moduleKey === 'publishing/logs') {
+    return <PublishingLogsTable workspaceId={workspaceId} jobs={publishJobs} items={contentItems} />;
+  }
+
+  if (moduleKey === 'publishing/errors') {
+    const failedJobs = publishJobs.filter((job) => job.status === 'failed' || job.status === 'dead_letter');
+    return <PublishingLogsTable workspaceId={workspaceId} jobs={failedJobs} items={contentItems} />;
+  }
+
+  if (moduleSegments[0] === 'publishing' && moduleSegments[1] === 'errors' && moduleSegments[2]) {
+    const targetJob = publishJobs.find((job) => job.id === moduleSegments[2]);
+    if (!targetJob) {
+      return (
+        <Card className="border-border/70">
+          <CardHeader>
+            <CardTitle>Publishing Error Detail</CardTitle>
+            <CardDescription>No job found for id: {moduleSegments[2]}</CardDescription>
+          </CardHeader>
+        </Card>
+      );
+    }
+    const item = contentItems.find((contentItem) => contentItem.id === targetJob.contentItemId);
+    return <PublishingErrorDetail workspaceId={workspaceId} job={targetJob} item={item} onRetry={retryPublishJob} />;
+  }
+
+  if (moduleSegments[0] === 'inbox') {
+    return <InboxView initialThreadId={moduleSegments[1]} />;
   }
 
   return (
@@ -80,10 +177,10 @@ export default function WorkspaceModuleCatchAllPage() {
       <Card className="border-border/70 bg-card/80">
         <CardHeader>
           <div className="flex flex-wrap items-center gap-3">
-            <CardTitle className="text-3xl font-headline">{module.title}</CardTitle>
-            <Badge variant={module.status === 'live' ? 'default' : 'secondary'}>{STATUS_LABEL[module.status]}</Badge>
+            <CardTitle className="text-3xl font-headline">{moduleDef.title}</CardTitle>
+            <Badge variant={moduleDef.status === 'live' ? 'default' : 'secondary'}>{STATUS_LABEL[moduleDef.status]}</Badge>
           </div>
-          <CardDescription>{module.description}</CardDescription>
+          <CardDescription>{moduleDef.description}</CardDescription>
         </CardHeader>
       </Card>
 

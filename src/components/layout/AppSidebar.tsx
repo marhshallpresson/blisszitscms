@@ -3,10 +3,9 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Briefcase, BarChart3, Inbox, Settings, LogOut, PanelLeftClose, Rocket } from "lucide-react";
+import { LayoutDashboard, Briefcase, BarChart3, Inbox, Settings, LogOut, PanelLeftClose, Rocket, PlusSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppLogo } from "./AppLogo";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 
@@ -26,6 +25,7 @@ interface AppSidebarProps {
 
 export const AppSidebar = ({ onNavigate, showDesktopCloseButton = false, onCloseSidebar }: AppSidebarProps) => {
   const pathname = usePathname();
+  const activePath = pathname ?? "";
   const router = useRouter();
   const { signOut } = useAuth();
   const { currentWorkspace, currentWorkspaceId } = useWorkspace();
@@ -68,9 +68,27 @@ export const AppSidebar = ({ onNavigate, showDesktopCloseButton = false, onClose
             </Button>
           )}
         </div>
+        {currentWorkspaceId ? (
+          <div className="mb-4 rounded-lg border border-border/60 bg-muted/40 p-3">
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Active Workspace</p>
+            <p className="mt-1 truncate text-sm font-semibold">{currentWorkspace?.name || 'Workspace'}</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-2 w-full justify-start"
+              onClick={() => handleNavigation(`/app/workspace/${currentWorkspaceId}`)}
+            >
+              <PlusSquare className="mr-2 h-4 w-4" />
+              Open Hub
+            </Button>
+          </div>
+        ) : null}
         <nav className="space-y-2">
           {navItems.map((item) => {
-            const isActive = pathname === item.href || (item.href !== "/app/dashboard" && pathname.startsWith(item.href));
+            const isActive =
+              activePath === item.href ||
+              (item.href !== "/app/dashboard" && activePath.startsWith(item.href));
             return (
               <Button
                 key={item.label}

@@ -8,14 +8,12 @@ import { ContentGrid } from '@/components/content/ContentDashboard';
 import { CalendarView } from '@/components/content/CalendarView';
 import { IdeaBoard } from '@/components/content/IdeaBoard';
 import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
-import { Plus, LayoutGrid, CalendarDays, Lightbulb, BarChartHorizontalBig, Send, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Plus, LayoutGrid, CalendarDays, Lightbulb, BarChartHorizontalBig, Send, CheckCircle2, XCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import Link from 'next/link';
-import { Badge } from '../ui/badge';
-import { ClientFormattedDate } from '../utils/ClientFormattedDate';
-import { getNetworkCapability } from '@/lib/network-capabilities';
+import { QueueMonitor } from '@/components/publishing/QueueMonitor';
 
 interface WorkspaceViewWrapperProps {
   workspace: Workspace;
@@ -72,14 +70,16 @@ export const WorkspaceViewWrapper = ({ workspace, onNewContent, onEditContent, o
       </Card>
 
       <Tabs defaultValue="grid" className="flex-grow flex flex-col">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 mb-6 bg-card border py-2 h-auto rounded-xl shadow-sm">
-          <TabsTrigger value="grid" className="py-2.5 gap-2"><LayoutGrid size={18}/> Grid</TabsTrigger>
-          <TabsTrigger value="calendar" className="py-2.5 gap-2"><CalendarDays size={18}/> Calendar</TabsTrigger>
-          <TabsTrigger value="ideas" className="py-2.5 gap-2"><Lightbulb size={18}/> Ideas</TabsTrigger>
-          <TabsTrigger value="queue" className="py-2.5 gap-2"><Send size={18}/> Queue ({queueItems.length})</TabsTrigger>
-          <TabsTrigger value="approvals" className="py-2.5 gap-2"><CheckCircle2 size={18}/> Approvals ({approvalItems.length})</TabsTrigger>
-          <TabsTrigger value="analytics" className="py-2.5 gap-2"><BarChartHorizontalBig size={18}/> Insights</TabsTrigger>
-        </TabsList>
+        <div className="sticky top-0 z-10 -mx-2 mb-4 overflow-x-auto bg-secondary/70 px-2 pb-2 pt-1 backdrop-blur-sm">
+          <TabsList className="inline-flex h-auto min-w-max gap-1 rounded-xl border bg-card p-1.5 shadow-sm">
+            <TabsTrigger value="grid" className="py-2.5 gap-2"><LayoutGrid size={18}/> Grid</TabsTrigger>
+            <TabsTrigger value="calendar" className="py-2.5 gap-2"><CalendarDays size={18}/> Calendar</TabsTrigger>
+            <TabsTrigger value="ideas" className="py-2.5 gap-2"><Lightbulb size={18}/> Ideas</TabsTrigger>
+            <TabsTrigger value="queue" className="py-2.5 gap-2"><Send size={18}/> Queue ({queueItems.length})</TabsTrigger>
+            <TabsTrigger value="approvals" className="py-2.5 gap-2"><CheckCircle2 size={18}/> Approvals ({approvalItems.length})</TabsTrigger>
+            <TabsTrigger value="analytics" className="py-2.5 gap-2"><BarChartHorizontalBig size={18}/> Insights</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="grid" className="flex-grow">
           <ContentGrid contentItems={contentItems} isLoading={isLoadingContent} onEdit={onEditContent} onViewDetails={onViewDetails} onMarkAsPublished={onMarkAsPublished} />
@@ -94,84 +94,16 @@ export const WorkspaceViewWrapper = ({ workspace, onNewContent, onEditContent, o
         </TabsContent>
 
         <TabsContent value="queue" className="flex-grow">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                Scheduled items create publish jobs per network. Run due jobs to process the queue.
-              </p>
-              <Button size="sm" variant="secondary" onClick={() => runDuePublishJobs()}>
-                Run Due Jobs
-              </Button>
-            </div>
-            {queueItems.length > 0 ? queueItems.map(item => (
-              <Card key={item.id} className="p-4 flex items-center justify-between border-l-4 border-l-primary">
-                <div className="flex items-center gap-4">
-                  <div className="bg-primary/10 p-3 rounded-full"><Clock className="text-primary h-5 w-5" /></div>
-                  <div>
-                    <h4 className="font-bold">{item.title}</h4>
-                    <p className="text-xs text-muted-foreground">
-                      {item.status === 'scheduled' ? 'Scheduled for' : 'Ready to schedule'}: <ClientFormattedDate date={item.dueDate} />
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  {item.status === 'scheduled' && <Button variant="outline" size="sm" onClick={() => onMarkAsPublished(item)}>Publish Now</Button>}
-                  {item.status === 'approved' && (
-                    <Button variant="default" size="sm" onClick={() => scheduleContentItemForPublishing(item.id, item.dueDate)}>
-                      Queue Publish Jobs
-                    </Button>
-                  )}
-                  <Button variant="ghost" size="sm" onClick={() => onEditContent(item)}>Reschedule</Button>
-                </div>
-              </Card>
-            )) : <div className="text-center py-20 bg-card/50 rounded-xl border-2 border-dashed italic text-muted-foreground">The publishing queue is empty.</div>}
-
-            <Card className="bg-card/80 border-border/70">
-              <CardHeader>
-                <CardTitle className="text-lg">Publish Jobs</CardTitle>
-                <CardDescription>
-                  Worker status per network with retry controls and capability-safe fallbacks.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoadingPublishJobs ? (
-                  <p className="text-sm text-muted-foreground">Loading publish jobs...</p>
-                ) : publishJobs.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No publish jobs yet.</p>
-                ) : (
-                  <div className="space-y-3">
-                    {publishJobs.map((job) => {
-                      const capability = getNetworkCapability(job.network);
-                      return (
-                        <div key={job.id} className="flex flex-col gap-2 rounded-md border border-border/60 p-3 md:flex-row md:items-center md:justify-between">
-                          <div>
-                            <p className="font-medium capitalize">{job.network}</p>
-                            <p className="text-xs text-muted-foreground">
-                              Scheduled: <ClientFormattedDate date={job.scheduledFor} options={{ month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' }} />
-                            </p>
-                            {job.lastError && (
-                              <p className="text-xs text-destructive mt-1">{job.lastError}</p>
-                            )}
-                            {!capability?.canPublish && (
-                              <p className="text-xs text-amber-600 mt-1">Direct publish is disabled for this network in MVP.</p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={job.status === 'published' ? 'default' : 'secondary'}>{job.status}</Badge>
-                            {job.status === 'failed' && (
-                              <Button size="sm" variant="outline" onClick={() => retryPublishJob(job.id)}>
-                                Retry
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+          <QueueMonitor
+            queueItems={queueItems}
+            publishJobs={publishJobs}
+            isLoadingPublishJobs={isLoadingPublishJobs}
+            onRunDueJobs={runDuePublishJobs}
+            onRetryJob={retryPublishJob}
+            onSchedulePublish={(item) => scheduleContentItemForPublishing(item.id, item.dueDate)}
+            onMarkAsPublished={onMarkAsPublished}
+            onEditContent={onEditContent}
+          />
         </TabsContent>
 
         <TabsContent value="approvals" className="flex-grow">

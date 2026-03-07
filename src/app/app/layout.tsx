@@ -13,9 +13,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen bg-background text-foreground" suppressHydrationWarning>
       <DesktopSidebar isOpen={isDesktopSidebarOpen} onClose={() => setIsDesktopSidebarOpen(false)} />
-      <div className="flex flex-col flex-1 overflow-hidden relative" suppressHydrationWarning>
+      <div className="relative flex flex-1 flex-col overflow-hidden" suppressHydrationWarning>
         {!isDesktopSidebarOpen && (
-          <div className="hidden md:block absolute top-4 left-4 z-20" suppressHydrationWarning>
+          <div className="absolute left-3 top-3 z-20 hidden md:block lg:left-4 lg:top-4" suppressHydrationWarning>
             <Button
               type="button"
               variant="outline"
@@ -29,7 +29,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         )}
         <MobileSidebar />
         <main className="flex-1 overflow-y-auto bg-secondary/50">
-          <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 w-full" suppressHydrationWarning>
+          <div
+            className="mx-auto w-full max-w-[1400px] px-3 py-4 sm:px-5 sm:py-6 lg:px-8 lg:py-8"
+            suppressHydrationWarning
+          >
             {children}
           </div>
         </main>

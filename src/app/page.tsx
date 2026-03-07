@@ -4,7 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MarketingShell } from '@/components/marketing/MarketingShell';
+import { BillingPlanCards } from '@/components/marketing/BillingPlanCards';
+import { BestTimeWidget } from '@/components/analytics/BestTimeWidget';
 import { MARKETING_MODULES } from '@/lib/marketing-content';
+import { PRICING_PLANS } from '@/lib/pricing-content';
 import { getPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = getPageMetadata({
@@ -35,6 +38,8 @@ const HOW_IT_WORKS = [
     description: 'Manage engagement and track what performs with analytics and best-time guidance.',
   },
 ];
+
+const TRUST_PILLS = ['Built for creators', 'Built for SMB teams', 'Built for small agencies'];
 
 const FAQS = [
   {
@@ -91,6 +96,16 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="border-b border-border/70 bg-card/40">
+        <div className="mx-auto flex w-full max-w-7xl flex-wrap gap-2 px-4 py-6 sm:px-6 lg:px-8">
+          {TRUST_PILLS.map((pill) => (
+            <Badge key={pill} variant="outline" className="px-3 py-1">
+              {pill}
+            </Badge>
+          ))}
+        </div>
+      </section>
+
       <section className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {MARKETING_MODULES.map((module) => (
@@ -126,19 +141,17 @@ export default function HomePage() {
       </section>
 
       <section className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-        <Card className="border-border/70 bg-gradient-to-br from-primary/10 to-accent/10">
-          <CardHeader>
-            <CardTitle>Best time to post</CardTitle>
-            <CardDescription>
-              Start with rules-based scheduling windows now, then evolve to model-driven recommendations.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-md border border-border/60 bg-background p-3 text-sm">Mon-Wed: 9:00 AM to 11:00 AM</div>
-            <div className="rounded-md border border-border/60 bg-background p-3 text-sm">Thu: 12:00 PM to 2:00 PM</div>
-            <div className="rounded-md border border-border/60 bg-background p-3 text-sm">Fri: 8:00 AM to 10:00 AM</div>
-          </CardContent>
-        </Card>
+        <BestTimeWidget />
+      </section>
+
+      <section className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+        <div className="mb-8 flex items-center justify-between gap-3">
+          <h2 className="font-headline text-3xl font-bold">Pricing preview</h2>
+          <Button asChild variant="outline">
+            <Link href="/pricing">Compare plans</Link>
+          </Button>
+        </div>
+        <BillingPlanCards plans={PRICING_PLANS.slice(0, 3)} />
       </section>
 
       <section className="mx-auto w-full max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
@@ -153,6 +166,17 @@ export default function HomePage() {
             </Card>
           ))}
         </div>
+        <Card className="mt-8 border-border/70 bg-card/70">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">Start running social from one workspace</CardTitle>
+            <CardDescription>Launch your first workspace, connect accounts, and schedule your first 30 days.</CardDescription>
+            <div className="pt-3">
+              <Button asChild className="bg-primary text-primary-foreground">
+                <Link href="/auth?mode=signup">Start free</Link>
+              </Button>
+            </div>
+          </CardHeader>
+        </Card>
       </section>
     </MarketingShell>
   );

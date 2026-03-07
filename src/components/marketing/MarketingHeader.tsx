@@ -8,6 +8,8 @@ const NAV_ITEMS = [
   { href: '/analytics', label: 'Analytics' },
   { href: '/pricing', label: 'Pricing' },
   { href: '/integrations', label: 'Integrations' },
+  { href: '/customers', label: 'Customers' },
+  { href: '/resources', label: 'Resources' },
 ];
 
 export const MarketingHeader = () => {

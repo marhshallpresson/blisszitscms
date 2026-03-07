@@ -1,18 +1,32 @@
 // src/components/admin/AdminDashboard.tsx
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Briefcase, ExternalLink, Loader2, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Briefcase, ExternalLink, Loader2, Sparkles, Activity, CircleAlert } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ClientFormattedDate } from '@/components/utils/ClientFormattedDate';
 import { useRouter } from 'next/navigation'; 
 import { WorkspaceCreatorModal } from '@/components/modals/WorkspaceCreatorModal';
 import { AiWorkspaceGeneratorModal } from '@/components/modals/AiWorkspaceGeneratorModal'; 
+import { Badge } from '@/components/ui/badge';
+
+type PhaseStatusResponse = {
+  phase: string;
+  checkedAt: string;
+  production: {
+    healthUrlConfigured: boolean;
+    health: 'healthy' | 'unreachable' | 'not_configured';
+    statusCode: number | null;
+    error: string | null;
+  };
+  oauthConfig: Array<{ network: string; configured: boolean }>;
+  blockers: string[];
+};
 
 export const AdminDashboard = () => {
   const { user, isLoadingAuth } = useAuth();
@@ -22,6 +36,33 @@ export const AdminDashboard = () => {
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isCreatorModalOpen, setIsCreatorModalOpen] = useState(false);
   const [isAiGeneratorOpen, setIsAiGeneratorOpen] = useState(false);
+  const [phaseStatus, setPhaseStatus] = useState<PhaseStatusResponse | null>(null);
+  const [isCheckingPhase, setIsCheckingPhase] = useState(false);
+
+  const fetchPhaseStatus = async () => {
+    if (!user) return;
+    setIsCheckingPhase(true);
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch('/api/phase/status', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const payload = (await response.json().catch(() => null)) as { error?: string } & PhaseStatusResponse;
+      if (!response.ok) throw new Error(payload?.error || 'Phase status request failed.');
+      setPhaseStatus(payload);
+    } catch (error: any) {
+      toast({
+        title: 'Phase check failed',
+        description: error?.message || 'Unable to load production phase status.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCheckingPhase(false);
+    }
+  };
 
   const handleDeleteWorkspace = async (workspaceId: string, workspaceName: string) => {
     if (!user) return;
@@ -47,6 +88,11 @@ export const AdminDashboard = () => {
     setCurrentWorkspaceId(workspaceId);
     router.push(`/app/workspace/${workspaceId}`); 
   };
+
+  useEffect(() => {
+    void fetchPhaseStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid]);
   
   if (isLoadingAuth || isLoadingWorkspaces) {
     return (
@@ -88,6 +134,52 @@ export const AdminDashboard = () => {
             </div>
           </div>
         </CardHeader>
+      </Card>
+
+      <Card className="shadow-lg border-border/80">
+        <CardHeader>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <Activity className="w-8 h-8 text-primary" />
+              <div>
+                <CardTitle className="font-headline text-2xl text-card-foreground">Production Phase Status</CardTitle>
+                <CardDescription>Current phase, health probe, and rollout blockers.</CardDescription>
+              </div>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => void fetchPhaseStatus()} disabled={isCheckingPhase}>
+              {isCheckingPhase ? <Loader2 size={14} className="mr-2 animate-spin" /> : null}
+              Refresh
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!phaseStatus ? (
+            <p className="text-sm text-muted-foreground">No status loaded yet.</p>
+          ) : (
+            <>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant={phaseStatus.phase === 'phase_2_connector_rollout' ? 'default' : 'secondary'}>
+                  {phaseStatus.phase}
+                </Badge>
+                <Badge variant={phaseStatus.production.health === 'healthy' ? 'default' : 'destructive'}>
+                  production: {phaseStatus.production.health}
+                </Badge>
+              </div>
+              {phaseStatus.blockers.length > 0 ? (
+                <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+                  <div className="mb-2 flex items-center gap-2 font-medium">
+                    <CircleAlert className="h-4 w-4" /> Active blockers
+                  </div>
+                  <ul className="list-disc pl-5">
+                    {phaseStatus.blockers.map((blocker) => (
+                      <li key={blocker}>{blocker}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </>
+          )}
+        </CardContent>
       </Card>
 
       <Card className="shadow-lg border-border/80">

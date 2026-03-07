@@ -15,6 +15,9 @@ import { Send, MessageSquare, UserCircle, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ClientFormattedDate } from '@/components/utils/ClientFormattedDate';
 import { useToast } from '@/hooks/use-toast';
+import { AiFieldActions } from '@/components/ai/AiFieldActions';
+import { AiAssistantPreviewPanel } from '@/components/ai/AiAssistantPreviewPanel';
+import { useAiTextAssistant } from '@/hooks/useAiTextAssistant';
 
 interface ContentDetailsModalProps {
   isOpen: boolean;
@@ -44,6 +47,13 @@ export const ContentDetailsModal = ({ isOpen, onClose, item }: ContentDetailsMod
   const [newComment, setNewComment] = useState('');
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const aiAssistant = useAiTextAssistant({
+    getFieldValue: () => newComment,
+    setFieldValue: (_fieldId, value) => setNewComment(value),
+    onError: (message) => {
+      toast({ title: 'AI Error', description: message, variant: 'destructive' });
+    },
+  });
 
   useEffect(() => {
     if (isOpen && item?.id) {
@@ -124,10 +134,44 @@ export const ContentDetailsModal = ({ isOpen, onClose, item }: ContentDetailsMod
               ) : (
                 <p className="text-sm text-muted-foreground text-center py-4">No comments yet. Be the first to leave one!</p>
               )}
-               <form onSubmit={handleAddComment} className="flex items-start gap-3 pt-4">
-                  <Textarea value={newComment} onChange={e => setNewComment(e.target.value)} placeholder="Add a comment..." rows={2} className="bg-input" />
-                  <Button type="submit" size="icon" disabled={isSubmittingComment || !newComment.trim()}>
+               <form onSubmit={handleAddComment} className="space-y-3 pt-4">
+                  <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+                    <Textarea value={newComment} onChange={e => setNewComment(e.target.value)} placeholder="Add a comment..." rows={3} className="bg-input" />
+                    <AiFieldActions
+                      onAction={(operation) => {
+                        void aiAssistant.runOperation({
+                          fieldId: 'comment',
+                          context: 'comment',
+                          operation,
+                          text: newComment,
+                          seed: newComment || item.idea || item.caption || item.title,
+                        });
+                      }}
+                      isLoading={{
+                        generate: aiAssistant.isLoading('comment', 'generate'),
+                        improve: aiAssistant.isLoading('comment', 'improve'),
+                        shorten: aiAssistant.isLoading('comment', 'shorten'),
+                      }}
+                      disabled={{
+                        generate: !(newComment.trim() || item.idea || item.caption || item.title),
+                        improve: !newComment.trim(),
+                        shorten: !newComment.trim(),
+                      }}
+                    />
+                  </div>
+                  <AiAssistantPreviewPanel
+                    preview={aiAssistant.preview}
+                    tone={aiAssistant.tone}
+                    onToneChange={aiAssistant.setTone}
+                    onApplyReplace={() => aiAssistant.applyPreview('replace')}
+                    onApplyAppend={() => aiAssistant.applyPreview('append')}
+                    onDismiss={aiAssistant.clearPreview}
+                    onUndo={aiAssistant.undoLastApply}
+                    canUndo={aiAssistant.hasUndo}
+                  />
+                  <Button type="submit" size="sm" disabled={isSubmittingComment || !newComment.trim()}>
                       {isSubmittingComment ? <Loader2 className="h-4 w-4 animate-spin"/> : <Send className="h-4 w-4" />}
+                      <span className="ml-2">Post Comment</span>
                   </Button>
                </form>
             </div>

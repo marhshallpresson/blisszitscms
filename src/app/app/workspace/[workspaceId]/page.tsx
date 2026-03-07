@@ -16,7 +16,7 @@ import { MarkAsPublishedModal } from '@/components/modals/MarkAsPublishedModal';
 export default function WorkspacePage() {
   const { setCurrentWorkspaceId, currentWorkspace, isLoadingWorkspaces } = useWorkspace();
   const params = useParams();
-  const workspaceId = params.workspaceId as string;
+  const workspaceId = (params?.workspaceId as string | undefined) ?? '';
 
   const [isContentFormModalOpen, setIsContentFormModalOpen] = useState(false);
   const [editingContentItem, setEditingContentItem] = useState<ContentItem | null>(null);

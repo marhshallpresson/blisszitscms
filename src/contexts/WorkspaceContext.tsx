@@ -3,11 +3,11 @@
 
 import type { Timestamp } from 'firebase/firestore';
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { collection, query, orderBy, onSnapshot, getDocs, doc, addDoc, deleteDoc, updateDoc, serverTimestamp, writeBatch, where } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, addDoc, deleteDoc, updateDoc, serverTimestamp, writeBatch, where } from 'firebase/firestore';
 import { db, rtdb } from '@/lib/firebaseConfig';
 import { ref as rtdbRef, set as rtdbSet, onValue as rtdbOnValue } from 'firebase/database';
 import { useAuth } from './AuthContext';
-import { getNetworkCapability, normalizeNetworkKey } from '@/lib/network-capabilities';
+import { normalizeNetworkKey } from '@/lib/network-capabilities';
 
 export interface Workspace {
   id: string;
@@ -32,9 +32,14 @@ export interface SocialAccount {
   workspaceId: string;
   network: string;
   accountName: string;
-  status: 'connected' | 'expired' | 'disconnected';
+  status: 'connected' | 'expiring' | 'expired' | 'revoked' | 'error' | 'disconnected';
   integrationMode: 'metadata_only' | 'oauth';
+  credentialRef?: string;
+  accountExternalId?: string;
+  scope?: string[];
+  expiresAt?: string;
   createdAt?: Timestamp | Date;
+  updatedAt?: Timestamp | Date;
 }
 
 export interface ContentItem {
@@ -155,7 +160,7 @@ export interface ContentSeed {
   idea: string;
 }
 
-export type PublishJobStatus = 'pending' | 'processing' | 'published' | 'failed' | 'retrying';
+export type PublishJobStatus = 'queued' | 'claimed' | 'processing' | 'published' | 'retrying' | 'failed' | 'dead_letter';
 
 export interface PublishJob {
   id: string;
@@ -164,12 +169,16 @@ export interface PublishJob {
   network: string;
   status: PublishJobStatus;
   scheduledFor: string;
+  nextAttemptAt?: string;
   publishedAt?: string;
+  providerRequestId?: string;
   externalPostId?: string;
+  errorCode?: string;
   attemptCount: number;
   maxAttempts: number;
   lastError?: string;
   idempotencyKey: string;
+  taskName?: string;
   createdAt?: Timestamp | Date;
   updatedAt?: Timestamp | Date;
 }
@@ -351,7 +360,12 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
             accountName: data.accountName || 'Unknown Account',
             status: data.status || 'connected',
             integrationMode: data.integrationMode || 'metadata_only',
+            credentialRef: data.credentialRef,
+            accountExternalId: data.accountExternalId,
+            scope: data.scope,
+            expiresAt: data.expiresAt,
             createdAt: data.createdAt,
+            updatedAt: data.updatedAt,
           });
         });
         setSocialAccounts(accs);
@@ -387,14 +401,18 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
             workspaceId: currentWorkspaceId,
             contentItemId: data.contentItemId || '',
             network: data.network || 'unknown',
-            status: (data.status as PublishJobStatus) || 'pending',
+            status: (data.status as PublishJobStatus) || 'queued',
             scheduledFor: data.scheduledFor || new Date().toISOString(),
+            nextAttemptAt: data.nextAttemptAt,
             publishedAt: data.publishedAt,
+            providerRequestId: data.providerRequestId,
             externalPostId: data.externalPostId,
+            errorCode: data.errorCode,
             attemptCount: data.attemptCount ?? 0,
             maxAttempts: data.maxAttempts ?? 3,
             lastError: data.lastError,
             idempotencyKey: data.idempotencyKey || `${docSnap.id}:${currentWorkspaceId}`,
+            taskName: data.taskName,
             createdAt: data.createdAt,
             updatedAt: data.updatedAt,
           });
@@ -432,6 +450,42 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user, workspaces, currentWorkspaceId]);
 
+  const postWithAuth = useCallback(
+    async <TResponse,>(path: string, body: Record<string, unknown>): Promise<TResponse> => {
+      if (!user) throw new Error('User not authenticated.');
+      const idToken = await user.getIdToken();
+      const response = await fetch(path, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      let payload: unknown = null;
+      try {
+        payload = await response.json();
+      } catch {
+        payload = null;
+      }
+
+      if (!response.ok) {
+        const message =
+          typeof payload === 'object' &&
+          payload !== null &&
+          'error' in payload &&
+          typeof (payload as { error?: unknown }).error === 'string'
+            ? ((payload as { error: string }).error)
+            : 'Request failed.';
+        throw new Error(message);
+      }
+
+      return payload as TResponse;
+    },
+    [user]
+  );
+
   const createWorkspace = async (name: string, description: string = '', contentPlan: ContentSeed[] = []): Promise<string | undefined> => {
     if (!user || !db) throw new Error("User not logged in");
     const firestore = db;
@@ -458,28 +512,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteWorkspace = async (workspaceId: string) => {
     if (!user || !db) throw new Error("User not logged in");
-    const firestore = db;
-    const contentRef = collection(firestore, `workspaces/${workspaceId}/content`);
-    const ideasRef = collection(firestore, `workspaces/${workspaceId}/ideas`);
-    const socialAccountsRef = collection(firestore, `workspaces/${workspaceId}/social_accounts`);
-    const publishJobsRef = collection(firestore, `workspaces/${workspaceId}/publish_jobs`);
-    const contentSnapshot = await getDocs(contentRef);
-    const ideasSnapshot = await getDocs(ideasRef);
-    const socialAccountsSnapshot = await getDocs(socialAccountsRef);
-    const publishJobsSnapshot = await getDocs(publishJobsRef);
-    const batch = writeBatch(firestore);
-
-    for (const contentDoc of contentSnapshot.docs) {
-      const commentsRef = collection(firestore, `workspaces/${workspaceId}/content/${contentDoc.id}/comments`);
-      const commentsSnapshot = await getDocs(commentsRef);
-      commentsSnapshot.forEach((commentDoc) => batch.delete(commentDoc.ref));
-      batch.delete(contentDoc.ref);
-    }
-    ideasSnapshot.forEach((ideaDoc) => batch.delete(ideaDoc.ref));
-    socialAccountsSnapshot.forEach((socialDoc) => batch.delete(socialDoc.ref));
-    publishJobsSnapshot.forEach((jobDoc) => batch.delete(jobDoc.ref));
-    await batch.commit();
-    await deleteDoc(doc(firestore, "workspaces", workspaceId));
+    await postWithAuth<{ ok: boolean }>('/api/workspaces/delete', { workspaceId });
     if (currentWorkspaceId === workspaceId) setCurrentWorkspaceId(null);
   };
 
@@ -584,147 +617,64 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
       throw new Error("Connect at least one social account or add a platform variant before scheduling.");
     }
 
-    const scheduleIso = new Date(
-      scheduledFor || item.scheduledAt || item.dueDate || new Date().toISOString()
-    ).toISOString();
+    const scheduleIso = new Date(scheduledFor || item.scheduledAt || item.dueDate || new Date().toISOString()).toISOString();
 
-    const existingJobsSnapshot = await getDocs(collection(db, `workspaces/${currentWorkspaceId}/publish_jobs`));
-    const existingIdempotencyKeys = new Set(
-      existingJobsSnapshot.docs.map((docSnap) => (docSnap.data().idempotencyKey as string) || '')
-    );
-
-    for (const network of targetNetworks) {
-      const idempotencyKey = `${item.id}:${network}:${scheduleIso.slice(0, 16)}`;
-      if (existingIdempotencyKeys.has(idempotencyKey)) continue;
-
-      await addDoc(collection(db, `workspaces/${currentWorkspaceId}/publish_jobs`), {
-        workspaceId: currentWorkspaceId,
-        contentItemId: item.id,
-        network,
-        status: 'pending',
-        scheduledFor: scheduleIso,
-        attemptCount: 0,
-        maxAttempts: 3,
-        idempotencyKey,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-    }
-
-    await updateContentItem({
-      ...item,
-      status: 'scheduled',
-      approvalStatus: 'approved',
-      scheduledAt: scheduleIso,
-    });
-  };
-
-  const processPublishJob = async (job: PublishJob) => {
-    if (!user || !db || !currentWorkspaceId) return;
-    const jobRef = doc(db, `workspaces/${currentWorkspaceId}/publish_jobs`, job.id);
-    const nextAttempt = (job.attemptCount ?? 0) + 1;
-    const capability = getNetworkCapability(job.network);
-    const networkKey = normalizeNetworkKey(job.network);
-    const hasConnectedAccount = socialAccounts.some(
-      (account) => normalizeNetworkKey(account.network) === networkKey && account.status === 'connected'
-    );
-
-    await updateDoc(jobRef, {
-      status: 'processing',
-      attemptCount: nextAttempt,
-      lastError: '',
-      updatedAt: serverTimestamp(),
-    });
-
-    if (!capability?.canPublish) {
-      await updateDoc(jobRef, {
-        status: 'failed',
-        lastError: 'Publishing is not enabled for this network in the current MVP.',
-        updatedAt: serverTimestamp(),
-      });
-      return;
-    }
-
-    if (!hasConnectedAccount) {
-      const exhausted = nextAttempt >= (job.maxAttempts ?? 3);
-      await updateDoc(jobRef, {
-        status: exhausted ? 'failed' : 'retrying',
-        lastError: 'Connected account not found or disconnected for this network.',
-        updatedAt: serverTimestamp(),
-      });
-      return;
-    }
-
-    const publishedAt = new Date().toISOString();
-    await updateDoc(jobRef, {
-      status: 'published',
-      publishedAt,
-      externalPostId: `sim_${job.network}_${job.id}_${Date.now()}`,
-      lastError: '',
-      updatedAt: serverTimestamp(),
-    });
-
-    const relatedJobs: PublishJob[] = [
-      ...publishJobs.filter((existing) => existing.contentItemId === job.contentItemId && existing.id !== job.id),
-      { ...job, status: 'published', publishedAt, attemptCount: nextAttempt },
-    ];
-    const isComplete = relatedJobs.every((existing) => existing.status === 'published' || existing.status === 'failed');
-    const hasAnySuccess = relatedJobs.some((existing) => existing.status === 'published');
-    const targetItem = contentItems.find((content) => content.id === job.contentItemId);
-
-    if (!targetItem || !isComplete) return;
-    await updateContentItem({
-      ...targetItem,
-      status: hasAnySuccess ? 'published' : 'failed',
-      publishedAt: hasAnySuccess ? publishedAt : targetItem.publishedAt,
+    await postWithAuth('/api/publishing/schedule', {
+      workspaceId: currentWorkspaceId,
+      contentItemId: item.id,
+      scheduledFor: scheduleIso,
     });
   };
 
   const runDuePublishJobs = async () => {
     if (!user || !db || !currentWorkspaceId) throw new Error("No workspace selected.");
-    const now = Date.now();
-    const dueJobs = publishJobs.filter((job) => {
-      const canRun = job.status === 'pending' || job.status === 'retrying';
-      const dueTime = new Date(job.scheduledFor).getTime();
-      return canRun && dueTime <= now;
+    await postWithAuth('/api/publishing/run-due', {
+      workspaceId: currentWorkspaceId,
+      limit: 50,
     });
-
-    for (const job of dueJobs) {
-      await processPublishJob(job);
-    }
   };
 
   const retryPublishJob = async (jobId: string) => {
     if (!user || !db || !currentWorkspaceId) throw new Error("No workspace selected.");
     const job = publishJobs.find((publishJob) => publishJob.id === jobId);
     if (!job) throw new Error("Publish job not found.");
-    if (job.status !== 'failed') throw new Error("Only failed jobs can be retried.");
+    if (job.status !== 'failed' && job.status !== 'dead_letter') {
+      throw new Error("Only failed/dead-letter jobs can be retried.");
+    }
 
-    await updateDoc(doc(db, `workspaces/${currentWorkspaceId}/publish_jobs`, job.id), {
-      status: 'retrying',
-      scheduledFor: new Date().toISOString(),
-      lastError: '',
-      updatedAt: serverTimestamp(),
+    await postWithAuth('/api/publishing/retry', {
+      workspaceId: currentWorkspaceId,
+      jobId: job.id,
     });
   };
 
   const connectAccount = async (network: string, name: string) => {
     if (!user || !db || !currentWorkspaceId) throw new Error("No workspace selected.");
-    const capability = getNetworkCapability(network);
-    const storedNetwork = capability?.label ?? network;
-    await addDoc(collection(db, `workspaces/${currentWorkspaceId}/social_accounts`), {
+    await postWithAuth<{ id: string }>('/api/social-accounts', {
       workspaceId: currentWorkspaceId,
-      network: storedNetwork,
+      network,
       accountName: name,
-      status: 'connected',
-      integrationMode: 'metadata_only',
-      createdAt: serverTimestamp(),
     });
   };
 
   const disconnectAccount = async (id: string) => {
     if (!user || !db || !currentWorkspaceId) throw new Error("No workspace selected.");
-    await deleteDoc(doc(db, `workspaces/${currentWorkspaceId}/social_accounts`, id));
+    await fetch('/api/social-accounts', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${await user.getIdToken()}`,
+      },
+      body: JSON.stringify({
+        workspaceId: currentWorkspaceId,
+        socialAccountId: id,
+      }),
+    }).then(async (response) => {
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(payload?.error || 'Failed to disconnect account.');
+      }
+    });
   };
 
   const currentWorkspace = workspaces.find(ws => ws.id === currentWorkspaceId) || null;

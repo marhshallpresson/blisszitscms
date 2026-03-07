@@ -10,6 +10,8 @@
 
 import {ai, gemini15Flash} from '@/ai/genkit';
 import {z} from 'genkit';
+import { executePromptWithModelFallback } from '@/lib/ai/execute-prompt-with-model-fallback';
+import { formatAiError } from '@/lib/ai/format-ai-error';
 
 const SuggestHashtagsInputSchema = z.object({
   textContent: z.string().describe('The text content (e.g., caption, core idea) to base hashtags on.'),
@@ -22,7 +24,11 @@ const SuggestHashtagsOutputSchema = z.object({
 export type SuggestHashtagsOutput = z.infer<typeof SuggestHashtagsOutputSchema>;
 
 export async function suggestHashtags(input: SuggestHashtagsInput): Promise<SuggestHashtagsOutput> {
-  return suggestHashtagsFlow(input);
+  try {
+    return await suggestHashtagsFlow(input);
+  } catch (error) {
+    throw new Error(formatAiError(error));
+  }
 }
 
 const prompt = ai.definePrompt({
@@ -56,7 +62,7 @@ const suggestHashtagsFlow = ai.defineFlow(
     outputSchema: SuggestHashtagsOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const {output} = await executePromptWithModelFallback(prompt, input);
     return output!;
   }
 );

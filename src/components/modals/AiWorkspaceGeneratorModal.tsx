@@ -4,7 +4,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -12,8 +11,10 @@ import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Sparkles, Check, ArrowRight, ArrowLeft } from 'lucide-react';
 import { generateAdvancedWorkspacePlan, type GenerateAdvancedWorkspacePlanOutput } from '@/ai/flows/generate-advanced-workspace-plan';
-import { ScrollArea } from '../ui/scroll-area';
 import { Progress } from '../ui/progress';
+import { AiFieldActions } from '@/components/ai/AiFieldActions';
+import { AiAssistantPreviewPanel } from '@/components/ai/AiAssistantPreviewPanel';
+import { useAiTextAssistant } from '@/hooks/useAiTextAssistant';
 
 interface AiWorkspaceGeneratorModalProps {
   isOpen: boolean;
@@ -44,6 +45,13 @@ export const AiWorkspaceGeneratorModal = ({ isOpen, onClose, onWorkspaceCreated 
   const { createWorkspace } = useWorkspace();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const aiAssistant = useAiTextAssistant({
+    getFieldValue: () => topic,
+    setFieldValue: (_fieldId, value) => setTopic(value),
+    onError: (message) => {
+      toast({ title: 'AI Error', description: message, variant: 'destructive' });
+    },
+  });
   
   const progressValue = {
     topic: 0,
@@ -138,13 +146,46 @@ export const AiWorkspaceGeneratorModal = ({ isOpen, onClose, onWorkspaceCreated 
           {step === 'topic' && (
             <div className="space-y-4 animate-in fade-in-50">
               <Label htmlFor="ai-topic" className="text-lg font-semibold">What is the main topic or goal?</Label>
-              <Textarea
-                id="ai-topic"
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                placeholder="e.g., '30-Day Fitness Challenge', 'Learn Photography Basics', 'Launch a new SaaS product'"
-                className="bg-input text-base"
-                rows={4}
+              <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+                <Textarea
+                  id="ai-topic"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder="e.g., '30-Day Fitness Challenge', 'Learn Photography Basics', 'Launch a new SaaS product'"
+                  className="bg-input text-base"
+                  rows={4}
+                />
+                <AiFieldActions
+                  onAction={(operation) => {
+                    void aiAssistant.runOperation({
+                      fieldId: 'workspace-topic',
+                      context: 'workspace_topic',
+                      operation,
+                      text: topic,
+                      seed: topic || 'Generate a clear content workspace topic for a social media strategy project.',
+                    });
+                  }}
+                  isLoading={{
+                    generate: aiAssistant.isLoading('workspace-topic', 'generate'),
+                    improve: aiAssistant.isLoading('workspace-topic', 'improve'),
+                    shorten: aiAssistant.isLoading('workspace-topic', 'shorten'),
+                  }}
+                  disabled={{
+                    generate: false,
+                    improve: !topic.trim(),
+                    shorten: !topic.trim(),
+                  }}
+                />
+              </div>
+              <AiAssistantPreviewPanel
+                preview={aiAssistant.preview}
+                tone={aiAssistant.tone}
+                onToneChange={aiAssistant.setTone}
+                onApplyReplace={() => aiAssistant.applyPreview('replace')}
+                onApplyAppend={() => aiAssistant.applyPreview('append')}
+                onDismiss={aiAssistant.clearPreview}
+                onUndo={aiAssistant.undoLastApply}
+                canUndo={aiAssistant.hasUndo}
               />
             </div>
           )}

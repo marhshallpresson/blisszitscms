@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MarketingShell } from '@/components/marketing/MarketingShell';
+import { IntegrationsCapabilityTable } from '@/components/marketing/IntegrationsCapabilityTable';
 import { NETWORK_CAPABILITY_ROWS } from '@/lib/marketing-content';
 import { getPageMetadata } from "@/lib/seo";
 
@@ -12,8 +12,6 @@ export const metadata: Metadata = getPageMetadata({
   path: "/integrations",
   keywords: ["social media integrations", "network API support", "publishing capabilities", "social inbox support"],
 });
-
-const mark = (value: boolean) => (value ? 'Yes' : 'No');
 
 export default function IntegrationsPage() {
   return (
@@ -26,22 +24,17 @@ export default function IntegrationsPage() {
           </p>
         </div>
 
-        <div className="mt-8 grid gap-4">
-          {NETWORK_CAPABILITY_ROWS.map((row) => (
-            <Card key={row.network} className="border-border/70">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xl">{row.network}</CardTitle>
-                <CardDescription>{row.note}</CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-2 text-sm">
-                <Badge variant={row.publish ? 'default' : 'outline'}>Publish: {mark(row.publish)}</Badge>
-                <Badge variant={row.schedule ? 'default' : 'outline'}>Schedule: {mark(row.schedule)}</Badge>
-                <Badge variant={row.inbox ? 'default' : 'outline'}>Inbox: {mark(row.inbox)}</Badge>
-                <Badge variant={row.analytics ? 'default' : 'outline'}>Analytics: {mark(row.analytics)}</Badge>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <Card className="mt-8 border-border/70">
+          <CardHeader>
+            <CardTitle>Capability matrix</CardTitle>
+            <CardDescription>
+              Feature availability is enforced per network so product claims always match real API support.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <IntegrationsCapabilityTable rows={NETWORK_CAPABILITY_ROWS} />
+          </CardContent>
+        </Card>
       </section>
     </MarketingShell>
   );

@@ -11,6 +11,8 @@
 
 import {ai, gemini15Flash} from '@/ai/genkit';
 import {z} from 'genkit';
+import { executePromptWithModelFallback } from '@/lib/ai/execute-prompt-with-model-fallback';
+import { formatAiError } from '@/lib/ai/format-ai-error';
 
 const GenerateContentIdeasInputSchema = z.object({
   topic: z
@@ -30,7 +32,11 @@ const GenerateContentIdeasOutputSchema = z.array(ContentIdeaSchema).describe('An
 export type GenerateContentIdeasOutput = z.infer<typeof GenerateContentIdeasOutputSchema>;
 
 export async function generateContentIdeas(input: GenerateContentIdeasInput): Promise<GenerateContentIdeasOutput> {
-  return generateContentIdeasFlow(input);
+  try {
+    return await generateContentIdeasFlow(input);
+  } catch (error) {
+    throw new Error(formatAiError(error));
+  }
 }
 
 const prompt = ai.definePrompt({
@@ -76,7 +82,7 @@ const generateContentIdeasFlow = ai.defineFlow(
     outputSchema: GenerateContentIdeasOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const {output} = await executePromptWithModelFallback(prompt, input);
     return output!;
   }
 );
