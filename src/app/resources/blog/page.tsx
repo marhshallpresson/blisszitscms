@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MarketingShell } from '@/components/marketing/MarketingShell';
+import { FeatureTiles, MarketingSection } from '@/components/marketing/EditorialSections';
 import { getPageMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = getPageMetadata({
@@ -30,27 +30,18 @@ const POSTS = [
 export default function ResourcesBlogPage() {
   return (
     <MarketingShell>
-      <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <h1 className="font-headline text-4xl font-bold sm:text-5xl">Blog</h1>
-        <p className="mt-3 max-w-3xl text-muted-foreground">
-          Tactical guides for teams shipping social workflows without enterprise overhead.
-        </p>
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          {POSTS.map((post) => (
-            <Card key={post.title} className="border-border/70">
-              <CardHeader>
-                <CardTitle className="text-xl">{post.title}</CardTitle>
-                <CardDescription>{post.description}</CardDescription>
-              </CardHeader>
-            </Card>
-          ))}
-        </div>
-        <div className="mt-8">
-          <Button asChild variant="outline">
+      <MarketingSection
+        kicker="Resources / Blog"
+        title="Practical playbooks for social operators"
+        subtitle="Actionable workflow guidance for planning, publishing, engagement, and analytics."
+        actions={
+          <Button asChild variant="outline" className="border-[hsl(var(--mk-border))] bg-white text-[hsl(var(--mk-ink))]">
             <Link href="/resources">Back to resources</Link>
           </Button>
-        </div>
-      </section>
+        }
+      >
+        <FeatureTiles items={POSTS.map((post, index) => ({ ...post, tone: (['mint', 'sky', 'night'] as const)[index % 3] }))} columns={3} />
+      </MarketingSection>
     </MarketingShell>
   );
 }

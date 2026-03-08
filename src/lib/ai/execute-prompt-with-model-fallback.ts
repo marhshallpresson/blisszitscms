@@ -12,45 +12,33 @@ const isUnknownGoogleModelActionError = (error: unknown): boolean => {
   );
 };
 
-const getModelCandidates = (model: string): string[] => {
-  const trimmed = model.trim();
-  if (!trimmed) return [];
-  if (trimmed.startsWith('googleai/')) {
-    return [trimmed, trimmed.replace(/^googleai\//, '')];
-  }
-  return [trimmed, `googleai/${trimmed}`];
-};
-
 export async function executePromptWithModelFallback<I>(
   prompt: ExecutablePrompt<I, any, any>,
   input: I
 ): Promise<Awaited<ReturnType<typeof prompt>>> {
+  let lastRecoverableError: unknown;
+
   try {
     // Use prompt's configured model first. This is the most stable path in Genkit.
     return await prompt(input);
   } catch (error) {
-    if (!isAiRateLimitError(error)) {
+    if (!isAiRateLimitError(error) && !isUnknownGoogleModelActionError(error)) {
+      throw error;
+    }
+    lastRecoverableError = error;
+  }
+
+  for (const model of geminiModelChain.slice(1)) {
+    try {
+      return await prompt(input, { model });
+    } catch (error) {
+      if (isUnknownGoogleModelActionError(error) || isAiRateLimitError(error)) {
+        lastRecoverableError = error;
+        continue;
+      }
       throw error;
     }
   }
 
-  let lastRateLimitError: unknown;
-
-  for (const model of geminiModelChain.slice(1)) {
-    for (const candidate of getModelCandidates(model)) {
-      try {
-        return await prompt(input, { model: candidate });
-      } catch (error) {
-        if (isUnknownGoogleModelActionError(error)) {
-          continue;
-        }
-        if (!isAiRateLimitError(error)) {
-          throw error;
-        }
-        lastRateLimitError = error;
-      }
-    }
-  }
-
-  throw lastRateLimitError ?? new Error('AI request failed for all configured models.');
+  throw lastRecoverableError ?? new Error('AI request failed for all configured models.');
 }

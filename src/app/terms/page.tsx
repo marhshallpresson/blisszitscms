@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { MarketingShell } from '@/components/marketing/MarketingShell';
+import { MarketingSection } from '@/components/marketing/EditorialSections';
 import { getPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = getPageMetadata({
@@ -13,11 +14,17 @@ export const metadata: Metadata = getPageMetadata({
 export default function TermsPage() {
   return (
     <MarketingShell>
-      <section className="mx-auto w-full max-w-4xl space-y-4 px-4 py-16 sm:px-6 lg:px-8">
-        <h1 className="font-headline text-4xl font-bold">Terms of service</h1>
-        <p className="text-muted-foreground">Use of Blisszits is subject to subscription limits and platform API compliance requirements.</p>
-        <p className="text-muted-foreground">Customers are responsible for content legality and connected network account authorization.</p>
-      </section>
+      <MarketingSection
+        kicker="Legal"
+        title="Terms of service"
+        subtitle="Use of Blisszits is subject to plan limits, platform policy compliance, and safe operation requirements."
+        className="max-w-4xl py-16"
+      >
+        <div className="marketing-fade-up space-y-3 text-sm text-[hsl(var(--mk-muted))]">
+          <p>Customers are responsible for content legality and authorization of connected network accounts.</p>
+          <p>Service availability, billing, and capability boundaries follow the documented plan and integration matrix.</p>
+        </div>
+      </MarketingSection>
     </MarketingShell>
   );
 }

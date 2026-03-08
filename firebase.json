@@ -7,8 +7,9 @@
       "**/node_modules/**"
     ],
     "frameworksBackend": {
-      "region": "us-central1"
-    }
+  "region": "us-central1",
+  "framework": "nextjs"
+}
   },
   "firestore": {
     "rules": "firestore.rules"

@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MarketingShell } from '@/components/marketing/MarketingShell';
+import { FeatureTiles, MarketingSection } from '@/components/marketing/EditorialSections';
 import { getPageMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = getPageMetadata({
@@ -34,27 +34,23 @@ const HELP_ARTICLES = [
 export default function ResourcesHelpPage() {
   return (
     <MarketingShell>
-      <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <h1 className="font-headline text-4xl font-bold sm:text-5xl">Help Center</h1>
-        <p className="mt-3 max-w-3xl text-muted-foreground">
-          Documentation for onboarding, publishing reliability, and day-to-day team workflows.
-        </p>
-        <div className="mt-8 grid gap-4 md:grid-cols-2">
-          {HELP_ARTICLES.map((article) => (
-            <Card key={article.title} className="border-border/70">
-              <CardHeader>
-                <CardTitle>{article.title}</CardTitle>
-                <CardDescription>{article.description}</CardDescription>
-              </CardHeader>
-            </Card>
-          ))}
-        </div>
-        <div className="mt-8">
-          <Button asChild variant="outline">
+      <MarketingSection
+        kicker="Resources / Help"
+        title="Help center for everyday operations"
+        subtitle="Setup and troubleshooting guides to keep teams shipping consistently."
+        actions={
+          <Button asChild variant="outline" className="border-[hsl(var(--mk-border))] bg-white text-[hsl(var(--mk-ink))]">
             <Link href="/resources">Back to resources</Link>
           </Button>
-        </div>
-      </section>
+        }
+      >
+        <FeatureTiles
+          items={HELP_ARTICLES.map((article, index) => ({
+            ...article,
+            tone: (['mint', 'sky', 'rose', 'night'] as const)[index % 4],
+          }))}
+        />
+      </MarketingSection>
     </MarketingShell>
   );
 }

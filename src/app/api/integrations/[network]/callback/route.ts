@@ -51,6 +51,7 @@ export async function GET(
     used?: boolean;
     expiresAt?: string;
     redirectUri?: string;
+    codeVerifier?: string;
   };
 
   const expired = !stateData.expiresAt || new Date(stateData.expiresAt).getTime() < Date.now();
@@ -86,6 +87,7 @@ export async function GET(
     const token = await adapter.exchangeAuthCode({
       code,
       redirectUri: stateData.redirectUri || '',
+      codeVerifier: stateData.codeVerifier,
     });
 
     const credentialRef = await saveCredential(db, {
@@ -100,15 +102,15 @@ export async function GET(
       accountName: token.accountName,
     });
 
-    const existingAccount = await db
-      .collection(`workspaces/${stateData.workspaceId}/social_accounts`)
-      .where('network', '==', normalized)
-      .limit(1)
-      .get();
+    const existingAccountSnapshot = await db.collection(`workspaces/${stateData.workspaceId}/social_accounts`).get();
+    const existingAccount = existingAccountSnapshot.docs.find((docSnap) => {
+      const rawNetwork = String((docSnap.data() as { network?: string }).network || '');
+      return normalizeNetworkKey(rawNetwork) === normalized;
+    });
 
-    const targetRef = existingAccount.empty
+    const targetRef = !existingAccount
       ? db.collection(`workspaces/${stateData.workspaceId}/social_accounts`).doc()
-      : existingAccount.docs[0].ref;
+      : existingAccount.ref;
 
     await targetRef.set(
       {

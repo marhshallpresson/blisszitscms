@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MarketingShell } from '@/components/marketing/MarketingShell';
 import { IntegrationsCapabilityTable } from '@/components/marketing/IntegrationsCapabilityTable';
+import { FinalCtaBand, MarketingSection, ProofBand } from '@/components/marketing/EditorialSections';
 import { NETWORK_CAPABILITY_ROWS } from '@/lib/marketing-content';
 import { getPageMetadata } from "@/lib/seo";
 
@@ -16,26 +19,50 @@ export const metadata: Metadata = getPageMetadata({
 export default function IntegrationsPage() {
   return (
     <MarketingShell>
-      <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="space-y-4">
-          <h1 className="font-headline text-4xl font-bold sm:text-5xl">Integrations and capabilities</h1>
-          <p className="max-w-3xl text-muted-foreground">
-            Every network is mapped by real API support so teams know exactly what is available now.
-          </p>
-        </div>
-
-        <Card className="mt-8 border-border/70">
+      <MarketingSection
+        kicker="Integrations"
+        title="Capability-driven network support"
+        subtitle="Every network is mapped by real API support so product claims stay aligned with implementation."
+        actions={
+          <Button asChild className="bg-[hsl(var(--mk-ink))] text-white">
+            <Link href="/auth?mode=signup">Start free</Link>
+          </Button>
+        }
+      >
+        <Card className="border-[hsl(var(--mk-border))] bg-white">
           <CardHeader>
-            <CardTitle>Capability matrix</CardTitle>
-            <CardDescription>
-              Feature availability is enforced per network so product claims always match real API support.
+            <CardTitle className="text-[hsl(var(--mk-ink))]">Capability matrix</CardTitle>
+            <CardDescription className="text-[hsl(var(--mk-muted))]">
+              Publishing, scheduling, inbox, and analytics coverage by network.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <IntegrationsCapabilityTable rows={NETWORK_CAPABILITY_ROWS} />
           </CardContent>
         </Card>
-      </section>
+      </MarketingSection>
+
+      <ProofBand
+        title="Integration truth before growth claims"
+        subtitle="Blisszits uses a capability matrix policy so roadmap and marketing stay anchored to real connector state."
+        metrics={[
+          { label: 'Primary launch', value: 'Meta + LinkedIn' },
+          { label: 'Phase 2', value: 'YouTube + TikTok' },
+          { label: 'Deferred', value: 'X' },
+          { label: 'Policy', value: 'No overclaims' },
+        ]}
+      />
+
+      <MarketingSection className="pb-20">
+        <FinalCtaBand
+          title="Connect what is live and scale network-by-network"
+          subtitle="Start with supported connectors today and expand as capability gates are cleared."
+          primaryLabel="Start free"
+          primaryHref="/auth?mode=signup"
+          secondaryLabel="View pricing"
+          secondaryHref="/pricing"
+        />
+      </MarketingSection>
     </MarketingShell>
   );
 }

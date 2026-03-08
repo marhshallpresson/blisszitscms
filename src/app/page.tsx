@@ -1,11 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { MarketingShell } from '@/components/marketing/MarketingShell';
 import { BillingPlanCards } from '@/components/marketing/BillingPlanCards';
+import { MarketingShell } from '@/components/marketing/MarketingShell';
 import { BestTimeWidget } from '@/components/analytics/BestTimeWidget';
+import {
+  EditorialHero,
+  FaqAccordion,
+  FeatureTiles,
+  FinalCtaBand,
+  MarketingSection,
+  ProcessSteps,
+  ProofBand,
+  TrustStrip,
+} from '@/components/marketing/EditorialSections';
 import { MARKETING_MODULES } from '@/lib/marketing-content';
 import { PRICING_PLANS } from '@/lib/pricing-content';
 import { getPageMetadata } from "@/lib/seo";
@@ -27,19 +35,19 @@ export const metadata: Metadata = getPageMetadata({
 const HOW_IT_WORKS = [
   {
     title: 'Plan in one workspace',
-    description: 'Create ideas, drafts, variants, and approvals using a unified content lifecycle.',
+    description: 'Capture ideas, drafts, variants, and approvals through one lifecycle.',
   },
   {
-    title: 'Publish with queue reliability',
-    description: 'Schedule approved posts, monitor publish jobs, and retry failures without duplicates.',
+    title: 'Publish with reliability',
+    description: 'Schedule approved content and monitor queue outcomes with safe retries.',
   },
   {
     title: 'Reply and optimize',
-    description: 'Manage engagement and track what performs with analytics and best-time guidance.',
+    description: 'Triage engagement and improve timing with best-time guidance.',
   },
 ];
 
-const TRUST_PILLS = ['Built for creators', 'Built for SMB teams', 'Built for small agencies'];
+const TRUST_PILLS = ['Built for creators', 'Built for SMB teams', 'Built for small agencies', 'No enterprise bloat'];
 
 const FAQS = [
   {
@@ -60,124 +68,152 @@ const FAQS = [
   },
 ];
 
+const FEATURE_TILES = [
+  {
+    title: 'Publish with confidence',
+    description: 'Queue visibility, retries, and failure states built for operational reliability.',
+    tone: 'mint' as const,
+  },
+  {
+    title: 'Unified engagement',
+    description: 'Thread assignment, status triage, and saved replies in one place.',
+    tone: 'sky' as const,
+  },
+  {
+    title: 'Analytics clarity',
+    description: 'Track what performed, when to post, and where to improve next.',
+    tone: 'rose' as const,
+  },
+  {
+    title: 'AI workflow acceleration',
+    description: 'Generate plans, captions, scripts, and variants without extra tools.',
+    tone: 'night' as const,
+  },
+  {
+    title: 'Agency-ready structure',
+    description: 'Role-aware approvals and multi-workspace process consistency.',
+    tone: 'mint' as const,
+  },
+  {
+    title: 'Capability-driven claims',
+    description: 'Network support is clearly mapped so teams know what is live now.',
+    tone: 'sky' as const,
+  },
+];
+
 export default function HomePage() {
   return (
     <MarketingShell>
-      <section className="relative overflow-hidden border-b border-border/70 bg-gradient-to-br from-background via-background to-primary/10">
-        <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:px-8 lg:py-24">
-          <div className="space-y-6">
-            <Badge variant="secondary">Social OS for SMBs and agencies</Badge>
-            <h1 className="font-headline text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-              Run your social media from one place.
-            </h1>
-            <p className="max-w-xl text-base text-muted-foreground sm:text-lg">
-              Plan, publish, reply, and track across multiple networks with AI that builds your next 30 days.
-            </p>
-            <div className="flex flex-wrap items-center gap-3">
-              <Button asChild size="lg" className="bg-primary text-primary-foreground">
-                <Link href="/auth?mode=signup">Start free</Link>
-              </Button>
-              <Button asChild size="lg" variant="outline">
-                <Link href="/platform">See demo flow</Link>
-              </Button>
-            </div>
-          </div>
-          <Card className="border-border/70 bg-card/80 shadow-xl">
-            <CardHeader>
-              <CardTitle>Product Preview</CardTitle>
-              <CardDescription>Publishing queue + inbox + analytics in one workspace shell.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm text-muted-foreground">
-              <div className="rounded-md border border-border/60 bg-background p-3">Calendar with status-based workflow and per-platform variants</div>
-              <div className="rounded-md border border-border/60 bg-background p-3">Queue monitor with retry-safe publish jobs and failure reasons</div>
-              <div className="rounded-md border border-border/60 bg-background p-3">Unified inbox and analytics modules with capability-driven rollouts</div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
+      <EditorialHero
+        kicker="Social OS for SMBs and agencies"
+        title="Run your social media from one place."
+        subtitle="Plan, publish, reply, and track across multiple networks, with AI that shapes your next 30 days."
+        actions={[
+          { label: 'Start free', href: '/auth?mode=signup' },
+          { label: 'See platform', href: '/platform', variant: 'secondary' },
+        ]}
+        statCards={[
+          { label: 'Workspaces', value: '24 active' },
+          { label: 'Scheduled', value: '126 posts' },
+          { label: 'Approvals', value: '18 pending' },
+        ]}
+      />
 
-      <section className="border-b border-border/70 bg-card/40">
-        <div className="mx-auto flex w-full max-w-7xl flex-wrap gap-2 px-4 py-6 sm:px-6 lg:px-8">
-          {TRUST_PILLS.map((pill) => (
-            <Badge key={pill} variant="outline" className="px-3 py-1">
-              {pill}
-            </Badge>
-          ))}
-        </div>
-      </section>
+      <TrustStrip items={TRUST_PILLS} />
 
-      <section className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {MARKETING_MODULES.map((module) => (
-            <Card key={module.slug} className="border-border/70 bg-card/70">
-              <CardHeader>
-                <CardTitle>{module.title}</CardTitle>
-                <CardDescription>{module.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button asChild variant="outline" size="sm">
-                  <Link href={module.ctaHref}>Explore module</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
+      <MarketingSection
+        kicker="What you get"
+        title="Modules that convert planning into execution"
+        subtitle="Blisszits is structured as practical modules so teams can adopt quickly and scale deliberately."
+      >
+        <FeatureTiles items={FEATURE_TILES} columns={3} />
+      </MarketingSection>
 
-      <section className="border-y border-border/70 bg-card/40">
+      <ProofBand
+        title="Bridge strategy and execution without app-switching"
+        subtitle="Marketing teams need one operational surface for planning, approvals, publishing, inbox, and analytics. Blisszits keeps that workflow tight."
+        metrics={[
+          { label: 'Primary CTA', value: 'Start Free' },
+          { label: 'Teams targeted', value: 'SMB + Agency' },
+          { label: 'Design mode', value: 'Editorial SaaS' },
+          { label: 'Execution model', value: 'Web-first' },
+        ]}
+      />
+
+      <MarketingSection
+        title="How Blisszits works"
+        subtitle="From first idea to published outcome in three practical stages."
+      >
+        <ProcessSteps items={HOW_IT_WORKS} />
+      </MarketingSection>
+
+      <section className="border-y border-[hsl(var(--mk-border))] bg-[hsl(var(--mk-mint-soft))]/50">
         <div className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-          <h2 className="font-headline text-3xl font-bold">How Blisszits works</h2>
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
-            {HOW_IT_WORKS.map((step) => (
-              <Card key={step.title} className="border-border/70">
-                <CardHeader>
-                  <CardTitle className="text-lg">{step.title}</CardTitle>
-                  <CardDescription>{step.description}</CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
+          <div className="mb-6 max-w-3xl">
+            <h2 className="font-headline text-3xl font-bold text-[hsl(var(--mk-ink))]">Best time to post, made practical</h2>
+            <p className="mt-2 text-[hsl(var(--mk-muted))]">
+              Start with clear posting windows from your current data, then iterate as performance signals grow.
+            </p>
           </div>
+          <BestTimeWidget />
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-        <BestTimeWidget />
-      </section>
-
-      <section className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-        <div className="mb-8 flex items-center justify-between gap-3">
-          <h2 className="font-headline text-3xl font-bold">Pricing preview</h2>
-          <Button asChild variant="outline">
-            <Link href="/pricing">Compare plans</Link>
-          </Button>
-        </div>
-        <BillingPlanCards plans={PRICING_PLANS.slice(0, 3)} />
-      </section>
-
-      <section className="mx-auto w-full max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-        <h2 className="font-headline text-3xl font-bold">FAQs</h2>
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          {FAQS.map((faq) => (
-            <Card key={faq.q} className="border-border/70">
-              <CardHeader>
-                <CardTitle className="text-lg">{faq.q}</CardTitle>
-                <CardDescription>{faq.a}</CardDescription>
-              </CardHeader>
-            </Card>
+      <MarketingSection
+        title="Explore every module"
+        subtitle="Each module page maps capabilities and workflows without overpromising unsupported integrations."
+      >
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {MARKETING_MODULES.map((module, index) => (
+            <Link
+              key={module.slug}
+              href={module.ctaHref}
+              className={`marketing-fade-up rounded-2xl border p-5 transition hover:-translate-y-0.5 hover:shadow-lg ${
+                index % 4 === 0
+                  ? 'border-[hsl(var(--mk-mint-soft-border))] bg-[hsl(var(--mk-mint-soft))]'
+                  : index % 4 === 1
+                  ? 'border-[hsl(var(--mk-sky-soft-border))] bg-[hsl(var(--mk-sky-soft))]'
+                  : index % 4 === 2
+                  ? 'border-[hsl(var(--mk-rose-soft-border))] bg-[hsl(var(--mk-rose-soft))]'
+                  : 'border-[hsl(var(--mk-night-soft-border))] bg-[hsl(var(--mk-night-soft))] text-white'
+              }`}
+            >
+              <h3 className="font-headline text-2xl font-semibold">{module.title}</h3>
+              <p className={`mt-2 text-sm ${index % 4 === 3 ? 'text-white/80' : 'text-[hsl(var(--mk-muted))]'}`}>{module.description}</p>
+            </Link>
           ))}
         </div>
-        <Card className="mt-8 border-border/70 bg-card/70">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Start running social from one workspace</CardTitle>
-            <CardDescription>Launch your first workspace, connect accounts, and schedule your first 30 days.</CardDescription>
-            <div className="pt-3">
-              <Button asChild className="bg-primary text-primary-foreground">
-                <Link href="/auth?mode=signup">Start free</Link>
-              </Button>
+      </MarketingSection>
+
+      <section className="border-y border-[hsl(var(--mk-border))] bg-white">
+        <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+          <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="font-headline text-3xl font-bold text-[hsl(var(--mk-ink))]">Pricing preview</h2>
+              <p className="mt-2 text-[hsl(var(--mk-muted))]">Scale by workspaces, social accounts, seats, and AI credits.</p>
             </div>
-          </CardHeader>
-        </Card>
+            <Button asChild variant="outline" className="border-[hsl(var(--mk-border))] bg-white text-[hsl(var(--mk-ink))]">
+              <Link href="/pricing">Compare plans</Link>
+            </Button>
+          </div>
+          <BillingPlanCards plans={PRICING_PLANS.slice(0, 3)} />
+        </div>
       </section>
+
+      <MarketingSection title="Frequently asked questions" subtitle="Straight answers for teams deciding on workflow tooling.">
+        <FaqAccordion items={FAQS} />
+      </MarketingSection>
+
+      <MarketingSection className="pb-20">
+        <FinalCtaBand
+          title="Launch your first social workspace this week"
+          subtitle="Set up your workspace, connect accounts, and ship your first 30-day cycle with one operating system."
+          primaryLabel="Start free"
+          primaryHref="/auth?mode=signup"
+          secondaryLabel="See pricing"
+          secondaryHref="/pricing"
+        />
+      </MarketingSection>
     </MarketingShell>
   );
 }

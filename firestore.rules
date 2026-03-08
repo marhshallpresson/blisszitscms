@@ -47,7 +47,17 @@ service cloud.firestore {
 
       match /social_accounts/{accountId} {
         allow read: if isWorkspaceOwner(workspaceId);
-        allow create, update, delete: if false;
+        allow create: if isWorkspaceOwner(workspaceId)
+          && request.resource.data.workspaceId == workspaceId
+          && request.resource.data.integrationMode == 'metadata_only'
+          && !('credentialRef' in request.resource.data);
+        allow update: if isWorkspaceOwner(workspaceId)
+          && request.resource.data.workspaceId == workspaceId
+          && resource.data.integrationMode == 'metadata_only'
+          && request.resource.data.integrationMode == 'metadata_only'
+          && !('credentialRef' in request.resource.data);
+        allow delete: if isWorkspaceOwner(workspaceId)
+          && resource.data.integrationMode == 'metadata_only';
       }
 
       match /publish_jobs/{jobId} {

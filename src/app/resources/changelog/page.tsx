@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MarketingShell } from '@/components/marketing/MarketingShell';
+import { MarketingSection, ProofBand } from '@/components/marketing/EditorialSections';
 import { getPageMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = getPageMetadata({
@@ -29,20 +30,25 @@ const RELEASES = [
 export default function ResourcesChangelogPage() {
   return (
     <MarketingShell>
-      <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <h1 className="font-headline text-4xl font-bold sm:text-5xl">Changelog</h1>
-        <p className="mt-3 max-w-3xl text-muted-foreground">
-          Product update history focused on real capability changes and operational reliability.
-        </p>
-        <div className="mt-8 space-y-4">
+      <MarketingSection
+        kicker="Resources / Changelog"
+        title="Release history and capability updates"
+        subtitle="Track real product changes tied to workflow reliability and integration coverage."
+        actions={
+          <Button asChild variant="outline" className="border-[hsl(var(--mk-border))] bg-white text-[hsl(var(--mk-ink))]">
+            <Link href="/resources">Back to resources</Link>
+          </Button>
+        }
+      >
+        <div className="space-y-4">
           {RELEASES.map((release) => (
-            <Card key={release.version} className="border-border/70">
+            <Card key={release.version} className="marketing-fade-up border-[hsl(var(--mk-border))] bg-white">
               <CardHeader>
                 <div className="flex flex-wrap items-center gap-2">
-                  <CardTitle>{release.version}</CardTitle>
+                  <CardTitle className="text-[hsl(var(--mk-ink))]">{release.version}</CardTitle>
                   <Badge variant="outline">{release.date}</Badge>
                 </div>
-                <CardDescription>
+                <CardDescription className="text-[hsl(var(--mk-muted))]">
                   {release.highlights.map((highlight) => (
                     <div key={highlight}>- {highlight}</div>
                   ))}
@@ -51,12 +57,18 @@ export default function ResourcesChangelogPage() {
             </Card>
           ))}
         </div>
-        <div className="mt-8">
-          <Button asChild variant="outline">
-            <Link href="/resources">Back to resources</Link>
-          </Button>
-        </div>
-      </section>
+      </MarketingSection>
+
+      <ProofBand
+        title="Change tracking with execution context"
+        subtitle="Every release note maps to capability coverage, workflow reliability, or platform hardening."
+        metrics={[
+          { label: 'Update cadence', value: 'Active' },
+          { label: 'Coverage', value: 'Workflow + API' },
+          { label: 'Phase tracking', value: 'Documented' },
+          { label: 'Audience', value: 'Operators' },
+        ]}
+      />
     </MarketingShell>
   );
 }

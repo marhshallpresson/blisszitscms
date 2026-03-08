@@ -29,14 +29,18 @@ export function AddOnSelector({ addons }: AddOnSelectorProps) {
   );
 
   return (
-    <Card className="border-border/70">
+    <Card className="border-[hsl(var(--mk-border))] bg-white">
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <CardTitle>Add-ons</CardTitle>
-            <CardDescription>Estimate usage-based expansion costs by account, AI, and reporting needs.</CardDescription>
+            <CardTitle className="text-[hsl(var(--mk-ink))]">Add-ons</CardTitle>
+            <CardDescription className="text-[hsl(var(--mk-muted))]">
+              Estimate usage-based expansion costs by account, AI, and reporting needs.
+            </CardDescription>
           </div>
-          <Badge variant="secondary">Est. +${total}/mo</Badge>
+          <Badge className="border-[hsl(var(--mk-mint-soft-border))] bg-[hsl(var(--mk-mint-soft))] text-[hsl(var(--mk-ink))]">
+            Est. +${total}/mo
+          </Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -44,13 +48,13 @@ export function AddOnSelector({ addons }: AddOnSelectorProps) {
           const qty = quantities[addon.id] ?? addon.defaultQty;
           const rowTotal = qty * addon.unitPriceUsd;
           return (
-            <div key={addon.id} className="rounded-md border border-border/60 p-3">
+            <div key={addon.id} className="rounded-md border border-[hsl(var(--mk-border))] bg-[hsl(var(--mk-paper))] p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <p className="font-medium">{addon.name}</p>
-                  <p className="text-xs text-muted-foreground">{addon.description}</p>
+                  <p className="font-medium text-[hsl(var(--mk-ink))]">{addon.name}</p>
+                  <p className="text-xs text-[hsl(var(--mk-muted))]">{addon.description}</p>
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-[hsl(var(--mk-muted))]">
                   ${addon.unitPriceUsd}/{addon.unitLabel}
                 </p>
               </div>
@@ -65,9 +69,9 @@ export function AddOnSelector({ addons }: AddOnSelectorProps) {
                     const next = Number.isNaN(raw) ? addon.minQty : Math.max(addon.minQty, Math.min(addon.maxQty, raw));
                     setQuantities((prev) => ({ ...prev, [addon.id]: next }));
                   }}
-                  className="w-24"
+                  className="w-24 border-[hsl(var(--mk-border))] bg-white"
                 />
-                <p className="text-sm text-muted-foreground">Subtotal: ${rowTotal}/mo</p>
+                <p className="text-sm text-[hsl(var(--mk-muted))]">Subtotal: ${rowTotal}/mo</p>
               </div>
             </div>
           );

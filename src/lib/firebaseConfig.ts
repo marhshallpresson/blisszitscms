@@ -32,8 +32,7 @@ const app = isConfigured
 
 // Handle App Check & Browser-only logic
 if (app && typeof window !== 'undefined') {
-  const isAppCheckEnabledByEnv = process.env.NEXT_PUBLIC_ENABLE_APP_CHECK === 'true';
-  const shouldEnableAppCheck = process.env.NODE_ENV === 'production' || isAppCheckEnabledByEnv;
+  const shouldEnableAppCheck = process.env.NEXT_PUBLIC_ENABLE_APP_CHECK === 'true';
   const appCheckDebugToken =
     process.env.NEXT_PUBLIC_APP_CHECK_DEBUG_TOKEN ??
     process.env.NEXT_PUBLIC_APP_CHECK_DEBUG_TOKEN_FROM_RUNTIME;

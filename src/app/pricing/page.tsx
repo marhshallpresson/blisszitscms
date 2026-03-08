@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from '@/components/ui/button';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BillingPlanCards } from '@/components/marketing/BillingPlanCards';
 import { AddOnSelector } from '@/components/marketing/AddOnSelector';
 import { MarketingShell } from '@/components/marketing/MarketingShell';
+import { FaqAccordion, FinalCtaBand, MarketingSection, ProofBand } from '@/components/marketing/EditorialSections';
 import { PRICING_ADDONS, PRICING_PLANS } from '@/lib/pricing-content';
 import { getPageMetadata } from "@/lib/seo";
 
@@ -34,37 +34,50 @@ const FAQS = [
 export default function PricingPage() {
   return (
     <MarketingShell>
-      <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="space-y-4 text-center">
-          <h1 className="font-headline text-4xl font-bold sm:text-5xl">Pricing built for growth</h1>
-          <p className="mx-auto max-w-3xl text-muted-foreground">Scale by workspaces, social accounts, seats, and AI credits without enterprise bloat.</p>
-        </div>
-
-        <div className="mt-10">
-          <BillingPlanCards plans={PRICING_PLANS} />
-        </div>
-
-        <div className="mt-8">
-          <AddOnSelector addons={PRICING_ADDONS} />
-        </div>
-
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          {FAQS.map((faq) => (
-            <Card key={faq.q} className="border-border/70">
-              <CardHeader>
-                <CardTitle className="text-lg">{faq.q}</CardTitle>
-                <CardDescription>{faq.a}</CardDescription>
-              </CardHeader>
-            </Card>
-          ))}
-        </div>
-
-        <div className="mt-8 flex justify-center">
-          <Button asChild className="bg-primary text-primary-foreground">
+      <MarketingSection
+        kicker="Pricing"
+        title="Pricing built for growth, not enterprise overhead"
+        subtitle="Scale by workspaces, social accounts, seats, and AI credits with transparent add-ons."
+        actions={
+          <Button asChild className="bg-[hsl(var(--mk-ink))] text-white">
             <Link href="/auth?mode=signup">Start free</Link>
           </Button>
+        }
+      >
+        <BillingPlanCards plans={PRICING_PLANS} />
+      </MarketingSection>
+
+      <section className="border-y border-[hsl(var(--mk-border))] bg-white">
+        <div className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+          <AddOnSelector addons={PRICING_ADDONS} />
         </div>
       </section>
+
+      <ProofBand
+        title="Pricing anchored to how teams naturally scale"
+        subtitle="Start lean, expand accounts and seats as demand grows, and add white-label only when needed."
+        metrics={[
+          { label: 'Entry plan', value: '$0' },
+          { label: 'Starter', value: '$15-$29' },
+          { label: 'Team range', value: '$49-$99' },
+          { label: 'Agency range', value: '$149-$299' },
+        ]}
+      />
+
+      <MarketingSection title="Pricing FAQs" subtitle="Common questions before rollout.">
+        <FaqAccordion items={FAQS} />
+      </MarketingSection>
+
+      <MarketingSection className="pb-20">
+        <FinalCtaBand
+          title="Pick a plan and ship your first campaign"
+          subtitle="Create a workspace, connect accounts, and move from draft to scheduled content quickly."
+          primaryLabel="Start free"
+          primaryHref="/auth?mode=signup"
+          secondaryLabel="See platform"
+          secondaryHref="/platform"
+        />
+      </MarketingSection>
     </MarketingShell>
   );
 }

@@ -650,31 +650,63 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
 
   const connectAccount = async (network: string, name: string) => {
     if (!user || !db || !currentWorkspaceId) throw new Error("No workspace selected.");
-    await postWithAuth<{ id: string }>('/api/social-accounts', {
-      workspaceId: currentWorkspaceId,
-      network,
-      accountName: name,
-    });
+    const networkKey = normalizeNetworkKey(network);
+    if (!networkKey) {
+      throw new Error('Unsupported network.');
+    }
+
+    try {
+      await postWithAuth<{ id: string }>('/api/social-accounts', {
+        workspaceId: currentWorkspaceId,
+        network: networkKey,
+        accountName: name,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error || '');
+      const canFallbackToClientWrite =
+        message.toLowerCase().includes('firebase admin credentials are missing') ||
+        message.toLowerCase().includes('failed to fetch');
+
+      if (!canFallbackToClientWrite) throw error;
+
+      await addDoc(collection(db, `workspaces/${currentWorkspaceId}/social_accounts`), {
+        workspaceId: currentWorkspaceId,
+        network: networkKey,
+        accountName: name.trim(),
+        status: 'connected',
+        integrationMode: 'metadata_only',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+    }
   };
 
   const disconnectAccount = async (id: string) => {
     if (!user || !db || !currentWorkspaceId) throw new Error("No workspace selected.");
-    await fetch('/api/social-accounts', {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${await user.getIdToken()}`,
-      },
-      body: JSON.stringify({
-        workspaceId: currentWorkspaceId,
-        socialAccountId: id,
-      }),
-    }).then(async (response) => {
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(payload?.error || 'Failed to disconnect account.');
+    try {
+      await fetch('/api/social-accounts', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${await user.getIdToken()}`,
+        },
+        body: JSON.stringify({
+          workspaceId: currentWorkspaceId,
+          socialAccountId: id,
+        }),
+      }).then(async (response) => {
+        if (!response.ok) {
+          const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+          throw new Error(payload?.error || 'Failed to disconnect account.');
+        }
+      });
+    } catch (error) {
+      const account = socialAccounts.find((entry) => entry.id === id);
+      if (account?.integrationMode !== 'metadata_only') {
+        throw error;
       }
-    });
+      await deleteDoc(doc(db, `workspaces/${currentWorkspaceId}/social_accounts`, id));
+    }
   };
 
   const currentWorkspace = workspaces.find(ws => ws.id === currentWorkspaceId) || null;

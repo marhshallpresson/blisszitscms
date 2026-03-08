@@ -77,3 +77,44 @@ h1, h2, h3, h4, h5, h6 {
     @apply antialiased;
   }
 }
+
+@layer components {
+  .marketing-theme {
+    --mk-ink: 222 48% 12%;
+    --mk-muted: 220 16% 37%;
+    --mk-paper: 180 20% 97%;
+    --mk-border: 210 22% 87%;
+    --mk-mint: 148 61% 67%;
+    --mk-mint-strong: 150 51% 45%;
+    --mk-mint-soft: 135 56% 91%;
+    --mk-mint-soft-border: 136 43% 80%;
+    --mk-sky-soft: 219 66% 92%;
+    --mk-sky-soft-border: 219 47% 83%;
+    --mk-rose-soft: 353 54% 93%;
+    --mk-rose-soft-border: 353 40% 84%;
+    --mk-night-soft: 230 34% 13%;
+    --mk-night-soft-border: 230 28% 20%;
+    background-color: hsl(var(--mk-paper));
+  }
+
+  .marketing-fade-up {
+    animation: marketing-fade-up 600ms ease both;
+  }
+}
+
+@keyframes marketing-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marketing-fade-up {
+    animation: none;
+  }
+}

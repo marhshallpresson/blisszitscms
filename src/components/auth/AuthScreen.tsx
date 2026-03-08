@@ -44,6 +44,8 @@ export const AuthScreen = () => {
   const [formLoading, setFormLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+  const showAuthRecaptcha =
+    process.env.NEXT_PUBLIC_ENABLE_AUTH_RECAPTCHA === 'true' && Boolean(recaptchaSiteKey);
 
   useEffect(() => {
     setIsClient(true);
@@ -275,7 +277,7 @@ export const AuthScreen = () => {
               </div>
             )}
             
-            {recaptchaSiteKey && (
+            {showAuthRecaptcha && (
               <div className="flex justify-center py-2 overflow-hidden">
                 <div
                   className="g-recaptcha scale-90 sm:scale-100"

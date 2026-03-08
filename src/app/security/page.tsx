@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MarketingShell } from '@/components/marketing/MarketingShell';
+import { FeatureTiles, MarketingSection, ProofBand } from '@/components/marketing/EditorialSections';
 import { getPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = getPageMetadata({
@@ -21,19 +21,30 @@ const SECURITY_ITEMS = [
 export default function SecurityPage() {
   return (
     <MarketingShell>
-      <section className="mx-auto w-full max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
-        <h1 className="font-headline text-4xl font-bold">Security and reliability</h1>
-        <div className="mt-8 grid gap-4">
-          {SECURITY_ITEMS.map((item) => (
-            <Card key={item} className="border-border/70">
-              <CardHeader>
-                <CardTitle className="text-lg">Security control</CardTitle>
-                <CardDescription>{item}</CardDescription>
-              </CardHeader>
-            </Card>
-          ))}
-        </div>
-      </section>
+      <MarketingSection
+        kicker="Security"
+        title="Security and reliability controls"
+        subtitle="Blisszits applies operational safeguards across data access, approvals, and publishing workflows."
+      >
+        <FeatureTiles
+          items={SECURITY_ITEMS.map((item, index) => ({
+            title: `Control ${index + 1}`,
+            description: item,
+            tone: (['mint', 'sky', 'rose', 'night'] as const)[index % 4],
+          }))}
+        />
+      </MarketingSection>
+
+      <ProofBand
+        title="Security built into the workflow engine"
+        subtitle="Controls are enforced at service, data, and execution layers so operational integrity is preserved."
+        metrics={[
+          { label: 'Rules model', value: 'Workspace scoped' },
+          { label: 'Queue model', value: 'Retry + idempotent' },
+          { label: 'Auditability', value: 'Event logged' },
+          { label: 'Release gate', value: 'Typecheck + build' },
+        ]}
+      />
     </MarketingShell>
   );
 }

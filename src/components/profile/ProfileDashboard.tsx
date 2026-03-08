@@ -1,7 +1,7 @@
 // src/components/profile/ProfileDashboard.tsx
 "use client";
 
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { Button } from '@/components/ui/button';
@@ -11,8 +11,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from '@/hooks/use-toast';
 import { Mail, ShieldAlert, Loader2, UserCircle, User, Edit, Save, Instagram, Linkedin, Video, Facebook, Globe, Trash2, Plus, Sparkles, Youtube, Twitter } from 'lucide-react';
 import type { UserProfile } from '@/types/user';
-import { SUPPORTED_NETWORKS, normalizeNetworkKey } from '@/lib/network-capabilities';
+import { SUPPORTED_NETWORKS, normalizeNetworkKey, type NetworkKey } from '@/lib/network-capabilities';
 import { Badge } from '../ui/badge';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const PLATFORM_ICON_MAP = {
   instagram: { icon: Instagram, color: 'text-pink-600' },
@@ -23,10 +24,31 @@ const PLATFORM_ICON_MAP = {
   x: { icon: Twitter, color: 'text-foreground' },
 } as const;
 
+const OAUTH_FIRST_NETWORKS = new Set<NetworkKey>(['facebook', 'instagram', 'linkedin', 'tiktok', 'youtube', 'x']);
+
+const encodeBase64Url = (bytes: Uint8Array): string => {
+  const binary = Array.from(bytes)
+    .map((byte) => String.fromCharCode(byte))
+    .join('');
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+};
+
+const createPkcePair = async (): Promise<{ codeVerifier: string; codeChallenge: string }> => {
+  const random = new Uint8Array(32);
+  window.crypto.getRandomValues(random);
+  const codeVerifier = encodeBase64Url(random);
+  const digest = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(codeVerifier));
+  const codeChallenge = encodeBase64Url(new Uint8Array(digest));
+  return { codeVerifier, codeChallenge };
+};
+
 export const ProfileDashboard = () => {
   const { user, userProfile, updateUserProfile } = useAuth();
   const { socialAccounts, connectAccount, disconnectAccount, currentWorkspace } = useWorkspace();
   const { toast } = useToast();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const lastOauthToastRef = useRef<string | null>(null);
   
   const [formData, setFormData] = useState<Partial<UserProfile>>({
     displayName: '',
@@ -45,6 +67,33 @@ export const ProfileDashboard = () => {
     }
   }, [userProfile]);
 
+  useEffect(() => {
+    const network = searchParams?.get('oauth_network');
+    const status = searchParams?.get('oauth_status');
+    const reason = searchParams?.get('oauth_reason');
+    if (!network || !status) return;
+
+    const signature = `${network}:${status}:${reason || ''}`;
+    if (lastOauthToastRef.current === signature) return;
+    lastOauthToastRef.current = signature;
+
+    const prettyNetwork = network.toUpperCase();
+    if (status === 'connected') {
+      toast({
+        title: `${prettyNetwork} connected`,
+        description: 'OAuth connection completed successfully.',
+      });
+    } else {
+      toast({
+        title: `${prettyNetwork} OAuth failed`,
+        description: reason ? reason.replace(/_/g, ' ') : 'Connection could not be completed.',
+        variant: 'destructive',
+      });
+    }
+
+    router.replace('/app/settings', { scroll: false });
+  }, [router, searchParams, toast]);
+
   const handleProfileUpdate = async (e: FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -59,17 +108,66 @@ export const ProfileDashboard = () => {
     }
   };
 
-  const handleConnect = async (network: string) => {
+  const startOAuthFlow = async (network: NetworkKey): Promise<'redirected' | 'not_configured'> => {
+    if (!user || !currentWorkspace) throw new Error('No workspace selected.');
+
+    if (typeof window === 'undefined' || !window.crypto?.subtle) {
+      throw new Error('Secure OAuth flow is not available in this browser context.');
+    }
+
+    const { codeVerifier, codeChallenge } = await createPkcePair();
+    const redirectUri = `${window.location.origin}/api/integrations/${network}/callback`;
+    const idToken = await user.getIdToken();
+
+    const response = await fetch(`/api/integrations/${network}/start`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({
+        workspaceId: currentWorkspace.id,
+        redirectUri,
+        codeVerifier,
+        codeChallenge,
+        codeChallengeMethod: 'S256',
+      }),
+    });
+
+    const payload = (await response.json().catch(() => null)) as
+      | { authorizationUrl?: string; message?: string; error?: string; status?: string }
+      | null;
+
+    if (response.status === 501 || payload?.status === 'not_configured') {
+      return 'not_configured';
+    }
+    if (!response.ok || !payload?.authorizationUrl) {
+      throw new Error(payload?.error || payload?.message || 'Unable to start OAuth flow.');
+    }
+
+    window.location.assign(payload.authorizationUrl);
+    return 'redirected';
+  };
+
+  const handleConnect = async (network: NetworkKey, label: string) => {
     if (!currentWorkspace) {
       toast({ title: "Select a workspace first", variant: "destructive" });
       return;
     }
     setIsConnecting(network);
     try {
-      await connectAccount(network, `${userProfile?.displayName || 'User'}'s ${network}`);
-      toast({ title: "Account Connected", description: `Successfully linked your ${network} profile.` });
+      if (OAUTH_FIRST_NETWORKS.has(network)) {
+        const oauthStatus = await startOAuthFlow(network);
+        if (oauthStatus === 'redirected') return;
+      }
+
+      await connectAccount(network, `${userProfile?.displayName || 'User'}'s ${label}`);
+      toast({
+        title: 'Account Connected',
+        description: `Connected ${label} in metadata mode. Add OAuth credentials for live publishing.`,
+      });
     } catch (error: any) {
-      toast({ title: "Connection Failed", variant: "destructive" });
+      toast({ title: "Connection Failed", description: error?.message || 'Unable to connect this account.', variant: "destructive" });
     } finally {
       setIsConnecting(null);
     }
@@ -195,10 +293,10 @@ export const ProfileDashboard = () => {
                       <Button
                         variant="outline"
                         className="h-10"
-                        onClick={() => handleConnect(network.label)}
+                        onClick={() => handleConnect(network.network, network.label)}
                         disabled={!!isConnecting || isConnected}
                       >
-                        {isConnecting === network.label ? <Loader2 className="h-4 w-4 animate-spin" /> : `Connect`}
+                        {isConnecting === network.network ? <Loader2 className="h-4 w-4 animate-spin" /> : `Connect`}
                       </Button>
                     </div>
                   </div>

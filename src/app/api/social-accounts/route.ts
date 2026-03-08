@@ -5,7 +5,7 @@ import { requireUserId } from '@/lib/server/api-auth';
 import { toApiError } from '@/lib/server/api-response';
 import { getAdminDb } from '@/lib/server/firebase-admin';
 import { assertWorkspaceOwner } from '@/lib/server/workspace-access';
-import { getNetworkCapability } from '@/lib/network-capabilities';
+import { getNetworkCapability, normalizeNetworkKey } from '@/lib/network-capabilities';
 
 const CreateSchema = z.object({
   workspaceId: z.string().min(1),
@@ -25,15 +25,19 @@ export async function POST(request: NextRequest) {
     const db = getAdminDb();
     await assertWorkspaceOwner(db, body.workspaceId, userId);
 
-    const capability = getNetworkCapability(body.network);
-    const networkLabel = capability?.label ?? body.network.trim();
+    const networkKey = normalizeNetworkKey(body.network);
+    if (!networkKey) {
+      return NextResponse.json({ error: 'Unsupported network.' }, { status: 400 });
+    }
+    const capability = getNetworkCapability(networkKey);
 
     const docRef = await db.collection(`workspaces/${body.workspaceId}/social_accounts`).add({
       workspaceId: body.workspaceId,
-      network: networkLabel,
+      network: networkKey,
       accountName: body.accountName.trim(),
       status: 'connected',
       integrationMode: 'metadata_only',
+      capabilityLabel: capability?.label ?? networkKey,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     });

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MarketingShell } from '@/components/marketing/MarketingShell';
+import { FeatureTiles, FinalCtaBand, MarketingSection, ProofBand } from '@/components/marketing/EditorialSections';
 import { getPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = getPageMetadata({
@@ -22,24 +22,47 @@ const USE_CASES = [
 export default function CustomersPage() {
   return (
     <MarketingShell>
-      <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <h1 className="font-headline text-4xl font-bold sm:text-5xl">Customer use-cases</h1>
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          {USE_CASES.map((item) => (
-            <Card key={item.title} className="border-border/70">
-              <CardHeader>
-                <CardTitle>{item.title}</CardTitle>
-                <CardDescription>{item.description}</CardDescription>
-              </CardHeader>
-            </Card>
-          ))}
-        </div>
-        <div className="mt-8">
-          <Button asChild className="bg-primary text-primary-foreground">
+      <MarketingSection
+        kicker="Use Cases"
+        title="Built for creators, SMB teams, and agencies"
+        subtitle="Blisszits stays lean enough for small teams while supporting structured operations as complexity grows."
+        actions={
+          <Button asChild className="bg-[hsl(var(--mk-ink))] text-white">
             <Link href="/auth?mode=signup">Start free</Link>
           </Button>
-        </div>
-      </section>
+        }
+      >
+        <FeatureTiles
+          columns={3}
+          items={USE_CASES.map((item, index) => ({
+            title: item.title,
+            description: item.description,
+            tone: (['mint', 'sky', 'night'] as const)[index % 3],
+          }))}
+        />
+      </MarketingSection>
+
+      <ProofBand
+        title="Designed for teams who need outcomes, not complexity"
+        subtitle="One platform covers planning, publishing, engagement, and analytics workflows with clear capability boundaries."
+        metrics={[
+          { label: 'Creators', value: 'Solo to small team' },
+          { label: 'SMBs', value: 'Cross-functional' },
+          { label: 'Agencies', value: 'Multi-workspace' },
+          { label: 'Model', value: 'Operational first' },
+        ]}
+      />
+
+      <MarketingSection className="pb-20">
+        <FinalCtaBand
+          title="Pick your use-case and start shipping"
+          subtitle="Stand up your workspace model and run your next social cycle with fewer tools."
+          primaryLabel="Start free"
+          primaryHref="/auth?mode=signup"
+          secondaryLabel="View platform"
+          secondaryHref="/platform"
+        />
+      </MarketingSection>
     </MarketingShell>
   );
 }
