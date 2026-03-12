@@ -40,7 +40,7 @@ export default function PricingPage() {
         subtitle="Scale by workspaces, social accounts, seats, and AI credits with transparent add-ons."
         actions={
           <Button asChild className="bg-[hsl(var(--mk-ink))] text-white">
-            <Link href="/auth?mode=signup">Start free</Link>
+            <Link href="/auth?mode=signup">Get started for free</Link>
           </Button>
         }
       >
@@ -58,9 +58,9 @@ export default function PricingPage() {
         subtitle="Start lean, expand accounts and seats as demand grows, and add white-label only when needed."
         metrics={[
           { label: 'Entry plan', value: '$0' },
-          { label: 'Starter', value: '$15-$29' },
-          { label: 'Team range', value: '$49-$99' },
-          { label: 'Agency range', value: '$149-$299' },
+          { label: 'Starter', value: '$10' },
+          { label: 'Team range', value: '$39' },
+          { label: 'Agency range', value: '$69' },
         ]}
       />
 
@@ -72,7 +72,7 @@ export default function PricingPage() {
         <FinalCtaBand
           title="Pick a plan and ship your first campaign"
           subtitle="Create a workspace, connect accounts, and move from draft to scheduled content quickly."
-          primaryLabel="Start free"
+          primaryLabel="Get started for free"
           primaryHref="/auth?mode=signup"
           secondaryLabel="See platform"
           secondaryHref="/platform"

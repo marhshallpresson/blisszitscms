@@ -33,7 +33,7 @@ This document captures the current design structure of Blisszits as implemented 
 ## Navigation Architecture
 ### Marketing Navigation
 - Primary modules: Platform, Publishing, Engagement, Analytics, Pricing, Integrations, Customers, Resources.
-- Authentication entry points: Log in and Start free.
+- Authentication entry points: Log in and Get started for free.
 
 ### App Navigation
 - Base items: Dashboard, Workspaces, Analytics, Inbox, Settings.
@@ -43,7 +43,7 @@ This document captures the current design structure of Blisszits as implemented 
 ## Design Foundations
 ### Typography
 - Body: PT Sans for readability and operational clarity.
-- Headlines: Playfair Display for premium, editorial emphasis.
+- Headlines: arial black for premium, editorial emphasis.
 
 ### Color Tokens
 - Primary: Purple for brand energy and key actions.

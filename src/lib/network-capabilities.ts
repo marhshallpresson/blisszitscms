@@ -1,6 +1,7 @@
 export type NetworkKey =
   | 'instagram'
   | 'facebook'
+  | 'threads'
   | 'linkedin'
   | 'tiktok'
   | 'youtube'
@@ -36,15 +37,25 @@ const NETWORK_CAPABILITIES: Record<NetworkKey, NetworkCapability> = {
     canReply: true,
     canFetchAnalytics: true,
   },
+  threads: {
+    network: 'threads',
+    label: 'Threads',
+    canPublish: true,
+    canSchedule: true,
+    canFetchComments: true,
+    canReply: true,
+    canFetchAnalytics: true,
+    notes: 'Hard 500-character limit enforced.',
+  },
   linkedin: {
     network: 'linkedin',
     label: 'LinkedIn',
     canPublish: true,
     canSchedule: true,
-    canFetchComments: false,
-    canReply: false,
+    canFetchComments: true,
+    canReply: true,
     canFetchAnalytics: true,
-    notes: 'Engagement endpoints are limited by integration scope.',
+    notes: 'Comments require Community Management API access. DMs are restricted.',
   },
   tiktok: {
     network: 'tiktok',
@@ -64,7 +75,7 @@ const NETWORK_CAPABILITIES: Record<NetworkKey, NetworkCapability> = {
     canFetchComments: false,
     canReply: false,
     canFetchAnalytics: true,
-    notes: 'Publishing workflow not enabled in MVP.',
+    notes: 'Publishing workflow not enabled try again later.',
   },
   x: {
     network: 'x',

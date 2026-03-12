@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Sparkles, Wand2, Scissors, Hash } from 'lucide-react';
+import { Loader2, Edit, Wand2, Scissors, Hash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { AiTextOperation } from '@/types/ai-assistant';
 
@@ -33,7 +33,7 @@ export function AiFieldActions({
   className,
 }: AiFieldActionsProps) {
   return (
-    <div className={`flex flex-col gap-2 ${className ?? ''}`}>
+    <div className={`flex flex-wrap gap-2 ${className ?? ''}`}>
       <Button
         type="button"
         size="sm"
@@ -41,7 +41,7 @@ export function AiFieldActions({
         onClick={() => onAction('generate')}
         disabled={isDisabled(disabled, 'generate') || Boolean(isLoading.generate)}
       >
-        {isLoading.generate ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+        {isLoading.generate ? <Loader2 className="h-4 w-4 animate-spin" /> : <Edit className="h-4 w-4" />}
         Generate
       </Button>
       <Button

@@ -36,7 +36,7 @@ export function MarketingSection({
 }: MarketingSectionProps) {
   return (
     <section id={id} className={`mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:px-8 ${className || ''}`}>
-      {(kicker || title || subtitle || actions) ? (
+      {(title || subtitle || actions) ? (
         <div className="marketing-fade-up mb-8 max-w-3xl">
           {kicker ? (
             <Badge className="mb-4 border-[hsl(var(--mk-mint-soft-border))] bg-[hsl(var(--mk-mint-soft))] text-[hsl(var(--mk-ink))]">
@@ -72,14 +72,14 @@ export interface EditorialHeroProps {
   statCards: HeroMockStat[];
 }
 
-export function EditorialHero({ kicker, title, subtitle, actions, statCards }: EditorialHeroProps) {
+export function EditorialHero({ title, subtitle, actions, statCards }: EditorialHeroProps) {
   return (
     <section className="relative overflow-hidden border-b border-[hsl(var(--mk-border))] bg-[hsl(var(--mk-paper))]">
       <div className="pointer-events-none absolute -left-28 top-16 h-56 w-56 rounded-full bg-[hsl(var(--mk-mint-soft))]" />
       <div className="pointer-events-none absolute -right-20 bottom-0 h-48 w-48 rounded-full bg-[hsl(var(--mk-sky-soft))]" />
       <div className="mx-auto grid w-full max-w-7xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:px-8">
         <div className="marketing-fade-up space-y-6">
-          <Badge className="border-[hsl(var(--mk-mint-soft-border))] bg-[hsl(var(--mk-mint-soft))] text-[hsl(var(--mk-ink))]">{kicker}</Badge>
+          
           <h1 className="font-headline text-4xl font-bold tracking-tight text-[hsl(var(--mk-ink))] sm:text-6xl">{title}</h1>
           <p className="max-w-xl text-base text-[hsl(var(--mk-muted))] sm:text-lg">{subtitle}</p>
           <div className="flex flex-wrap items-center gap-3">
@@ -266,7 +266,7 @@ export function FaqAccordion({ items }: { items: FaqItem[] }) {
 export function FinalCtaBand({
   title,
   subtitle,
-  primaryLabel = 'Start free',
+  primaryLabel = 'Get started for free',
   primaryHref = '/auth?mode=signup',
   secondaryLabel,
   secondaryHref,

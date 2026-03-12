@@ -20,7 +20,7 @@ import { PublishingErrorDetail } from '@/components/publishing/PublishingErrorDe
 
 const STATUS_LABEL: Record<'live' | 'mvp' | 'planned', string> = {
   live: 'Live',
-  mvp: 'MVP',
+  mvp: 'Development',
   planned: 'Planned',
 };
 

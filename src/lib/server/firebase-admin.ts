@@ -9,13 +9,13 @@ type AdminConfig = {
 };
 
 const parseAdminConfig = (): AdminConfig => {
-  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n');
+  const projectId = process.env.BLISS_PROJECT_ID;
+  const clientEmail = process.env.BLISS_CLIENT_EMAIL;
+  const privateKey = process.env.BLISS_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
   if (!projectId || !clientEmail || !privateKey) {
     throw new Error(
-      'Firebase Admin credentials are missing. Set FIREBASE_ADMIN_PROJECT_ID, FIREBASE_ADMIN_CLIENT_EMAIL, and FIREBASE_ADMIN_PRIVATE_KEY.'
+      'Firebase Admin credentials are missing. Set BLISS_PROJECT_ID, BLISS_CLIENT_EMAIL, and BLISS_PRIVATE_KEY.'
     );
   }
 

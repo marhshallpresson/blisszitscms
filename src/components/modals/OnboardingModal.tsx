@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Check, Sparkles } from 'lucide-react';
+import { Check, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface OnboardingModalProps {
@@ -53,7 +53,7 @@ export const OnboardingModal = ({ isOpen, onClose, onSaveInterests }: Onboarding
       <DialogContent className="sm:max-w-2xl bg-card">
         <DialogHeader className="text-center">
           <div className="mx-auto bg-primary/10 rounded-full p-3 w-fit mb-2">
-            <Sparkles className="h-8 w-8 text-primary"/>
+            <Edit className="h-8 w-8 text-primary"/>
           </div>
           <DialogTitle className="font-headline text-card-foreground text-2xl">Personalize Your Experience</DialogTitle>
           <DialogDescription className="text-muted-foreground">

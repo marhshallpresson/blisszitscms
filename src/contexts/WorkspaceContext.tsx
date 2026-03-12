@@ -188,6 +188,8 @@ interface WorkspaceContextType {
   currentWorkspace: Workspace | null;
   currentWorkspaceId: string | null;
   isLoadingWorkspaces: boolean;
+  isSelectorModalOpen: boolean;
+  setIsSelectorModalOpen: (isOpen: boolean) => void;
   setCurrentWorkspaceId: (id: string | null) => void;
   createWorkspace: (name: string, description?: string, contentPlan?: ContentSeed[]) => Promise<string | undefined>;
   deleteWorkspace: (workspaceId: string) => Promise<void>;
@@ -223,8 +225,15 @@ const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefin
 export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [currentWorkspaceId, setCurrentWorkspaceIdState] = useState<string | null>(null);
+  const [currentWorkspaceId, setCurrentWorkspaceIdState] = useState<string | null>(() => {
+    // Try to get from localStorage for immediate availability
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('lastWorkspaceId');
+    }
+    return null;
+  });
   const [isLoadingWorkspaces, setIsLoadingWorkspaces] = useState(true);
+  const [isSelectorModalOpen, setIsSelectorModalOpen] = useState(false);
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
   const [isLoadingContent, setIsLoadingContent] = useState(true);
   const [ideas, setIdeas] = useState<Idea[]>([]);
@@ -429,6 +438,14 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
   }, [user, currentWorkspaceId]);
 
   const setCurrentWorkspaceId = useCallback((id: string | null) => {
+    if (typeof window !== 'undefined') {
+      if (id) {
+        localStorage.setItem('lastWorkspaceId', id);
+      } else {
+        localStorage.removeItem('lastWorkspaceId');
+      }
+    }
+
     if (user && id && rtdb) {
       const prefRef = rtdbRef(rtdb, `userPrefs/${user.uid}/lastWorkspace`);
       rtdbSet(prefRef, id);
@@ -443,8 +460,16 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
             const lastId = snapshot.val();
             if (lastId && workspaces.some(ws => ws.id === lastId)) {
                 setCurrentWorkspaceIdState(lastId);
+                if (typeof window !== 'undefined') localStorage.setItem('lastWorkspaceId', lastId);
             } else if (workspaces.length > 0) {
-                setCurrentWorkspaceIdState(workspaces[0].id);
+                // If we have a localStorage value that's valid, use it, otherwise use the first one
+                const localId = typeof window !== 'undefined' ? localStorage.getItem('lastWorkspaceId') : null;
+                if (localId && workspaces.some(ws => ws.id === localId)) {
+                   setCurrentWorkspaceIdState(localId);
+                } else {
+                   setCurrentWorkspaceIdState(workspaces[0].id);
+                   if (typeof window !== 'undefined') localStorage.setItem('lastWorkspaceId', workspaces[0].id);
+                }
             }
         }, { onlyOnce: true });
     }

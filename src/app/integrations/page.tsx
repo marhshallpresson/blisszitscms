@@ -25,7 +25,7 @@ export default function IntegrationsPage() {
         subtitle="Every network is mapped by real API support so product claims stay aligned with implementation."
         actions={
           <Button asChild className="bg-[hsl(var(--mk-ink))] text-white">
-            <Link href="/auth?mode=signup">Start free</Link>
+            <Link href="/auth?mode=signup">Get started for free</Link>
           </Button>
         }
       >
@@ -57,7 +57,7 @@ export default function IntegrationsPage() {
         <FinalCtaBand
           title="Connect what is live and scale network-by-network"
           subtitle="Start with supported connectors today and expand as capability gates are cleared."
-          primaryLabel="Start free"
+          primaryLabel="Get started for free"
           primaryHref="/auth?mode=signup"
           secondaryLabel="View pricing"
           secondaryHref="/pricing"

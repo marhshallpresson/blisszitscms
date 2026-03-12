@@ -168,7 +168,7 @@ export function QueueMonitor({
                         {job.lastError ? <p className="mt-1 text-xs text-destructive">{job.lastError}</p> : null}
                         {!capability?.canPublish ? (
                           <p className="mt-1 text-xs text-amber-600">
-                            Direct publishing is disabled for this network in MVP.
+                            Direct publishing is disabled for now
                           </p>
                         ) : null}
                       </div>

@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, ShieldAlert, Loader2, UserCircle, User, Edit, Save, Instagram, Linkedin, Video, Facebook, Globe, Trash2, Plus, Sparkles, Youtube, Twitter } from 'lucide-react';
+// ✅ Edit appears once
+import { Mail, Loader2, UserCircle, User, Edit, Save, Instagram, Linkedin, Video, Facebook, Globe, Trash2, Plus, Youtube, Twitter } from 'lucide-react';
 import type { UserProfile } from '@/types/user';
 import { SUPPORTED_NETWORKS, normalizeNetworkKey, type NetworkKey } from '@/lib/network-capabilities';
 import { Badge } from '../ui/badge';
@@ -307,7 +308,7 @@ export const ProfileDashboard = () => {
 
           <Card className="bg-gradient-to-br from-primary to-accent text-primary-foreground border-none">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg"><Sparkles className="h-5 w-5" /> Pro Plan</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-lg"><Edit className="h-5 w-5" /> Pro Plan</CardTitle>
               <CardDescription className="text-primary-foreground/80">You are currently on the Pro plan ($29/mo). You have 12 social account slots remaining.</CardDescription>
             </CardHeader>
             <CardFooter>

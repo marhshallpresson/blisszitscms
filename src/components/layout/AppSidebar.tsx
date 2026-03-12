@@ -49,9 +49,9 @@ export const AppSidebar = ({ onNavigate, showDesktopCloseButton = false, onClose
     : appNavItems;
 
   return (
-    <aside className="w-full h-full bg-card text-card-foreground p-4 flex flex-col justify-between border-r border-border/70 shadow-md" suppressHydrationWarning>
-      <div suppressHydrationWarning>
-        <div className="px-2 mb-8 flex items-center justify-between" suppressHydrationWarning>
+    <aside className="w-full h-full bg-card text-card-foreground p-4 flex flex-col justify-between">
+      <div>
+        <div className="px-2 mb-8 flex items-center justify-between">
           <Link href="/app/dashboard" onClick={onNavigate}>
             <AppLogo iconSize={32} showName={true} />
           </Link>
@@ -69,22 +69,23 @@ export const AppSidebar = ({ onNavigate, showDesktopCloseButton = false, onClose
           )}
         </div>
         {currentWorkspaceId ? (
-          <div className="mb-4 rounded-lg border border-border/60 bg-muted/40 p-3">
-            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Active Workspace</p>
-            <p className="mt-1 truncate text-sm font-semibold">{currentWorkspace?.name || 'Workspace'}</p>
+          <div className="mb-4 rounded-md p-3 text-sm bg-muted/40 text-muted-foreground border border-border/60">
+            <p className="text-[10px] uppercase tracking-wide opacity-70 mb-1">Active Workspace</p>
+            <p className="font-semibold text-foreground truncate">{currentWorkspace?.name || 'Workspace'}</p>
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="mt-2 w-full justify-start"
+              className="mt-2 w-full justify-start text-xs h-8"
               onClick={() => handleNavigation(`/app/workspace/${currentWorkspaceId}`)}
             >
-              <PlusSquare className="mr-2 h-4 w-4" />
+              <PlusSquare className="mr-2 h-3.5 w-3.5" />
               Open Hub
             </Button>
           </div>
         ) : null}
-        <nav className="space-y-2">
+        <h3 className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">General</h3>
+        <nav className="space-y-1">
           {navItems.map((item) => {
             const isActive =
               activePath === item.href ||
@@ -92,24 +93,24 @@ export const AppSidebar = ({ onNavigate, showDesktopCloseButton = false, onClose
             return (
               <Button
                 key={item.label}
-                variant={isActive ? "secondary" : "ghost"}
+                variant="ghost"
                 onClick={() => handleNavigation(item.href)}
-                className="w-full justify-start text-base py-3"
+                className={`w-full justify-start text-sm py-2 h-9 ${isActive ? "bg-primary/10 text-primary font-semibold" : "text-muted-foreground hover:bg-accent/20 hover:text-foreground"}`}
               >
-                <item.icon className="mr-3 h-5 w-5" />
+                <item.icon className="mr-3 h-4 w-4" />
                 {item.label}
               </Button>
             );
           })}
         </nav>
       </div>
-      <div className="space-y-2" suppressHydrationWarning>
+      <div className="space-y-1">
         <Button
           variant="ghost"
           onClick={handleSignOut}
-          className="w-full justify-start text-base py-3 text-destructive hover:bg-destructive/10 hover:text-destructive"
+          className="w-full justify-start text-sm py-2 h-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
         >
-          <LogOut className="mr-3 h-5 w-5" />
+          <LogOut className="mr-3 h-4 w-4" />
           Sign Out
         </Button>
       </div>

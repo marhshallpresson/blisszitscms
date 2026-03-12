@@ -66,7 +66,7 @@ export const ModulePage = ({
               <Link href={ctaHref}>{ctaLabel}</Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-[hsl(var(--mk-border))] bg-white text-[hsl(var(--mk-ink))]">
-              <Link href="/auth?mode=signup">Start free</Link>
+              <Link href="/auth?mode=signup">Get started for free</Link>
             </Button>
           </>
         }

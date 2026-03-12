@@ -24,7 +24,7 @@ export default function PlatformPage() {
         actions={
           <>
             <Button asChild className="bg-[hsl(var(--mk-ink))] text-white">
-              <Link href="/auth?mode=signup">Start free</Link>
+              <Link href="/auth?mode=signup">Get started for free</Link>
             </Button>
             <Button asChild variant="outline" className="border-[hsl(var(--mk-border))] bg-white text-[hsl(var(--mk-ink))]">
               <Link href="/pricing">Compare plans</Link>
@@ -57,7 +57,7 @@ export default function PlatformPage() {
         <FinalCtaBand
           title="Start with the modules your team needs now"
           subtitle="Adopt one workflow at a time and scale into a full social operating model."
-          primaryLabel="Start free"
+          primaryLabel="Get started for free"
           primaryHref="/auth?mode=signup"
           secondaryLabel="View integrations"
           secondaryHref="/integrations"

@@ -7,9 +7,6 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const NAV_ITEMS = [
   { href: '/platform', label: 'Platform' },
-  { href: '/publishing', label: 'Publishing' },
-  { href: '/engagement', label: 'Engagement' },
-  { href: '/analytics', label: 'Analytics' },
   { href: '/pricing', label: 'Pricing' },
   { href: '/integrations', label: 'Integrations' },
   { href: '/customers', label: 'Customers' },
@@ -41,7 +38,7 @@ export const MarketingHeader = () => {
             <Link href="/auth?mode=signin">Log in</Link>
           </Button>
           <Button asChild size="sm" className="bg-[hsl(var(--mk-ink))] text-white hover:bg-[hsl(var(--mk-night-soft-border))]">
-            <Link href="/auth?mode=signup">Start free</Link>
+            <Link href="/auth?mode=signup">Get started for free</Link>
           </Button>
           <Sheet>
             <SheetTrigger asChild>
@@ -63,7 +60,7 @@ export const MarketingHeader = () => {
                   <Link href="/auth?mode=signin">Log in</Link>
                 </Button>
                 <Button asChild className="w-full bg-[hsl(var(--mk-ink))] text-white">
-                  <Link href="/auth?mode=signup">Start free</Link>
+                  <Link href="/auth?mode=signup">Get started for free</Link>
                 </Button>
               </div>
             </SheetContent>

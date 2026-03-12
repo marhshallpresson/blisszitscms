@@ -8,7 +8,7 @@ export default function OnboardingConnectAccountsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Connect accounts</CardTitle>
-          <CardDescription>Connect Meta and LinkedIn first for MVP publishing and analytics.</CardDescription>
+          <CardDescription>Connect Meta and LinkedIn first for publishing and analytics.</CardDescription>
         </CardHeader>
         <CardContent>
           <Button asChild><Link href="/app/settings">Open social account settings</Link></Button>

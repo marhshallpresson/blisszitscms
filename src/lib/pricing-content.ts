@@ -26,20 +26,20 @@ export const PRICING_PLANS: PricingPlan[] = [
   },
   {
     name: 'Starter',
-    price: '$15-$29/mo',
+    price: '$10/mo',
     description: 'For creators and small teams publishing consistently.',
     featured: true,
     limits: ['1 workspace', '5 social accounts', 'Scheduling + publishing', 'Basic analytics'],
   },
   {
     name: 'Pro Team',
-    price: '$49-$99/mo',
+    price: '$39/mo',
     description: 'For teams needing approvals and inbox collaboration.',
     limits: ['Approvals + inbox', '3-10 seats', 'Expanded AI credits', 'Priority support'],
   },
   {
     name: 'Agency',
-    price: '$149-$299/mo',
+    price: '$69/mo',
     description: 'For multi-brand operations and client workflows.',
     limits: ['Multi-workspace', 'Client approvals', 'White-label reports', 'Advanced exports'],
   },

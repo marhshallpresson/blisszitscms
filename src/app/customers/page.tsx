@@ -28,7 +28,7 @@ export default function CustomersPage() {
         subtitle="Blisszits stays lean enough for small teams while supporting structured operations as complexity grows."
         actions={
           <Button asChild className="bg-[hsl(var(--mk-ink))] text-white">
-            <Link href="/auth?mode=signup">Start free</Link>
+            <Link href="/auth?mode=signup">Get started for free</Link>
           </Button>
         }
       >
@@ -57,7 +57,7 @@ export default function CustomersPage() {
         <FinalCtaBand
           title="Pick your use-case and start shipping"
           subtitle="Stand up your workspace model and run your next social cycle with fewer tools."
-          primaryLabel="Start free"
+          primaryLabel="Get started for free"
           primaryHref="/auth?mode=signup"
           secondaryLabel="View platform"
           secondaryHref="/platform"

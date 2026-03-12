@@ -3,68 +3,67 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: 'PT Sans', sans-serif;
-}
-
-h1, h2, h3, h4, h5, h6 {
-  font-family: 'Playfair Display', serif;
-}
-
 @layer base {
   :root {
-    /* Blisszits App Theme */
-    --background: 240 5% 96%; /* Light Gray */
-    --foreground: 240 6% 10%; /* Nearly Black */
+    --background: 0 0% 100%; /* Pure white for clean look */
+    --foreground: 224 71.4% 4.1%; /* Slightly darker grey for contrast */
 
-    --card: 0 0% 100%; /* White */
-    --card-foreground: 240 6% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 71.4% 4.1%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 6% 10%;
+    --popover-foreground: 224 71.4% 4.1%;
 
-    --primary: 239 84% 67%; /* Purple */
-    --primary-foreground: 0 0% 100%;
+    --primary: 262 80% 50%; /* Vibrant purple for primary actions */
+    --primary-foreground: 210 20% 98%; /* Light text for primary elements */
 
-    --secondary: 240 5% 90%; /* Slightly darker gray */
-    --secondary-foreground: 240 6% 10%;
+    --secondary: 220 14.3% 95.9%; /* Light grey for secondary elements */
+    --secondary-foreground: 224 71.4% 4.1%; /* Dark text for secondary elements */
 
-    --muted: 240 5% 90%;
-    --muted-foreground: 240 4% 46%;
+    --muted: 220 14.3% 95.9%; /* Muted light grey */
+    --muted-foreground: 215.4 16.3% 46.9%; /* Existing muted foreground */
 
-    --accent: 221 83% 53%; /* Blue */
-    --accent-foreground: 0 0% 100%;
+    --accent: 220 14.3% 95.9%; /* Accent light grey */
+    --accent-foreground: 224 71.4% 4.1%; /* Accent foreground text */
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 20% 98%;
 
-    --border: 240 6% 90%;
-    --input: 0 0% 100%;
-    --ring: 239 84% 67%;
+    --border: 220 14.3% 91.9%; /* Light subtle grey border */
+    --input: 220 14.3% 91.9%; /* Light subtle grey input border */
+    --ring: 262 80% 50%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
   }
 
   .dark {
-    --background: 240 6% 10%;
-    --foreground: 0 0% 98%;
-    --card: 240 4% 14%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 6% 10%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 239 78% 70%;
-    --primary-foreground: 240 6% 10%;
-    --secondary: 240 4% 18%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 4% 18%;
-    --muted-foreground: 240 4% 60%;
-    --accent: 221 78% 63%;
-    --accent-foreground: 240 6% 10%;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 4% 18%;
-    --input: 240 4% 14%;
-    --ring: 239 78% 70%;
+    --background: 224 71.4% 4.1%; /* Dark background */
+    --foreground: 210 20% 98%; /* Light text */
+
+    --card: 224 71.4% 4.1%;
+    --card-foreground: 210 20% 98%;
+
+    --popover: 224 71.4% 4.1%;
+    --popover-foreground: 210 20% 98%;
+
+    --primary: 262 80% 60%; /* Slightly lighter vibrant purple for dark theme */
+    --primary-foreground: 224 71.4% 4.1%; /* Dark text for primary elements */
+
+    --secondary: 220 14.3% 15.9%; /* Dark grey for secondary elements */
+    --secondary-foreground: 210 20% 98%; /* Light text for secondary elements */
+
+    --muted: 220 14.3% 15.9%; /* Muted dark grey */
+    --muted-foreground: 215 15% 60%; /* Lighter muted grey for muted text */
+
+    --accent: 220 14.3% 15.9%; /* Accent dark grey */
+    --accent-foreground: 210 20% 98%; /* Accent foreground text */
+
+    --destructive: 0 60% 40%;
+    --destructive-foreground: 210 20% 98%;
+
+    --border: 220 14.3% 21.9%; /* Dark subtle grey border */
+    --input: 220 14.3% 21.9%; /* Dark subtle grey input border */
+    --ring: 262 80% 60%;
   }
 }
 
@@ -73,7 +72,7 @@ h1, h2, h3, h4, h5, h6 {
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground text-base leading-relaxed;
     @apply antialiased;
   }
 }

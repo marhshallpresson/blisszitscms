@@ -64,7 +64,7 @@ export default function ResourcesPage() {
         <FinalCtaBand
           title="Learn fast, execute faster"
           subtitle="Use Blisszits resources to standardize workflow quality from week one."
-          primaryLabel="Start free"
+          primaryLabel="Get started for free"
           primaryHref="/auth?mode=signup"
           secondaryLabel="View platform"
           secondaryHref="/platform"

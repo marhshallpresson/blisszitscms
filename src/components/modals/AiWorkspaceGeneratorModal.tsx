@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Sparkles, Check, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Loader2, Edit, Check, ArrowRight, ArrowLeft } from 'lucide-react';
 import { generateAdvancedWorkspacePlan, type GenerateAdvancedWorkspacePlanOutput } from '@/ai/flows/generate-advanced-workspace-plan';
 import { Progress } from '../ui/progress';
 import { AiFieldActions } from '@/components/ai/AiFieldActions';
@@ -136,7 +136,7 @@ export const AiWorkspaceGeneratorModal = ({ isOpen, onClose, onWorkspaceCreated 
     <Dialog open={isOpen} onOpenChange={(openStatus) => !openStatus && onClose()}>
       <DialogContent className="sm:max-w-2xl bg-card flex flex-col max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle className="font-headline text-card-foreground flex items-center gap-2"><Sparkles className="text-primary"/> AI Workspace Generator</DialogTitle>
+          <DialogTitle className="font-headline text-card-foreground flex items-center gap-2"><Edit className="text-primary"/> AI Workspace Generator</DialogTitle>
           <DialogDescription>Let's craft the perfect content plan for your new project in just a few steps.</DialogDescription>
         </DialogHeader>
         
@@ -269,7 +269,7 @@ export const AiWorkspaceGeneratorModal = ({ isOpen, onClose, onWorkspaceCreated 
               
               {step === 'topic' && <Button onClick={() => setStep('interests')} disabled={!topic.trim()}>Next <ArrowRight className="ml-2 h-4 w-4"/></Button>}
               {step === 'interests' && <Button onClick={() => setStep('platforms')}>Next <ArrowRight className="ml-2 h-4 w-4"/></Button>}
-              {step === 'platforms' && <Button onClick={handleGeneratePlan} disabled={isSubmitting || !topic.trim()}>Generate Plan <Sparkles className="ml-2 h-4 w-4"/></Button>}
+              {step === 'platforms' && <Button onClick={handleGeneratePlan} disabled={isSubmitting || !topic.trim()}>Generate Plan <Edit className="ml-2 h-4 w-4"/></Button>}
               {step === 'review' && <Button onClick={handleCreateWorkspace} disabled={isSubmitting} className="bg-primary hover:bg-primary/90 text-primary-foreground">Create Workspace <Check className="ml-2 h-4 w-4"/></Button>}
             </div>
           </div>

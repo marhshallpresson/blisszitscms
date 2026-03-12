@@ -22,7 +22,7 @@ const POSTS = [
     description: 'Operational rules for assignment, tags, and saved replies that reduce response lag.',
   },
   {
-    title: 'Best-time-to-post in MVP mode',
+    title: 'Best-time-to-post',
     description: 'Start with rules-based windows, then mature to model-driven optimization.',
   },
 ];

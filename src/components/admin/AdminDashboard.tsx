@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Briefcase, ExternalLink, Loader2, Sparkles, Activity, CircleAlert } from 'lucide-react';
+import { Plus, Trash2, Briefcase, ExternalLink, Loader2, Edit, Activity, CircleAlert } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ClientFormattedDate } from '@/components/utils/ClientFormattedDate';
 import { useRouter } from 'next/navigation'; 
@@ -129,7 +129,7 @@ export const AdminDashboard = () => {
                 size="lg" 
                 className="font-bold shadow-md hover:shadow-lg transition-shadow bg-primary hover:bg-primary/90 text-primary-foreground"
               >
-                <Sparkles size={20} className="mr-2" /> Create with AI
+                <Edit size={20} className="mr-2" /> Create with AI
               </Button>
             </div>
           </div>
@@ -230,7 +230,7 @@ export const AdminDashboard = () => {
               <h3 className="mt-6 text-2xl font-semibold font-headline text-card-foreground">No workspaces found.</h3>
               <p className="mt-2 text-muted-foreground font-body">Get started by creating your first workspace.</p>
               <Button onClick={() => setIsAiGeneratorOpen(true)} className="mt-6 bg-primary hover:bg-primary/90 text-primary-foreground">
-                <Sparkles size={18} className="mr-2" /> Create with AI
+                <Edit size={18} className="mr-2" /> Create with AI
               </Button>
             </div>
           )}

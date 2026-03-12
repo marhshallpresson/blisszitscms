@@ -5,7 +5,7 @@ import type { GenerateContentIdeasOutput } from '@/ai/flows/generate-content-ide
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Sparkles, DownloadCloud, Loader2 } from 'lucide-react';
+import { Edit, DownloadCloud, Loader2 } from 'lucide-react';
 import { generateContentIdeas } from '@/ai/flows/generate-content-ideas';
 import { useToast } from '@/hooks/use-toast';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
@@ -109,9 +109,9 @@ export const AiRecommendationCard = ({
       <Card className="bg-gradient-to-br from-primary via-primary/80 to-accent text-primary-foreground shadow-xl rounded-xl">
         <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 px-6 pt-6">
           <div className="flex items-center gap-4">
-            <Sparkles className="w-10 h-10 flex-shrink-0" />
+            <Edit className="w-10 h-10 flex-shrink-0" />
             <div>
-              <CardTitle className="text-2xl md:text-3xl font-bold font-headline">AI Content Inspiration</CardTitle>
+              <CardTitle className="text-2xl md:text-3xl font-bold font-headline">Get Content Inspiration</CardTitle>
               <CardDescription className="text-primary-foreground/80 text-base">Let AI kickstart your next viral piece of content.</CardDescription>
             </div>
           </div>
@@ -123,7 +123,7 @@ export const AiRecommendationCard = ({
             className="bg-background/20 hover:bg-background/30 text-primary-foreground font-semibold shadow-md hover:shadow-lg transition-shadow w-full md:w-auto flex-shrink-0"
             aria-label={isLoading ? "Generating new ideas" : "Get new content ideas"}
           >
-            {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Sparkles className="mr-2 h-5 w-5" />}
+            {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Edit className="mr-2 h-5 w-5" />}
             {isLoading ? "Generating..." : "Get New Ideas"}
           </Button>
         </CardHeader>

@@ -98,7 +98,7 @@ export const NETWORK_CAPABILITY_ROWS: NetworkCapabilityRow[] = [
     schedule: true,
     inbox: true,
     analytics: true,
-    note: 'Primary MVP network.',
+    note: 'Primary  network.',
   },
   {
     network: 'Facebook',
@@ -106,7 +106,7 @@ export const NETWORK_CAPABILITY_ROWS: NetworkCapabilityRow[] = [
     schedule: true,
     inbox: true,
     analytics: true,
-    note: 'Primary MVP network.',
+    note: 'Primary network.',
   },
   {
     network: 'LinkedIn',

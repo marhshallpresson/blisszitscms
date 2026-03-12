@@ -27,13 +27,31 @@ export function isAiRateLimitError(error: unknown): boolean {
     normalized.includes('resource_exhausted') ||
     normalized.includes('quota exceeded') ||
     normalized.includes('too many requests') ||
-    normalized.includes('[429')
+    normalized.includes('[429') ||
+    normalized.includes('[503') ||
+    normalized.includes('503 service unavailable') ||
+    normalized.includes('high demand') ||
+    normalized.includes('service unavailable')
+  );
+}
+
+export function isAiServiceUnavailableError(error: unknown): boolean {
+  const normalized = extractErrorMessage(error).trim().toLowerCase();
+  return (
+    normalized.includes('503') ||
+    normalized.includes('service unavailable') ||
+    normalized.includes('high demand') ||
+    normalized.includes('temporarily unavailable')
   );
 }
 
 export function formatAiError(error: unknown): string {
   const rawMessage = extractErrorMessage(error).trim();
   const normalized = rawMessage.toLowerCase();
+
+  if (isAiServiceUnavailableError(error)) {
+    return 'AI model is temporarily unavailable due to high demand. Trying a fallback model…';
+  }
 
   if (isAiRateLimitError(error)) {
     const retrySeconds = parseRetryDelaySeconds(rawMessage);

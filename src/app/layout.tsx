@@ -1,8 +1,15 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google"
 import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { defaultDescription, defaultTitle, siteName, siteUrl } from "@/lib/seo";
+import { cn } from "@/lib/utils";
+
+const fontSans = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+})
 
 const organizationSchema = {
   "@context": "https://schema.org",
@@ -54,7 +61,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
-      <body className="font-body antialiased flex flex-col min-h-screen bg-background" suppressHydrationWarning>
+      <body className={cn("min-h-screen bg-background font-sans antialiased", fontSans.variable)} suppressHydrationWarning>
         <AuthProvider>
           {children}
           <Toaster />

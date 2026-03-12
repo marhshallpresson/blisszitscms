@@ -47,7 +47,7 @@ const HOW_IT_WORKS = [
   },
 ];
 
-const TRUST_PILLS = ['Built for creators', 'Built for SMB teams', 'Built for small agencies', 'No enterprise bloat'];
+const TRUST_PILLS = ['Built for creators', 'Built for SMB teams', 'Built for small agencies'];
 
 const FAQS = [
   {
@@ -56,7 +56,7 @@ const FAQS = [
   },
   {
     q: 'Which platforms can I publish to today?',
-    a: 'MVP publishing focuses on Meta and LinkedIn. Other networks are added by capability matrix phase.',
+    a: 'Start publishing focuses on Meta and LinkedIn. Other networks are added by capability matrix phase.',
   },
   {
     q: 'Do you support inbox and DMs?',
@@ -109,7 +109,7 @@ export default function HomePage() {
         title="Run your social media from one place."
         subtitle="Plan, publish, reply, and track across multiple networks, with AI that shapes your next 30 days."
         actions={[
-          { label: 'Start free', href: '/auth?mode=signup' },
+          { label: 'Get started for free', href: '/auth?mode=signup' },
           { label: 'See platform', href: '/platform', variant: 'secondary' },
         ]}
         statCards={[
@@ -119,7 +119,13 @@ export default function HomePage() {
         ]}
       />
 
-      <TrustStrip items={TRUST_PILLS} />
+
+      <MarketingSection
+        title="How Blisszits works"
+        subtitle="From first idea to published outcome in three practical stages."
+      >
+        <ProcessSteps items={HOW_IT_WORKS} />
+      </MarketingSection>
 
       <MarketingSection
         kicker="What you get"
@@ -133,19 +139,13 @@ export default function HomePage() {
         title="Bridge strategy and execution without app-switching"
         subtitle="Marketing teams need one operational surface for planning, approvals, publishing, inbox, and analytics. Blisszits keeps that workflow tight."
         metrics={[
-          { label: 'Primary CTA', value: 'Start Free' },
-          { label: 'Teams targeted', value: 'SMB + Agency' },
+          { label: 'Strategy', value: 'All-in-One' },
+          { label: 'Who is it For', value: 'Creators, SMB & Agency' },
           { label: 'Design mode', value: 'Editorial SaaS' },
-          { label: 'Execution model', value: 'Web-first' },
+          { label: 'Approach', value: 'Web-first' },
         ]}
       />
 
-      <MarketingSection
-        title="How Blisszits works"
-        subtitle="From first idea to published outcome in three practical stages."
-      >
-        <ProcessSteps items={HOW_IT_WORKS} />
-      </MarketingSection>
 
       <section className="border-y border-[hsl(var(--mk-border))] bg-[hsl(var(--mk-mint-soft))]/50">
         <div className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
@@ -208,7 +208,7 @@ export default function HomePage() {
         <FinalCtaBand
           title="Launch your first social workspace this week"
           subtitle="Set up your workspace, connect accounts, and ship your first 30-day cycle with one operating system."
-          primaryLabel="Start free"
+          primaryLabel="Get started for free"
           primaryHref="/auth?mode=signup"
           secondaryLabel="See pricing"
           secondaryHref="/pricing"
